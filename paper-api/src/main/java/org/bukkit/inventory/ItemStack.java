@@ -23,6 +23,8 @@ import org.bukkit.Translatable;
 import org.bukkit.UndefinedNullability;
 import org.bukkit.Utility;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
+import org.bukkit.craftbukkit.inventory.CraftItemStack;
+import org.bukkit.craftbukkit.persistence.CraftPersistentDataContainer;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.meta.ColorableArmorMeta;
 import org.bukkit.inventory.meta.Damageable;
@@ -1470,7 +1472,8 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
     }
 
     public CraftItemStack setUnbreakable() {
-        return setDataC(DataComponentTypes.UNBREAKABLE, Unbreakable.unbreakable(false));
+        setData(DataComponentTypes.UNBREAKABLE);
+        return getCraft();
     }
 
     @ApiStatus.Experimental
