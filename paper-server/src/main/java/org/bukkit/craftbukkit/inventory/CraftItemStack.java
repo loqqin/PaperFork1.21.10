@@ -493,7 +493,7 @@ public final class CraftItemStack extends ItemStack {
         return customData.getUnsafe().getCompoundOrEmpty(PDC_CUSTOM_DATA_KEY);
     }
 
-    private static final org.bukkit.craftbukkit.persistence.CraftPersistentDataTypeRegistry REGISTRY = new org.bukkit.craftbukkit.persistence.CraftPersistentDataTypeRegistry();
+    public static final org.bukkit.craftbukkit.persistence.CraftPersistentDataTypeRegistry REGISTRY = new org.bukkit.craftbukkit.persistence.CraftPersistentDataTypeRegistry();
     private final io.papermc.paper.persistence.PaperPersistentDataContainerView pdcView = new io.papermc.paper.persistence.PaperPersistentDataContainerView(REGISTRY) {
 
         @Override

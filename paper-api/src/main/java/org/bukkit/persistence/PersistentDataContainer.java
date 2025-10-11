@@ -69,4 +69,41 @@ public interface PersistentDataContainer extends io.papermc.paper.persistence.Pe
         this.readFromBytes(bytes, true);
     }
     // Paper end - byte array serialization
+
+    // loqqin todo в нмсе производительнее
+    default Integer getInt(String key) {
+        final Integer space = get(new NamespacedKey("space", key.toLowerCase()), PersistentDataType.INTEGER);
+        if (space == null) {
+            return 0;
+        }
+        return space;
+    }
+
+    default void setInt(String key, int value) {
+        set(new NamespacedKey("space", key.toLowerCase()), PersistentDataType.INTEGER, value);
+    }
+
+    default String getString(String key) {
+        final String space = get(new NamespacedKey("space", key.toLowerCase()), PersistentDataType.STRING);
+        if (space == null) {
+            return "";
+        }
+        return space;
+    }
+
+    default void setString(String key, String value) {
+        set(new NamespacedKey("space", key.toLowerCase()), PersistentDataType.STRING, value);
+    }
+
+    default Double getDouble(String key) {
+        final Double space = get(new NamespacedKey("space", key.toLowerCase()), PersistentDataType.DOUBLE);
+        if (space == null) {
+            return 0.0;
+        }
+        return space;
+    }
+
+    default void setDouble(String key, Double value) {
+        set(new NamespacedKey("space", key.toLowerCase()), PersistentDataType.DOUBLE, value);
+    }
 }

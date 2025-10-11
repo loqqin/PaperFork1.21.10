@@ -2,15 +2,21 @@ package org.bukkit.inventory;
 
 import com.google.common.base.Preconditions;
 import io.papermc.paper.datacomponent.DataComponentHolder;
+import io.papermc.paper.datacomponent.DataComponentType;
+import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.registry.RegistryKey;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
+import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Translatable;
@@ -18,10 +24,13 @@ import org.bukkit.UndefinedNullability;
 import org.bukkit.Utility;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.inventory.meta.ColorableArmorMeta;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.material.MaterialData;
 import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -727,9 +736,9 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * When used in chat, make sure to follow the ItemStack rules regarding amount, type, and other properties.
      * @return display name of the {@link ItemStack}
      */
-    public net.kyori.adventure.text.@NotNull Component displayName() {
-        return Bukkit.getServer().getItemFactory().displayName(this);
-    }
+    // public net.kyori.adventure.text.@NotNull Component displayName() {
+    //     return Bukkit.getServer().getItemFactory().displayName(this);
+    // }
 
     /**
      * Gets the effective name of this item stack shown to player in inventory.
@@ -1373,4 +1382,199 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
         return this.craftDelegate.matchesWithoutData(item, excludeTypes, ignoreCount);
     }
     // Paper end - data component API
+
+
+    // loqqin start
+
+    public CraftItemStack editPersistentDataContainerC(@NotNull Consumer<PersistentDataContainer> consumer) {
+        // this.craftDelegate.editPersistentDataContainer(consumer);
+        final CraftItemStack craft = getCraft();
+        craft.editPersistentDataContainer(consumer);
+        return craft;
+    }
+
+     public @NotNull Component displayName() {
+        if (getAmount() > 64) {
+            ItemStack clone = this.clone();
+            clone.setAmount(64);
+            return clone.getDataOrDefault(DataComponentTypes.CUSTOM_NAME, Component.text(""));
+        }
+        return getDataOrDefault(DataComponentTypes.CUSTOM_NAME, Component.text(""));
+    }
+
+    public CraftItemStack getCraft() { // хз насколько кастинг эффективен, мб лучше юзать как раньше return craftitemstack
+        if (this instanceof CraftItemStack craft) {
+            return craft;
+        }
+        return CraftItemStack.asCraftCopy(this);
+    }
+
+    public CraftItemStack setAmountC(int amount) {
+        setAmount(amount);
+        return getCraft();
+    }
+
+    public CraftItemStack editMetaC(final @NotNull Consumer<? super ItemMeta> consumer) {
+        editMeta(consumer);
+        return getCraft();
+    }
+
+    public CraftItemStack loreC(List<Component> lore) {
+        lore(lore);
+        return getCraft();
+    }
+
+    public String name() { // мб на pdc view
+        // final ItemMeta itemMeta = getItemMeta();
+        // if (itemMeta == null) {
+        //     return "null";
+        // }
+        final Component aNull = getDataOrDefault(DataComponentTypes.CUSTOM_NAME, Component.text(""));
+        String serialize = LegacyComponentSerializer.legacySection().serialize(aNull);
+        // if (serialize.contains("[") && serialize.contains("]")) {
+        //     return new StringBuilder(serialize).deleteCharAt(serialize.indexOf('[')).deleteCharAt(serialize.lastIndexOf(']') - 1).toString();
+        // }
+        return serialize;
+        // return itemMeta.getDisplayName();
+    }
+
+    public boolean nameEquals(ItemStack itemStack) {
+        return name().equals(itemStack.name());
+    }
+
+    public boolean hasUUID() {
+        return getPersistentDataContainer().has(new NamespacedKey("space", "uuid"));
+    }
+
+    public static boolean equals(ItemStack itemStack, ItemStack itemStack1) {
+        if (itemStack == null && itemStack1 == null) {
+            return true;
+        }
+        if (itemStack1 == null || itemStack == null) {
+            return false;
+        }
+        return itemStack.equals(itemStack1);
+    }
+
+    public boolean materialEquals(Material material) {
+        return material == getType();
+    }
+
+    public static boolean nullOrAir(ItemStack itemStack) {
+        return itemStack == null || itemStack.getType().isAir();
+    }
+
+    public CraftItemStack setName(String name) {
+        return setDataC(DataComponentTypes.CUSTOM_NAME, Component.text(name));
+        // return editMetaC(meta -> meta.displayName(Component.text(name)));
+    }
+
+    public CraftItemStack setUnbreakable() {
+        return setDataC(DataComponentTypes.UNBREAKABLE, Unbreakable.unbreakable(false));
+    }
+
+    @ApiStatus.Experimental
+    public <T> CraftItemStack setDataC(final DataComponentType.@NotNull Valued<T> type, final @NotNull T value) {
+        setData(type, value);
+        return getCraft();
+    }
+
+    public CraftItemStack setRandomUUID() {
+        return editPersistentDataContainerC(a -> a.setString("uuid", UUID.randomUUID().toString()));
+        // return editMetaC(meta -> meta.getPersistentDataContainer().set(new NamespacedKey("space", "uuid"), PersistentDataType.STRING,
+        //     UUID.randomUUID().toString()));
+    }
+
+    public CraftItemStack setColor(int red, int green, int blue) {
+        return editMetaC(meta -> {
+            ((ColorableArmorMeta) meta).setColor(Color.fromRGB(red, green, blue));
+            meta.addItemFlags(ItemFlag.HIDE_DYE);
+        });
+    }
+
+    public static boolean nameEquals(ItemStack first, ItemStack second) {
+        if (first == null && second == null) {
+            return true;
+        }
+        if (first == null || second == null) {
+            return false;
+        }
+
+        return first.name().equals(second.name());
+    }
+
+    public String getID() {
+        // final ItemMeta itemMeta = getItemMeta();
+        // if (itemMeta == null) {
+        //     return "";
+        // }
+        return getString("id");
+    }
+
+    public CraftItemStack setString(String key, String value) {
+        return editPersistentDataContainerC(a -> a.setString(key, value));
+        // return editMetaC(meta -> meta.getPersistentDataContainer().set(new NamespacedKey("space", key.toLowerCase()), PersistentDataType.STRING, value));
+    }
+
+    public CraftPersistentDataContainer getCompound(String key) {
+        final ItemMeta itemMeta = getItemMeta();
+        if (itemMeta == null) {
+            return null;
+        }
+        return (CraftPersistentDataContainer) itemMeta.getPersistentDataContainer().get(new NamespacedKey("space", key.toLowerCase()), PersistentDataType.TAG_CONTAINER);
+    }
+
+    public CraftItemStack setCompound(String key, PersistentDataContainer container) {
+        return editPersistentDataContainerC(a -> a.set(new NamespacedKey("space", key.toLowerCase()), PersistentDataType.TAG_CONTAINER, container));
+        // return editMetaC(meta -> meta.getPersistentDataContainer().set(new NamespacedKey("space", key.toLowerCase()), PersistentDataType.TAG_CONTAINER, container));
+    }
+
+    public CraftItemStack setGlinting() {
+        return setDataC(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, Boolean.TRUE);
+    }
+
+    public CraftItemStack hideTooltip() {
+        return editMetaC(meta -> meta.setHideTooltip(true));
+    }
+
+    public CraftItemStack setDouble(String key, double value) {
+        return editPersistentDataContainerC(a -> a.setDouble(key, value));
+        // return editMetaC(meta -> meta.getPersistentDataContainer().set(new NamespacedKey("space", key.toLowerCase()), PersistentDataType.DOUBLE, value));
+    }
+
+    public CraftItemStack setInt(String key, int value) {
+        return editPersistentDataContainerC(a -> a.setInt(key, value));
+        // return editMetaC(meta -> meta.getPersistentDataContainer().set(new NamespacedKey("space", key.toLowerCase()), PersistentDataType.INTEGER, value));
+    }
+
+    public String getString(String key) {
+        final String space = getPersistentDataContainer().get(new NamespacedKey("space", key.toLowerCase()), PersistentDataType.STRING);
+        if (space == null) {
+            return "";
+        }
+        return space;
+    }
+
+    public int getInt(String key) {
+        final Integer space = getPersistentDataContainer().get(new NamespacedKey("space", key.toLowerCase()), PersistentDataType.INTEGER);
+        if (space == null) {
+            return 0;
+        }
+        return space;
+    }
+
+    public double getDouble(String key) {
+        final Double space = getPersistentDataContainer().get(new NamespacedKey("space", key.toLowerCase()), PersistentDataType.DOUBLE);
+        if (space == null) {
+            return 0.0;
+        }
+        return space;
+    }
+
+    public CraftItemStack cloneC() {
+        return getCraft().clone();
+        // return ((CraftItemStack) clone());
+    }
+
+    // loqqin end
 }

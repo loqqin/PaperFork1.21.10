@@ -65,11 +65,11 @@ public class CraftInventoryCustom extends CraftInventory {
         }
     }
 
-    static class MinecraftInventory implements Container {
+    public static class MinecraftInventory implements Container {
         private final NonNullList<ItemStack> items;
         private int maxStack = MAX_STACK;
         private final List<HumanEntity> viewers;
-        private final String title;
+        public String title;
         private final net.kyori.adventure.text.Component adventure$title; // Paper
         private InventoryType type;
         private final InventoryHolder owner;

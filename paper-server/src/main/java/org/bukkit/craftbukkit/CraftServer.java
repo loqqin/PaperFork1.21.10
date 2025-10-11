@@ -275,7 +275,7 @@ public final class CraftServer implements Server {
     private final SimplePluginManager pluginManager; // Paper - Move down
     public final io.papermc.paper.plugin.manager.PaperPluginManagerImpl paperPluginManager;
     private final StructureManager structureManager;
-    final DedicatedServer console;
+    public final DedicatedServer console;
     private final DedicatedPlayerList playerList;
     private final Map<String, World> worlds = new LinkedHashMap<>();
     private YamlConfiguration configuration;

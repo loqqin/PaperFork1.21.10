@@ -36,7 +36,7 @@ public final class SysoutCatcher {
         System.setErr(new WrappedOutStream(System.err, Level.SEVERE, "[STDERR] "));
     }
 
-    private final class WrappedOutStream extends PrintStream {
+    public final class WrappedOutStream extends PrintStream {
         private static final StackWalker STACK_WALKER = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE);
         private final Level level;
         private final String prefix;

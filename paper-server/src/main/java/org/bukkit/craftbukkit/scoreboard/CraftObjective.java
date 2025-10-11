@@ -11,8 +11,8 @@ import org.bukkit.scoreboard.RenderType;
 import org.bukkit.scoreboard.Score;
 import java.util.Objects;
 
-final class CraftObjective extends CraftScoreboardComponent implements Objective {
-    private final net.minecraft.world.scores.Objective objective;
+public final class CraftObjective extends CraftScoreboardComponent implements Objective {
+    public final net.minecraft.world.scores.Objective objective;
     private final CraftCriteria criteria;
 
     CraftObjective(CraftScoreboard scoreboard, net.minecraft.world.scores.Objective objective) {
