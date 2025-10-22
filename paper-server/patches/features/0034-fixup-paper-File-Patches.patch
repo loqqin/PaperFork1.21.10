@@ -1,25 +1,28 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: loqqin <soubmatic@gmail.com>
-Date: Wed, 22 Oct 2025 18:27:12 +0300
+Date: Wed, 22 Oct 2025 18:32:51 +0300
 Subject: [PATCH] fixup! paper File Patches
 
 
 diff --git a/net/minecraft/world/entity/EntityType.java b/net/minecraft/world/entity/EntityType.java
-index 7c3026f3650d4a8205eea1f9228c6298754e7e8c..234616177dfa4351e92b4e91701d36cc3be98666 100644
+index 28b511dfc50eb9335c2dec3bb31fd31f31925fc1..11fdb98eef4b70979013751206e2d54964023c19 100644
 --- a/net/minecraft/world/entity/EntityType.java
 +++ b/net/minecraft/world/entity/EntityType.java
-@@ -1618,7 +1618,8 @@ public class EntityType<T extends Entity> implements FeatureElement, EntityTypeT
+@@ -1618,7 +1618,12 @@ public class EntityType<T extends Entity> implements FeatureElement, EntityTypeT
  
-     private static Optional<Entity> loadStaticEntity(EntityType<?> entityType, ValueInput valueInput, Level level, EntitySpawnReason spawnReason) {
+     private static Optional<Entity> loadStaticEntity(EntityType<?> entityType, ValueInput input, Level level, EntitySpawnReason spawnReason) {
          try {
--            return create(entityType, valueInput, level, spawnReason);
++<<<<<<< HEAD
+             return create(entityType, input, level, spawnReason);
++=======
 +            return
 +                create(entityType, valueInput, level, spawnReason);
++>>>>>>> fixup! paper File Patches
          } catch (RuntimeException var5) {
              LOGGER.warn("Exception loading entity: ", (Throwable)var5);
              return Optional.empty();
 diff --git a/net/minecraft/world/entity/player/Player.java b/net/minecraft/world/entity/player/Player.java
-index 14e8332cd07ebbd474015ad50abb191f4ad43b18..0a5e41a745bbcbd3eeaf677938276eeabca1ef4d 100644
+index f9ad67668ca73d510e3165d68c1bef25e7069656..3327a18eba9ccd199d886c6df109029c9bfdc59c 100644
 --- a/net/minecraft/world/entity/player/Player.java
 +++ b/net/minecraft/world/entity/player/Player.java
 @@ -1119,7 +1119,7 @@ public abstract class Player extends Avatar implements ContainerUser {
