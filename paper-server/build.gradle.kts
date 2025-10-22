@@ -1,23 +1,20 @@
 import io.papermc.fill.model.BuildChannel
 import io.papermc.paperweight.attribute.DevBundleOutput
 import io.papermc.paperweight.util.*
-import io.papermc.paperweight.util.data.FileEntry
-import paper.libs.com.google.gson.annotations.SerializedName
 import java.time.Instant
-import kotlin.io.path.readText
 
 plugins {
     `java-library`
     `maven-publish`
     idea
     id("io.papermc.paperweight.core")
-    id("io.papermc.fill.gradle") version "1.0.7"
+    id("io.papermc.fill.gradle") version "1.0.9"
 }
 
 val paperMavenPublicUrl = "https://repo.papermc.io/repository/maven-public/"
 
 dependencies {
-    mache("io.papermc:mache:1.21.10+build.1")
+    mache("io.papermc:mache:1.21.10+build.7")
     paperclip("io.papermc:paperclip:3.0.3")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
@@ -193,7 +190,7 @@ tasks.jar {
         val git = Git(rootProject.layout.projectDirectory.path)
         val mcVersion = rootProject.providers.gradleProperty("mcVersion").get()
         val build = System.getenv("BUILD_NUMBER") ?: null
-        val buildTime = if (build != null) Instant.now() else Instant.EPOCH
+        val buildTime = providers.environmentVariable("BUILD_STARTED_AT").map(Instant::parse).orElse(Instant.EPOCH).get()
         val gitHash = git.exec(providers, "rev-parse", "--short=7", "HEAD").get().trim()
         val implementationVersion = "$mcVersion-${build ?: "DEV"}-$gitHash"
         val date = git.exec(providers, "show", "-s", "--format=%ci", gitHash).get().trim()
