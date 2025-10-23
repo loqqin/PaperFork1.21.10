@@ -1,0 +1,37 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: loqqin <soubmatic@gmail.com>
+Date: Thu, 23 Oct 2025 23:18:02 +0300
+Subject: [PATCH] fixup! paper File Patches
+
+
+diff --git a/net/minecraft/server/ServerScoreboard.java b/net/minecraft/server/ServerScoreboard.java
+index ebf273306b85917535a52abe1b2b1a51d235247f..e60e739db6d63429a4fbde3a1fa9613faf7ce646 100644
+--- a/net/minecraft/server/ServerScoreboard.java
++++ b/net/minecraft/server/ServerScoreboard.java
+@@ -303,6 +303,9 @@ public class ServerScoreboard extends Scoreboard {
+     }
+ 
+     private void updatePlayerWaypoint(String playerName) {
++        if (true) { // loqqin fix lag on team set color
++            return;
++        }
+         ServerPlayer playerByName = this.server.getPlayerList().getPlayerByName(playerName);
+         if (playerByName != null) {
+             ServerLevel var4 = playerByName.level();
+diff --git a/net/minecraft/world/entity/EntityType.java b/net/minecraft/world/entity/EntityType.java
+index 11fdb98eef4b70979013751206e2d54964023c19..28b511dfc50eb9335c2dec3bb31fd31f31925fc1 100644
+--- a/net/minecraft/world/entity/EntityType.java
++++ b/net/minecraft/world/entity/EntityType.java
+@@ -1618,12 +1618,7 @@ public class EntityType<T extends Entity> implements FeatureElement, EntityTypeT
+ 
+     private static Optional<Entity> loadStaticEntity(EntityType<?> entityType, ValueInput input, Level level, EntitySpawnReason spawnReason) {
+         try {
+-<<<<<<< HEAD
+             return create(entityType, input, level, spawnReason);
+-=======
+-            return
+-                create(entityType, valueInput, level, spawnReason);
+->>>>>>> fixup! paper File Patches
+         } catch (RuntimeException var5) {
+             LOGGER.warn("Exception loading entity: ", (Throwable)var5);
+             return Optional.empty();
