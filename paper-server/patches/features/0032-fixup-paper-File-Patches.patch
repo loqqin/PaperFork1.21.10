@@ -4,23 +4,6 @@ Date: Sat, 11 Oct 2025 22:17:45 +0300
 Subject: [PATCH] fixup! paper File Patches
 
 
-diff --git a/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/NewChunkHolder.java b/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/NewChunkHolder.java
-index 2409c83b03cfa1f0285f6f7c3508dbdf53750316..5d07783f2da5da87b9a2e93f5addbd25559d1cf6 100644
---- a/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/NewChunkHolder.java
-+++ b/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/NewChunkHolder.java
-@@ -1738,6 +1738,12 @@ public final class NewChunkHolder {
-         }
-         try {
-             final SerializableChunkData chunkData = SerializableChunkData.copyOf(this.world, chunk);
-+            // loqqin если тут сделать return чанк не сохранится
-+            if (true) {
-+                // System.out.println("savechunk");
-+                // System.out.println("return true");
-+                // return true;
-+            }
-             PlatformHooks.get().chunkSyncSave(this.world, chunk, chunkData);
- 
-             chunk.tryMarkSaved();
 diff --git a/net/minecraft/nbt/CompoundTag.java b/net/minecraft/nbt/CompoundTag.java
 index 052ca6beb06a3256fdf04bac5f2085ad622d7df0..bebedcfc94083eb005a56f8716cece9f38988736 100644
 --- a/net/minecraft/nbt/CompoundTag.java
