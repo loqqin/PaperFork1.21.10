@@ -1,0 +1,33 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: loqqin <soubmatic@gmail.com>
+Date: Fri, 24 Oct 2025 21:36:39 +0300
+Subject: [PATCH] fixup! # This is a combination of 5 commits. # This is the
+ 1st commit message:
+
+
+diff --git a/io/papermc/paper/command/subcommands/FixLightCommand.java b/io/papermc/paper/command/subcommands/FixLightCommand.java
+index 85950a1aa732ab8c01ad28bec9e0de140e1a172e..3513ce23dfc9abc40f3c7ebc44b648f69e5bba2a 100644
+--- a/io/papermc/paper/command/subcommands/FixLightCommand.java
++++ b/io/papermc/paper/command/subcommands/FixLightCommand.java
+@@ -35,7 +35,7 @@ public final class FixLightCommand implements PaperSubcommand {
+         return true;
+     }
+ 
+-    private void doFixLight(final CommandSender sender, final String[] args) {
++    public static void doFixLight(final CommandSender sender, final String[] args) {
+         if (!(sender instanceof Player)) {
+             sender.sendMessage(text("Only players can use this command", RED));
+             return;
+@@ -64,10 +64,10 @@ public final class FixLightCommand implements PaperSubcommand {
+         ServerPlayer handle = player.getHandle();
+         ServerLevel world = (ServerLevel) handle.level();
+         ThreadedLevelLightEngine lightengine = world.getChunkSource().getLightEngine();
+-        this.starlightFixLight(handle, world, lightengine, radius, post);
++        starlightFixLight(handle, world, lightengine, radius, post);
+     }
+ 
+-    private void starlightFixLight(
++    public static void starlightFixLight(
+         final ServerPlayer sender,
+         final ServerLevel world,
+         final ThreadedLevelLightEngine lightengine,
