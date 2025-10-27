@@ -1096,7 +1096,7 @@
          if (this.player.hasClientLoaded()) {
              BlockPos pos = packet.getPos();
              this.player.resetLastActionTime();
-@@ -1207,32 +_,95 @@
+@@ -1207,32 +_,96 @@
                  case SWAP_ITEM_WITH_OFFHAND:
                      if (!this.player.isSpectator()) {
                          ItemStack itemInHand = this.player.getItemInHand(InteractionHand.OFF_HAND);
@@ -1150,6 +1150,7 @@
                      return;
                  case DROP_ALL_ITEMS:
                      if (!this.player.isSpectator()) {
++                        org.bukkit.Bukkit.getPluginManager().callEvent(new org.bukkit.event.player.PlayerDropStackItemEvent(player.getBukkitEntity()));
                          this.player.drop(true);
 +                        if (io.papermc.paper.configuration.GlobalConfiguration.get().unsupportedSettings.updateEquipmentOnPlayerActions) this.player.detectEquipmentUpdates(); // Paper - Force update attributes.
                      }

@@ -1,0 +1,11 @@
+--- a/net/minecraft/world/item/crafting/ShapedRecipePattern.java
++++ b/net/minecraft/world/item/crafting/ShapedRecipePattern.java
+@@ -39,7 +_,7 @@
+     private final int width;
+     private final int height;
+     private final List<Optional<Ingredient>> ingredients;
+-    private final Optional<ShapedRecipePattern.Data> data;
++    public final Optional<ShapedRecipePattern.Data> data;
+     private final int ingredientCount;
+     private final boolean symmetrical;
+ 

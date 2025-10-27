@@ -1,11 +1,19 @@
 --- a/net/minecraft/world/level/block/StemBlock.java
 +++ b/net/minecraft/world/level/block/StemBlock.java
-@@ -70,11 +_,11 @@
+@@ -66,15 +_,19 @@
+         return state.is(Blocks.FARMLAND);
+     }
+ 
++    public static final it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap<String> growthPercentIncrease = new it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap<>();
++
+     @Override
      protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
          if (level.getRawBrightness(pos, 0) >= 9) {
              float growthSpeed = CropBlock.getGrowthSpeed(this, level, pos);
 -            if (random.nextInt((int)(25.0F / growthSpeed) + 1) == 0) {
-+            if (random.nextFloat() < ((this == Blocks.PUMPKIN_STEM ? level.spigotConfig.pumpkinModifier : level.spigotConfig.melonModifier) / (100.0F * (Math.floor((25.0F / growthSpeed) + 1))))) { // Spigot - SPIGOT-7159: Better modifier resolution
++            double modifier = this == Blocks.PUMPKIN_STEM ? level.spigotConfig.pumpkinModifier : level.spigotConfig.melonModifier;
++            modifier += modifier / 100 * growthPercentIncrease.getDouble(level.serverLevelData.settings.levelName);
++            if (random.nextFloat() < (modifier / (100.0F * (Math.floor((25.0F / growthSpeed) + 1))))) { // Spigot - SPIGOT-7159: Better modifier resolution
                  int ageValue = state.getValue(AGE);
                  if (ageValue < 7) {
                      state = state.setValue(AGE, ageValue + 1);

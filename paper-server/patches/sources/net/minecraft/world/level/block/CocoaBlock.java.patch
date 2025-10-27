@@ -1,11 +1,17 @@
 --- a/net/minecraft/world/level/block/CocoaBlock.java
 +++ b/net/minecraft/world/level/block/CocoaBlock.java
-@@ -50,10 +_,10 @@
+@@ -48,12 +_,16 @@
+         return state.getValue(AGE) < 2;
+     }
  
++    public static final it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap<String> growthPercentIncrease = new it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap<>();
++
      @Override
      protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
 -        if (level.random.nextInt(5) == 0) {
-+        if (level.random.nextFloat() < (level.spigotConfig.cocoaModifier / (100.0F * 5))) { // Spigot - SPIGOT-7159: Better modifier resolution
++        double modifier = level.spigotConfig.cocoaModifier;
++        modifier += modifier / 100 * growthPercentIncrease.getDouble(level.serverLevelData.settings.levelName);
++        if (level.random.nextFloat() < (modifier / (100.0F * 5))) { // Spigot - SPIGOT-7159: Better modifier resolution
              int ageValue = state.getValue(AGE);
              if (ageValue < 2) {
 -                level.setBlock(pos, state.setValue(AGE, ageValue + 1), Block.UPDATE_CLIENTS);

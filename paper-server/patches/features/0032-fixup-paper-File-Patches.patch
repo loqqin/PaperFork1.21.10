@@ -1,0 +1,59 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: loqqin <soubmatic@gmail.com>
+Date: Mon, 27 Oct 2025 14:18:58 +0200
+Subject: [PATCH] fixup! paper File Patches
+
+
+diff --git a/io/papermc/paper/command/subcommands/FixLightCommand.java b/io/papermc/paper/command/subcommands/FixLightCommand.java
+index 85950a1aa732ab8c01ad28bec9e0de140e1a172e..3513ce23dfc9abc40f3c7ebc44b648f69e5bba2a 100644
+--- a/io/papermc/paper/command/subcommands/FixLightCommand.java
++++ b/io/papermc/paper/command/subcommands/FixLightCommand.java
+@@ -35,7 +35,7 @@ public final class FixLightCommand implements PaperSubcommand {
+         return true;
+     }
+ 
+-    private void doFixLight(final CommandSender sender, final String[] args) {
++    public static void doFixLight(final CommandSender sender, final String[] args) {
+         if (!(sender instanceof Player)) {
+             sender.sendMessage(text("Only players can use this command", RED));
+             return;
+@@ -64,10 +64,10 @@ public final class FixLightCommand implements PaperSubcommand {
+         ServerPlayer handle = player.getHandle();
+         ServerLevel world = (ServerLevel) handle.level();
+         ThreadedLevelLightEngine lightengine = world.getChunkSource().getLightEngine();
+-        this.starlightFixLight(handle, world, lightengine, radius, post);
++        starlightFixLight(handle, world, lightengine, radius, post);
+     }
+ 
+-    private void starlightFixLight(
++    public static void starlightFixLight(
+         final ServerPlayer sender,
+         final ServerLevel world,
+         final ThreadedLevelLightEngine lightengine,
+diff --git a/net/minecraft/server/ServerScoreboard.java b/net/minecraft/server/ServerScoreboard.java
+index 5886de75a8be3b7134b52520e5bc635812fda659..974086f19093f7c4c0082f2d87b17406a22ad119 100644
+--- a/net/minecraft/server/ServerScoreboard.java
++++ b/net/minecraft/server/ServerScoreboard.java
+@@ -303,6 +303,9 @@ public class ServerScoreboard extends Scoreboard {
+     }
+ 
+     private void updatePlayerWaypoint(String playerName) {
++        if (true) { // loqqin fix lag on team set color
++            return;
++        }
+         ServerPlayer playerByName = this.server.getPlayerList().getPlayerByName(playerName);
+         if (playerByName != null) {
+             ServerLevel var4 = playerByName.level();
+diff --git a/net/minecraft/world/entity/player/Player.java b/net/minecraft/world/entity/player/Player.java
+index e95e259e5be5bb14a4ba2473d6ce850ebbedcb6d..c60dd6f8406e078978a474b6099ed47a60eb6062 100644
+--- a/net/minecraft/world/entity/player/Player.java
++++ b/net/minecraft/world/entity/player/Player.java
+@@ -1120,7 +1120,7 @@ public abstract class Player extends Avatar implements ContainerUser {
+                                 // Paper end - Configurable sprint interruption on attack
+                             }
+ 
+-                            if (flag3) {
++                            if (flag3 && false) { // loqqin disable sweep
+                                 float f5 = 1.0F + (float)this.getAttributeValue(Attributes.SWEEPING_DAMAGE_RATIO) * f;
+ 
+                                 for (LivingEntity livingEntity2 : this.level()

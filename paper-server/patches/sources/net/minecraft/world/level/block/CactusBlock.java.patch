@@ -1,5 +1,15 @@
 --- a/net/minecraft/world/level/block/CactusBlock.java
 +++ b/net/minecraft/world/level/block/CactusBlock.java
+@@ -50,6 +_,9 @@
+         }
+     }
+ 
++    // todo loqqin
++    public static final it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap<String> growthPercentIncrease = new it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap<>();
++
+     @Override
+     protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+         BlockPos blockPos = pos.above();
 @@ -58,18 +_,22 @@
              int ageValue = state.getValue(AGE);
  

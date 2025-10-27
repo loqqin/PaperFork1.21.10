@@ -464,7 +464,7 @@ index 35e852c4bb5e632ac4e1dc8c9e89f7a366ba7c09..f500e724034b330b590825c07b7dd615
      public void tick() {
          super.tick();
 diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
-index d5a38c3464539b05453ead3dfd77f4cf4b672617..7ab250350027543adc3926632b0d68a2254c6ad3 100644
+index 523496693e8be202fd75f418d5a9fab636b6f8a4..bb15c51baf1e93912ce68d284e1b70e21e846398 100644
 --- a/net/minecraft/world/entity/Entity.java
 +++ b/net/minecraft/world/entity/Entity.java
 @@ -367,6 +367,15 @@ public abstract class Entity implements SyncedDataHolder, DebugValueSource, Name
@@ -523,10 +523,10 @@ index d5a38c3464539b05453ead3dfd77f4cf4b672617..7ab250350027543adc3926632b0d68a2
              movement = this.maybeBackOffFromEdge(movement, type);
              Vec3 vec3 = this.collide(movement);
 diff --git a/net/minecraft/world/entity/LivingEntity.java b/net/minecraft/world/entity/LivingEntity.java
-index 712983c9f55f4a5c120cda8b95ec16ce815fa205..025ef0b83e5d481c8b2ef25206cafd30897caabd 100644
+index 75a60ea07cb533e1bb35f0616dcf7bda1ad3405c..36885d7ea4d27d64226892161526fd1980ec91aa 100644
 --- a/net/minecraft/world/entity/LivingEntity.java
 +++ b/net/minecraft/world/entity/LivingEntity.java
-@@ -3255,6 +3255,14 @@ public abstract class LivingEntity extends Entity implements Attackable, Waypoin
+@@ -3258,6 +3258,14 @@ public abstract class LivingEntity extends Entity implements Attackable, Waypoin
          return false;
      }
  

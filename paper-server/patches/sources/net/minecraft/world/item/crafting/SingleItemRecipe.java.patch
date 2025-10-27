@@ -1,0 +1,11 @@
+--- a/net/minecraft/world/item/crafting/SingleItemRecipe.java
++++ b/net/minecraft/world/item/crafting/SingleItemRecipe.java
+@@ -13,7 +_,7 @@
+ 
+ public abstract class SingleItemRecipe implements Recipe<SingleRecipeInput> {
+     private final Ingredient input;
+-    private final ItemStack result;
++    public ItemStack result;
+     private final String group;
+     @Nullable
+     private PlacementInfo placementInfo;

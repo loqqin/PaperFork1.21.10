@@ -1,9 +1,19 @@
 --- a/net/minecraft/world/item/crafting/ShapelessRecipe.java
 +++ b/net/minecraft/world/item/crafting/ShapelessRecipe.java
-@@ -31,6 +_,21 @@
+@@ -19,7 +_,7 @@
+ public class ShapelessRecipe implements CraftingRecipe {
+     final String group;
+     final CraftingBookCategory category;
+-    final ItemStack result;
++    public ItemStack result;
+     final List<Ingredient> ingredients;
+     @Nullable
+     private PlacementInfo placementInfo;
+@@ -30,6 +_,21 @@
+         this.result = result;
          this.ingredients = ingredients;
      }
- 
++
 +    // CraftBukkit start
 +    @Override
 +    public org.bukkit.inventory.ShapelessRecipe toBukkitRecipe(org.bukkit.NamespacedKey id) {
@@ -18,7 +28,6 @@
 +        return recipe;
 +    }
 +    // CraftBukkit end
-+
+ 
      @Override
      public RecipeSerializer<ShapelessRecipe> getSerializer() {
-         return RecipeSerializer.SHAPELESS_RECIPE;

@@ -1,13 +1,21 @@
 --- a/net/minecraft/world/level/block/CropBlock.java
 +++ b/net/minecraft/world/level/block/CropBlock.java
-@@ -80,8 +_,25 @@
+@@ -74,14 +_,35 @@
+         return !this.isMaxAge(state);
+     }
+ 
++    public static final it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap<String> growthPercentIncrease = new it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap<>();
++
+     @Override
+     protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+         if (level.getRawBrightness(pos, 0) >= 9) {
              int age = this.getAge(state);
              if (age < this.getMaxAge()) {
                  float growthSpeed = getGrowthSpeed(this, level, pos);
 -                if (random.nextInt((int)(25.0F / growthSpeed) + 1) == 0) {
 -                    level.setBlock(pos, this.getStateForAge(age + 1), Block.UPDATE_CLIENTS);
 +                // Spigot start
-+                int modifier = 100;
++                double modifier = 100;
 +                if (this == Blocks.BEETROOTS) {
 +                    modifier = level.spigotConfig.beetrootModifier;
 +                } else if (this == Blocks.CARROTS) {
@@ -21,6 +29,8 @@
 +                } else if (this == Blocks.WHEAT) {
 +                    modifier = level.spigotConfig.wheatModifier;
 +                }
++
++                modifier += modifier / 100 * growthPercentIncrease.getDouble(level.serverLevelData.settings.levelName);
 +
 +                if (random.nextFloat() < (modifier / (100.0F * (Math.floor((25.0F / growthSpeed) + 1))))) { // Spigot - SPIGOT-7159: Better modifier resolution
 +                    // Spigot end

@@ -1,11 +1,17 @@
 --- a/net/minecraft/world/level/block/MushroomBlock.java
 +++ b/net/minecraft/world/level/block/MushroomBlock.java
-@@ -46,7 +_,7 @@
+@@ -44,9 +_,13 @@
+         return SHAPE;
+     }
  
++    public static final it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap<String> growthPercentIncrease = new it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap<>();
++
      @Override
      protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
 -        if (random.nextInt(25) == 0) {
-+        if (random.nextFloat() < (level.spigotConfig.mushroomModifier / (100.0F * 25))) { // Spigot - SPIGOT-7159: Better modifier resolution
++        double mushroomModifier = level.spigotConfig.mushroomModifier;
++        mushroomModifier += mushroomModifier / 100 * growthPercentIncrease.getDouble(level.serverLevelData.settings.levelName);
++        if (random.nextFloat() < (mushroomModifier / (100.0F * 25))) { // Spigot - SPIGOT-7159: Better modifier resolution
              int i = 5;
              int i1 = 4;
  

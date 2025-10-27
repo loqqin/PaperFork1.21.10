@@ -508,7 +508,7 @@
              return false;
          } else if (damageSource.is(DamageTypeTags.IS_FIRE) && this.hasEffect(MobEffects.FIRE_RESISTANCE)) {
              return false;
-@@ -1170,35 +_,58 @@
+@@ -1170,35 +_,61 @@
  
              ItemStack useItem = this.getUseItem();
              float originAmount = amount;
@@ -538,6 +538,9 @@
              boolean flag1 = true;
 -            if (this.invulnerableTime > 10.0F && !damageSource.is(DamageTypeTags.BYPASSES_COOLDOWN)) {
 +            if (this.invulnerableTime > (float) this.invulnerableDuration / 2.0F && !damageSource.is(DamageTypeTags.BYPASSES_COOLDOWN)) { // CraftBukkit - restore use of maxNoDamageTicks
++                if (true) { // loqqin 31.08
++                    return false;
++                }
                  if (amount <= this.lastHurt) {
                      return false;
                  }

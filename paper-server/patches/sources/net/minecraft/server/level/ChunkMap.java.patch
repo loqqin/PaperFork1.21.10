@@ -109,6 +109,14 @@
                  this.saveChunkIfNeeded(chunkHolder, millis);
              }
          }
+@@ -459,6 +_,7 @@
+         this.poiManager.tick(hasMoreTime);
+         profilerFiller.popPush("chunk_unload");
+         if (!this.level.noSave()) {
++            System.out.println("process unloads " + this.level.serverLevelData.getLevelName());
+             this.processUnloads(hasMoreTime);
+         }
+ 
 @@ -468,6 +_,7 @@
      public boolean hasWork() {
          return this.lightEngine.hasLightWork()

@@ -9,7 +9,15 @@
  
              byte b;
              while ((b = input.readByte()) != 0) {
-@@ -171,7 +_,7 @@
+@@ -164,14 +_,14 @@
+             return "TAG_Compound";
+         }
+     };
+-    private final Map<String, Tag> tags;
++    public final Map<String, Tag> tags;
+ 
+     CompoundTag(Map<String, Tag> tags) {
+         this.tags = tags;
      }
  
      public CompoundTag() {

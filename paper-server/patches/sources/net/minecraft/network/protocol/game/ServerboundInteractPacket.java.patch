@@ -1,5 +1,32 @@
 --- a/net/minecraft/network/protocol/game/ServerboundInteractPacket.java
 +++ b/net/minecraft/network/protocol/game/ServerboundInteractPacket.java
+@@ -16,7 +_,7 @@
+         ServerboundInteractPacket::write, ServerboundInteractPacket::new
+     );
+     private final int entityId;
+-    private final ServerboundInteractPacket.Action action;
++    public final ServerboundInteractPacket.Action action;
+     private final boolean usingSecondaryAction;
+     static final ServerboundInteractPacket.Action ATTACK_ACTION = new ServerboundInteractPacket.Action() {
+         @Override
+@@ -91,7 +_,7 @@
+         this.action.dispatch(handler);
+     }
+ 
+-    interface Action {
++    public interface Action {
+         ServerboundInteractPacket.ActionType getType();
+ 
+         void dispatch(ServerboundInteractPacket.Handler handler);
+@@ -99,7 +_,7 @@
+         void write(FriendlyByteBuf buffer);
+     }
+ 
+-    static enum ActionType {
++    public static enum ActionType {
+         INTERACT(ServerboundInteractPacket.InteractionAction::new),
+         ATTACK(buffer -> ServerboundInteractPacket.ATTACK_ACTION),
+         INTERACT_AT(ServerboundInteractPacket.InteractionAtLocationAction::new);
 @@ -145,6 +_,15 @@
              buffer.writeEnum(this.hand);
          }

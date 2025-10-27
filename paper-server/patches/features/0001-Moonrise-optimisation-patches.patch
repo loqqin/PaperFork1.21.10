@@ -23847,7 +23847,7 @@ index e823b8aac00158892538083bc877ccf99895909a..7d871318065f19540748363809de8265
      private static final ChunkStep FULL_CHUNK_STEP = ChunkPyramid.GENERATION_PYRAMID.getStepTo(ChunkStatus.FULL);
      public static final int RADIUS_AROUND_FULL_CHUNK = FULL_CHUNK_STEP.accumulatedDependencies().getRadius();
 diff --git a/net/minecraft/server/level/ChunkMap.java b/net/minecraft/server/level/ChunkMap.java
-index 16ff2443545b051357e86d84bea8d7e312cf1cda..5807ae8e9e612c0c926d87cdefd3df4d4f31d69a 100644
+index 85c86c610c222c929778d24889ee657cffe82fca..87643d7ad308f6c43980e97ec53ab77f9de1e3cd 100644
 --- a/net/minecraft/server/level/ChunkMap.java
 +++ b/net/minecraft/server/level/ChunkMap.java
 @@ -102,7 +102,7 @@ import net.minecraft.world.phys.Vec3;
@@ -24153,7 +24153,7 @@ index 16ff2443545b051357e86d84bea8d7e312cf1cda..5807ae8e9e612c0c926d87cdefd3df4d
      }
  
      protected void tick(BooleanSupplier hasMoreTime) {
-@@ -506,129 +390,28 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
+@@ -507,129 +391,28 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
      }
  
      public boolean hasWork() {
@@ -24290,7 +24290,7 @@ index 16ff2443545b051357e86d84bea8d7e312cf1cda..5807ae8e9e612c0c926d87cdefd3df4d
      }
  
      private ChunkAccess handleChunkLoadFailure(Throwable exception, ChunkPos chunkPos) {
-@@ -666,230 +449,129 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
+@@ -667,230 +450,129 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
  
      @Override
      public GenerationChunkHolder acquireGeneration(long chunkPos) {
@@ -24586,7 +24586,7 @@ index 16ff2443545b051357e86d84bea8d7e312cf1cda..5807ae8e9e612c0c926d87cdefd3df4d
      @Nullable
      public LevelChunk getChunkToSend(long chunkPos) {
          ChunkHolder visibleChunkIfPresent = this.getVisibleChunkIfPresent(chunkPos);
-@@ -971,28 +653,71 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
+@@ -972,28 +654,71 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
      }
  
      // CraftBukkit start
@@ -24668,7 +24668,7 @@ index 16ff2443545b051357e86d84bea8d7e312cf1cda..5807ae8e9e612c0c926d87cdefd3df4d
              if (chunkHolder != null) {
                  LevelChunk tickingChunk = chunkHolder.getTickingChunk();
                  if (tickingChunk != null) {
-@@ -1008,8 +733,8 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
+@@ -1009,8 +734,8 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
      }
  
      boolean anyPlayerCloseEnoughForSpawning(ChunkPos chunkPos, boolean reducedRange) {
@@ -24679,7 +24679,7 @@ index 16ff2443545b051357e86d84bea8d7e312cf1cda..5807ae8e9e612c0c926d87cdefd3df4d
          // Spigot end
      }
  
-@@ -1021,7 +746,20 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
+@@ -1022,7 +747,20 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
      private boolean anyPlayerCloseEnoughForSpawningInternal(ChunkPos chunkPos, boolean reducedRange) {
          double blockRange; // Paper - use from event
          // Spigot end
@@ -24701,7 +24701,7 @@ index 16ff2443545b051357e86d84bea8d7e312cf1cda..5807ae8e9e612c0c926d87cdefd3df4d
              // Paper start - PlayerNaturallySpawnCreaturesEvent
              com.destroystokyo.paper.event.entity.PlayerNaturallySpawnCreaturesEvent event;
              blockRange = 16384.0D;
-@@ -1037,26 +775,41 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
+@@ -1038,26 +776,41 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
          }
  
          return false;
@@ -24754,7 +24754,7 @@ index 16ff2443545b051357e86d84bea8d7e312cf1cda..5807ae8e9e612c0c926d87cdefd3df4d
          if (player.isSpectator()) {
              return false;
          } else {
-@@ -1085,18 +838,20 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
+@@ -1086,18 +839,20 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
              this.updatePlayerPos(player);
              if (!flag) {
                  this.distanceManager.addPlayer(SectionPos.of(player), player);
@@ -24777,7 +24777,7 @@ index 16ff2443545b051357e86d84bea8d7e312cf1cda..5807ae8e9e612c0c926d87cdefd3df4d
          }
      }
  
-@@ -1106,13 +861,7 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
+@@ -1107,13 +862,7 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
      }
  
      public void move(ServerPlayer player) {
@@ -24792,7 +24792,7 @@ index 16ff2443545b051357e86d84bea8d7e312cf1cda..5807ae8e9e612c0c926d87cdefd3df4d
  
          SectionPos lastSectionPos = player.getLastSectionPos();
          SectionPos sectionPos = SectionPos.of(player);
-@@ -1121,6 +870,7 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
+@@ -1122,6 +871,7 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
          boolean flag2 = lastSectionPos.asLong() != sectionPos.asLong();
          if (flag2 || flag != flag1) {
              this.updatePlayerPos(player);
@@ -24800,7 +24800,7 @@ index 16ff2443545b051357e86d84bea8d7e312cf1cda..5807ae8e9e612c0c926d87cdefd3df4d
              if (!flag) {
                  this.distanceManager.removePlayer(lastSectionPos, player);
              }
-@@ -1137,49 +887,29 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
+@@ -1138,49 +888,29 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
                  this.playerMap.unIgnorePlayer(player);
              }
  
@@ -24861,7 +24861,7 @@ index 16ff2443545b051357e86d84bea8d7e312cf1cda..5807ae8e9e612c0c926d87cdefd3df4d
      }
  
      public void addEntity(Entity entity) {
-@@ -1203,6 +933,12 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
+@@ -1204,6 +934,12 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
                  } else {
                      ChunkMap.TrackedEntity trackedEntity = new ChunkMap.TrackedEntity(entity, i, updateInterval, type.trackDeltas());
                      this.entityMap.put(entity.getId(), trackedEntity);
@@ -24874,7 +24874,7 @@ index 16ff2443545b051357e86d84bea8d7e312cf1cda..5807ae8e9e612c0c926d87cdefd3df4d
                      trackedEntity.updatePlayers(this.level.players());
                      if (entity instanceof ServerPlayer serverPlayer) {
                          this.updatePlayerStatus(serverPlayer, true);
-@@ -1232,12 +968,38 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
+@@ -1233,12 +969,38 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
          if (trackedEntity1 != null) {
              trackedEntity1.broadcastRemoved();
          }
@@ -24915,7 +24915,7 @@ index 16ff2443545b051357e86d84bea8d7e312cf1cda..5807ae8e9e612c0c926d87cdefd3df4d
  
          List<ServerPlayer> list = Lists.newArrayList();
          List<ServerPlayer> list1 = this.level.players();
-@@ -1335,17 +1097,11 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
+@@ -1336,17 +1098,11 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
      }
  
      public void waitForLightBeforeSending(ChunkPos chunkPos, int range) {
@@ -24935,7 +24935,7 @@ index 16ff2443545b051357e86d84bea8d7e312cf1cda..5807ae8e9e612c0c926d87cdefd3df4d
              LevelChunk chunkToSend = chunkHolder.getChunkToSend();
              if (chunkToSend != null) {
                  action.accept(chunkToSend);
-@@ -1353,14 +1109,21 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
+@@ -1354,14 +1110,21 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
          }
      }
  
@@ -24959,7 +24959,7 @@ index 16ff2443545b051357e86d84bea8d7e312cf1cda..5807ae8e9e612c0c926d87cdefd3df4d
          }
  
          @Nullable
-@@ -1376,13 +1139,96 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
+@@ -1377,13 +1140,96 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
          }
      }
  
@@ -25057,7 +25057,7 @@ index 16ff2443545b051357e86d84bea8d7e312cf1cda..5807ae8e9e612c0c926d87cdefd3df4d
          public TrackedEntity(final Entity entity, final int range, final int updateInterval, final boolean trackDelta) {
              this.serverEntity = new ServerEntity(ChunkMap.this.level, entity, updateInterval, trackDelta, this, this.seenBy); // Paper
              this.entity = entity;
-@@ -1492,17 +1338,24 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
+@@ -1493,17 +1339,24 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
          }
  
          private int getEffectiveRange() {
@@ -27739,7 +27739,7 @@ index 4367d84309e6dbae6637cb465332896304db5b5a..384289f5d898fef2f791edcbe0716ed0
                      PrepareSpawnTask.this.loadListener.updateFocus(this.spawnLevel.dimension(), chunkPos);
                  }
 diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
-index df3be6267d834b591a85b43fc864d929ce9950e0..51e8abb15392772ad53ea1da80127d4e61a21e00 100644
+index 495b7d457c09126c68e112c728227e3fc69e147c..7d4b95d3fffac9053ac50b81bbb0498a0736b997 100644
 --- a/net/minecraft/server/players/PlayerList.java
 +++ b/net/minecraft/server/players/PlayerList.java
 @@ -1183,7 +1183,7 @@ public abstract class PlayerList {
@@ -28134,7 +28134,7 @@ index 8cc5c0716392ba06501542ff5cbe71ee43979e5d..09fd99c9cbd23b5f3c899bfb00c9b896
 +    // Paper end - block counting
  }
 diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
-index a91d8e7d26cea116b0f58d84c84854bbd8cee05c..d5a38c3464539b05453ead3dfd77f4cf4b672617 100644
+index d9553f5b4d82ff71474b154ef6997e8f4805a7a1..523496693e8be202fd75f418d5a9fab636b6f8a4 100644
 --- a/net/minecraft/world/entity/Entity.java
 +++ b/net/minecraft/world/entity/Entity.java
 @@ -149,7 +149,7 @@ import net.minecraft.world.waypoints.WaypointTransmitter;

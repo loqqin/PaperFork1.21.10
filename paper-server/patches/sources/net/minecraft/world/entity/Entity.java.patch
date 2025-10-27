@@ -622,6 +622,20 @@
                  double d = entity.getX() - this.getX();
                  double d1 = entity.getZ() - this.getZ();
                  double max = Mth.absMax(d, d1);
+@@ -1767,11 +_,11 @@
+                     d1 *= d2;
+                     d *= 0.05F;
+                     d1 *= 0.05F;
+-                    if (!this.isVehicle() && this.isPushable()) {
++                    if (/*!this.isVehicle() &&*/ this.isPushable()) {
+                         this.push(-d, 0.0, -d1);
+                     }
+ 
+-                    if (!entity.isVehicle() && entity.isPushable()) {
++                    if (/*!entity.isVehicle() &&*/ entity.isPushable()) {
+                         entity.push(d, 0.0, d1);
+                     }
+                 }
 @@ -1784,7 +_,21 @@
      }
  
