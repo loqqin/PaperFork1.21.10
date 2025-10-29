@@ -79,7 +79,7 @@ public class ClickCallbackProviderImpl implements ClickCallback.Provider {
                     this.tryConsumeCallback(id.get(), callback -> {
                         callback.accept(PaperDialogResponseView.createUnvalidatedResponse(t), audience);
                     });
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     e.printStackTrace();
                 }
             });
@@ -120,10 +120,14 @@ public class ClickCallbackProviderImpl implements ClickCallback.Provider {
         }
 
         final void tryConsumeCallback(final I key, final Consumer<? super C> callbackConsumer) {
-            final StoredCallback<C, I> callback = this.callbacks.get(key);
-            if (callback != null && callback.valid()) {
-                callback.takeUse();
-                callbackConsumer.accept(callback.callback);
+            try {
+                final StoredCallback<C, I> callback = this.callbacks.get(key);
+                if (callback != null && callback.valid()) {
+                    callback.takeUse();
+                    callbackConsumer.accept(callback.callback);
+                }
+            } catch (Throwable e) {
+                e.printStackTrace();
             }
         }
 
