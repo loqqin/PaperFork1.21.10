@@ -75,9 +75,13 @@ public class ClickCallbackProviderImpl implements ClickCallback.Provider {
                 if (id.isEmpty()) {
                     return;
                 }
-                this.tryConsumeCallback(id.get(), callback -> {
-                    callback.accept(PaperDialogResponseView.createUnvalidatedResponse(t), audience);
-                });
+                try {
+                    this.tryConsumeCallback(id.get(), callback -> {
+                        callback.accept(PaperDialogResponseView.createUnvalidatedResponse(t), audience);
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             });
         }
     }

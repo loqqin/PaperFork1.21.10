@@ -87,7 +87,7 @@ dependencies {
     testImplementation("org.ow2.asm:asm-tree:9.8")
     mockitoAgent("org.mockito:mockito-core:5.14.1") { isTransitive = false } // configure mockito agent that is needed in newer java versions
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    compileOnly(files("/home/user/PaperFork1.21.10/paper-server/build/libs/paper-bundler-1.21.10-R0.1-SNAPSHOT-mojmap/META-INF/versions/1.21.10/paper-1.21.10.jar"))
+    compileOnly(files("/home/user/backup/Skyblock120/paper-bundler-1.21.10-R0.1-SNAPSHOT-mojmap/META-INF/versions/1.21.10/paper-1.21.10.jar"))
 }
 
 val generatedDir: java.nio.file.Path = layout.projectDirectory.dir("src/generated/java").asFile.toPath()
