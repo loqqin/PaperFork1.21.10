@@ -56,6 +56,7 @@ abstract class Services {
     @get:Inject
     abstract val archiveOperations: ArchiveOperations
 }
+
 val services = objects.newInstance<Services>()
 
 if (project.providers.gradleProperty("publishDevBundle").isPresent) {
@@ -117,6 +118,7 @@ val runtimeConfiguration by configurations.consumable("runtimeConfiguration") {
 
 // Configure mockito agent that is needed in newer java versions
 val mockitoAgent = configurations.register("mockitoAgent")
+
 abstract class MockitoAgentProvider : CommandLineArgumentProvider {
     @get:CompileClasspath
     abstract val fileCollection: ConfigurableFileCollection
@@ -288,10 +290,15 @@ fun TaskContainer.registerRunTask(
         .dir(providers.gradleProperty("paper.runWorkDir").getOrElse("run"))
         .asFile
     javaLauncher.set(project.javaToolchains.launcherFor {
-        languageVersion.set(JavaLanguageVersion.of(21))
+        languageVersion.set(JavaLanguageVersion.of(25))
         vendor.set(JvmVendorSpec.JETBRAINS)
     })
-    jvmArgs("-XX:+AllowEnhancedClassRedefinition")
+    jvmArgs("-XX:+AllowEnhancedClassRedefinition",
+        "-Dfile.encoding=UTF-8",
+        "-Xverify:none",
+        "-Dpaper.disablePluginRemapping=true",
+        "-Dio.papermc.paper.suppress.sout.nags=true",
+        "-Dpaper.disableStartupVersionCheck=true")
 
     if (rootProject.childProjects["test-plugin"] != null) {
         val testPluginJar = rootProject.project(":test-plugin").tasks.jar.flatMap { it.archiveFile }

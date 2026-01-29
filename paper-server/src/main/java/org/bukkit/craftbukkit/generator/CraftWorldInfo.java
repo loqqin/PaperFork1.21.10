@@ -18,7 +18,7 @@ public class CraftWorldInfo implements WorldInfo {
     private final int maxHeight;
     private final net.minecraft.world.flag.FeatureFlagSet enabledFeatures; // Paper - feature flag API
     // Paper start
-    private final net.minecraft.world.level.chunk.ChunkGenerator vanillaChunkGenerator;
+    public final net.minecraft.world.level.chunk.ChunkGenerator vanillaChunkGenerator;
     private final net.minecraft.core.RegistryAccess.Frozen registryAccess;
 
     public CraftWorldInfo(PrimaryLevelData worldDataServer, LevelStorageSource.LevelStorageAccess session, World.Environment environment, DimensionType dimensionManager, net.minecraft.world.level.chunk.ChunkGenerator chunkGenerator, net.minecraft.core.RegistryAccess.Frozen registryAccess) {

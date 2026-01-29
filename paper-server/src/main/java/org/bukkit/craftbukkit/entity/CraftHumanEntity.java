@@ -33,6 +33,7 @@ import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -57,6 +58,7 @@ import org.bukkit.entity.Firework;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Item;
 import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
+import org.bukkit.event.inventory.PlayerSetCursorItemEvent;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
@@ -141,6 +143,8 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
     @Override
     public void setItemOnCursor(ItemStack item) {
         net.minecraft.world.item.ItemStack stack = CraftItemStack.asNMSCopy(item);
+        // final net.minecraft.world.item.ItemStack oldCarried = this.getHandle().containerMenu.getCarried();
+        // Bukkit.getPluginManager().callEvent(new PlayerSetCursorItemEvent(oldCarried == null ? null : oldCarried.asBukkitMirror(), item == null ? ));
         this.getHandle().containerMenu.setCarried(stack);
         if (this instanceof CraftPlayer) {
             this.getHandle().containerMenu.broadcastCarriedItem(); // Send set slot for cursor
