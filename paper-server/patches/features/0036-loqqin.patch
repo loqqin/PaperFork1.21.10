@@ -1,0 +1,19 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: loqqin <soubmatic@gmail.com>
+Date: Thu, 5 Feb 2026 21:25:14 +0200
+Subject: [PATCH] loqqin
+
+
+diff --git a/net/minecraft/network/protocol/game/ClientboundMoveEntityPacket.java b/net/minecraft/network/protocol/game/ClientboundMoveEntityPacket.java
+index 93ff9ba4c7e5a3dff4f36dcc80864fe7754dbcb7..6d424f55380ac6daa1afc5fcf253048e095bb645 100644
+--- a/net/minecraft/network/protocol/game/ClientboundMoveEntityPacket.java
++++ b/net/minecraft/network/protocol/game/ClientboundMoveEntityPacket.java
+@@ -10,7 +10,7 @@ import net.minecraft.world.entity.Entity;
+ import net.minecraft.world.level.Level;
+ 
+ public abstract class ClientboundMoveEntityPacket implements Packet<ClientGamePacketListener> {
+-    protected final int entityId;
++    public final int entityId;
+     protected final short xa;
+     protected final short ya;
+     protected final short za;
