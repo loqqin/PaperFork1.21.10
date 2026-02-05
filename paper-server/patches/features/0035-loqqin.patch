@@ -1,0 +1,19 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: loqqin <soubmatic@gmail.com>
+Date: Thu, 5 Feb 2026 19:05:23 +0200
+Subject: [PATCH] loqqin
+
+
+diff --git a/net/minecraft/world/entity/ai/goal/FloatGoal.java b/net/minecraft/world/entity/ai/goal/FloatGoal.java
+index b9c6cb31d0dd6b0c1dff86ee5987179d0ab2a3d5..87a3d8027ab5eb0e681810ed4556450d79eabf5f 100644
+--- a/net/minecraft/world/entity/ai/goal/FloatGoal.java
++++ b/net/minecraft/world/entity/ai/goal/FloatGoal.java
+@@ -5,7 +5,7 @@ import net.minecraft.tags.FluidTags;
+ import net.minecraft.world.entity.Mob;
+ 
+ public class FloatGoal extends Goal {
+-    private final Mob mob;
++    public final Mob mob;
+ 
+     public FloatGoal(Mob mob) {
+         this.mob = mob;
