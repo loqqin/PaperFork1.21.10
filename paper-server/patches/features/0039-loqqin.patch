@@ -1,0 +1,90 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: loqqin <soubmatic@gmail.com>
+Date: Tue, 10 Feb 2026 17:17:41 +0200
+Subject: [PATCH] loqqin
+
+
+diff --git a/net/minecraft/world/effect/OozingMobEffect.java b/net/minecraft/world/effect/OozingMobEffect.java
+index 2b02e9c58dd1abec0e8d2d2bc88332d4683aa309..fd9ecd7ba21b6fdb1e0f9de264e43366058c8af0 100644
+--- a/net/minecraft/world/effect/OozingMobEffect.java
++++ b/net/minecraft/world/effect/OozingMobEffect.java
+@@ -47,7 +47,7 @@ class OozingMobEffect extends MobEffect {
+     private void spawnSlimeOffspring(Level level, double x, double y, double z) {
+         Slime slime = EntityType.SLIME.create(level, EntitySpawnReason.TRIGGERED);
+         if (slime != null) {
+-            slime.setSize(2, true);
++            slime.setSize(2, true, false);
+             slime.snapTo(x, y, z, level.getRandom().nextFloat() * 360.0F, 0.0F);
+             level.addFreshEntity(slime, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.POTION_EFFECT); // CraftBukkit
+         }
+diff --git a/net/minecraft/world/entity/monster/MagmaCube.java b/net/minecraft/world/entity/monster/MagmaCube.java
+index 034a41573c330b2366fb305bb0796293d5d6a187..e00352104ed3304442fa9497c31ca26c404821d8 100644
+--- a/net/minecraft/world/entity/monster/MagmaCube.java
++++ b/net/minecraft/world/entity/monster/MagmaCube.java
+@@ -35,9 +35,11 @@ public class MagmaCube extends Slime {
+     }
+ 
+     @Override
+-    public void setSize(int size, boolean resetHealth) {
+-        super.setSize(size, resetHealth);
+-        this.getAttribute(Attributes.ARMOR).setBaseValue(size * 3);
++    public void setSize(int size, boolean resetHealth, boolean ignoreAttributes) {
++        super.setSize(size, resetHealth, ignoreAttributes);
++        if (!ignoreAttributes) {
++            this.getAttribute(Attributes.ARMOR).setBaseValue(size * 3);
++        }
+     }
+ 
+     @Override
+diff --git a/net/minecraft/world/entity/monster/Slime.java b/net/minecraft/world/entity/monster/Slime.java
+index 6a4bdf6e8e785460c864552f21116dec8c545bd6..055c2d243873ad10a054141415974d4be317f5ac 100644
+--- a/net/minecraft/world/entity/monster/Slime.java
++++ b/net/minecraft/world/entity/monster/Slime.java
+@@ -89,14 +89,16 @@ public class Slime extends Mob implements Enemy {
+     }
+ 
+     @VisibleForTesting
+-    public void setSize(int size, boolean resetHealth) {
++    public void setSize(int size, boolean resetHealth, boolean ignoreAttributes) {
+         int i = Mth.clamp(size, 1, 127);
+         this.entityData.set(ID_SIZE, i);
+         this.reapplyPosition();
+         this.refreshDimensions();
+-        this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(i * i);
+-        this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.2F + 0.1F * i);
+-        this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(i);
++        if (!ignoreAttributes) {
++            this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(i * i);
++            this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.2F + 0.1F * i);
++            this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(i);
++        }
+         if (resetHealth) {
+             this.setHealth(this.getMaxHealth());
+         }
+@@ -118,7 +120,7 @@ public class Slime extends Mob implements Enemy {
+ 
+     @Override
+     protected void readAdditionalSaveData(ValueInput input) {
+-        this.setSize(input.getIntOr("Size", 0) + 1, false);
++        this.setSize(input.getIntOr("Size", 0) + 1, false, false);
+         super.readAdditionalSaveData(input);
+         this.wasOnGround = input.getBooleanOr("wasOnGround", false);
+         this.canWander = input.getBooleanOr("Paper.canWander", true); // Paper
+@@ -220,7 +222,7 @@ public class Slime extends Mob implements Enemy {
+                 float f1 = (i2 % 2 - 0.5F) * f;
+                 float f2 = (i2 / 2 - 0.5F) * f;
+                 Slime converted = this.convertTo(this.getType(), new ConversionParams(ConversionType.SPLIT_ON_DEATH, false, false, team), EntitySpawnReason.TRIGGERED, (mob) -> { // CraftBukkit
+-                    mob.setSize(i, true);
++                    mob.setSize(i, true, false);
+                     mob.snapTo(this.getX() + f1, this.getY() + 0.5, this.getZ() + f2, this.random.nextFloat() * 360.0F, 0.0F);
+                 // CraftBukkit start
+                 }, null, null);
+@@ -369,7 +371,7 @@ public class Slime extends Mob implements Enemy {
+         }
+ 
+         int i = 1 << randomInt;
+-        this.setSize(i, true);
++        this.setSize(i, true, false);
+         return super.finalizeSpawn(level, difficulty, spawnReason, spawnGroupData);
+     }
+ 
