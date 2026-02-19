@@ -1,20 +1,54 @@
 package org.bukkit.inventory;
 
 import com.google.common.base.Preconditions;
+import io.papermc.paper.datacomponent.DataComponentBuilder;
 import io.papermc.paper.datacomponent.DataComponentHolder;
 import io.papermc.paper.datacomponent.DataComponentType;
 import io.papermc.paper.datacomponent.DataComponentTypes;
+import io.papermc.paper.inventory.ItemRarity;
+import io.papermc.paper.inventory.tooltip.TooltipContext;
+import io.papermc.paper.persistence.PersistentDataContainerView;
+import io.papermc.paper.persistence.PersistentDataViewHolder;
 import io.papermc.paper.registry.RegistryKey;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
+import io.papermc.paper.registry.keys.tags.EnchantmentTagKeys;
+import io.papermc.paper.registry.set.RegistryKeySet;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.event.HoverEventSource;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.DoubleTag;
+import net.minecraft.nbt.IntTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.util.ARGB;
+import net.minecraft.util.Unit;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.component.DyedItemColor;
+import net.minecraft.world.item.component.TooltipDisplay;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Material;
@@ -22,10 +56,15 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.Translatable;
 import org.bukkit.UndefinedNullability;
 import org.bukkit.Utility;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.craftbukkit.persistence.CraftPersistentDataContainer;
+import org.bukkit.craftbukkit.persistence.CraftPersistentDataTypeRegistry;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.meta.BlockDataMeta;
 import org.bukkit.inventory.meta.ColorableArmorMeta;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -33,8 +72,10 @@ import org.bukkit.material.MaterialData;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 /**
  * Represents a stack of items.
@@ -43,11 +84,12 @@ import org.jetbrains.annotations.Nullable;
  * use this class to encapsulate Materials for which {@link Material#isItem()}
  * returns false.</b>
  */
-public class ItemStack implements Cloneable, ConfigurationSerializable, Translatable, net.kyori.adventure.text.event.HoverEventSource<net.kyori.adventure.text.event.HoverEvent.ShowItem>, net.kyori.adventure.translation.Translatable, io.papermc.paper.persistence.PersistentDataViewHolder, DataComponentHolder { // Paper
+public class ItemStack implements Cloneable, ConfigurationSerializable, Translatable, HoverEventSource<HoverEvent.ShowItem>, net.kyori.adventure.translation.Translatable, PersistentDataViewHolder, DataComponentHolder { // Paper
     private ItemStack craftDelegate; // Paper - always delegate to server-backed stack
     private MaterialData data = null;
 
     // Paper start - add static factory methods
+
     /**
      * Creates an itemstack with the specified item type and a count of 1.
      *
@@ -55,7 +97,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * @return a new itemstack
      * @throws IllegalArgumentException if the Material provided is not an item ({@link Material#isItem()})
      */
-    @org.jetbrains.annotations.Contract(value = "_ -> new", pure = true)
+    @Contract(value = "_ -> new", pure = true)
     public static @NotNull ItemStack of(final @NotNull Material type) {
         return of(type, 1);
     }
@@ -69,20 +111,21 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * @throws IllegalArgumentException if the Material provided is not an item ({@link Material#isItem()})
      * @throws IllegalArgumentException if the amount is less than 1
      */
-    @org.jetbrains.annotations.Contract(value = "_, _ -> new", pure = true)
+    @Contract(value = "_, _ -> new", pure = true)
     public static @NotNull ItemStack of(final @NotNull Material type, final int amount) {
         Preconditions.checkArgument(type.asItemType() != null, "%s isn't an item", type);
         Preconditions.checkArgument(amount > 0, "amount must be greater than 0");
-        return java.util.Objects.requireNonNull(type.asItemType(), type + " is not an item").createItemStack(amount); // Paper - delegate
+        return Objects.requireNonNull(type.asItemType(), type + " is not an item").createItemStack(amount); // Paper - delegate
     }
     // Paper end
 
     // Paper start - pdc
+
     /**
      * @see #editPersistentDataContainer(Consumer)
      */
     @Override
-    public io.papermc.paper.persistence.@NotNull PersistentDataContainerView getPersistentDataContainer() {
+    public @NotNull PersistentDataContainerView getPersistentDataContainer() {
         return this.craftDelegate.getPersistentDataContainer();
     }
 
@@ -114,7 +157,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * @apiNote use {@link #of(Material)}
      * @see #of(Material)
      */
-    @org.jetbrains.annotations.ApiStatus.Obsolete(since = "1.21") // Paper
+    @ApiStatus.Obsolete(since = "1.21") // Paper
     public ItemStack(@NotNull final Material type) {
         this(type, 1);
     }
@@ -131,7 +174,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * @apiNote Use {@link #of(Material, int)}
      * @see #of(Material, int)
      */
-    @org.jetbrains.annotations.ApiStatus.Obsolete(since = "1.21") // Paper
+    @ApiStatus.Obsolete(since = "1.21") // Paper
     public ItemStack(@NotNull final Material type, final int amount) {
         this(type, amount, (short) 0);
     }
@@ -186,7 +229,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * @apiNote Use {@link #clone()}
      * @see #clone()
      */
-    @org.jetbrains.annotations.ApiStatus.Obsolete(since = "1.21") // Paper
+    @ApiStatus.Obsolete(since = "1.21") // Paper
     public ItemStack(@NotNull final ItemStack stack) throws IllegalArgumentException {
         Preconditions.checkArgument(stack != null, "Cannot copy null stack");
         this.craftDelegate = stack.clone(); // Paper - delegate
@@ -231,6 +274,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
         this.craftDelegate.setType(type); // Paper - delegate
     }
     // Paper start
+
     /**
      * Creates a new ItemStack with the specified Material type, where the item count and item meta is preserved.
      *
@@ -238,7 +282,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * @return A new ItemStack instance with the specified Material type.
      */
     @NotNull
-    @org.jetbrains.annotations.Contract(value = "_ -> new", pure = true)
+    @Contract(value = "_ -> new", pure = true)
     public ItemStack withType(@NotNull Material type) {
         return this.craftDelegate.withType(type); // Paper - delegate
     }
@@ -266,7 +310,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * Gets the MaterialData for this stack of items
      *
      * @return MaterialData for this item
-     * @deprecated cast to {@link org.bukkit.inventory.meta.BlockDataMeta} and use {@link org.bukkit.inventory.meta.BlockDataMeta#getBlockData(Material)}
+     * @deprecated cast to {@link BlockDataMeta} and use {@link BlockDataMeta#getBlockData(Material)}
      */
     @Nullable
     @Deprecated(forRemoval = true, since = "1.13")
@@ -283,7 +327,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * Sets the MaterialData for this stack of items
      *
      * @param data New MaterialData for this item
-     * @deprecated cast to {@link org.bukkit.inventory.meta.BlockDataMeta} and use {@link org.bukkit.inventory.meta.BlockDataMeta#setBlockData(org.bukkit.block.data.BlockData)}
+     * @deprecated cast to {@link BlockDataMeta} and use {@link BlockDataMeta#setBlockData(BlockData)}
      */
     @Deprecated(forRemoval = true, since = "1.13")
     public void setData(@Nullable MaterialData data) {
@@ -414,7 +458,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * Adds the specified enchantments to this item stack.
      * <p>
      * This method is the same as calling {@link
-     * #addEnchantment(org.bukkit.enchantments.Enchantment, int)} for each
+     * #addEnchantment(Enchantment, int)} for each
      * element of the map.
      *
      * @param enchantments Enchantments to add
@@ -458,7 +502,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * Adds the specified enchantments to this item stack in an unsafe manner.
      * <p>
      * This method is the same as calling {@link
-     * #addUnsafeEnchantment(org.bukkit.enchantments.Enchantment, int)} for
+     * #addUnsafeEnchantment(Enchantment, int)} for
      * each element of the map.
      *
      * @param enchantments Enchantments to add
@@ -522,7 +566,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
     public static ItemStack deserialize(@NotNull Map<String, Object> args) {
         // Parse internally, if schema_version is not defined, assume legacy and fall through to unsafe legacy deserialization logic
         if (args.containsKey("schema_version")) {
-            return org.bukkit.Bukkit.getUnsafe().deserializeStack(args);
+            return Bukkit.getUnsafe().deserializeStack(args);
         }
 
         int version = (args.containsKey("v")) ? ((Number) args.get("v")).intValue() : -1;
@@ -598,10 +642,11 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
     }
 
     // Paper start
+
     /**
      * Edits the {@link ItemMeta} of this stack.
      * <p>
-     * The {@link java.util.function.Consumer} must only interact
+     * The {@link Consumer} must only interact
      * with this stack's {@link ItemMeta} through the provided {@link ItemMeta} instance.
      * Calling this method or any other meta-related method of the {@link ItemStack} class
      * (such as {@link #getItemMeta()}, {@link #addItemFlags(ItemFlag...)}, {@link #lore()}, etc.)
@@ -611,14 +656,14 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * @param consumer the meta consumer
      * @return {@code true} if the edit was successful, {@code false} otherwise
      */
-    public boolean editMeta(final @NotNull java.util.function.Consumer<? super ItemMeta> consumer) {
+    public boolean editMeta(final @NotNull Consumer<? super ItemMeta> consumer) {
         return editMeta(ItemMeta.class, consumer);
     }
 
     /**
      * Edits the {@link ItemMeta} of this stack if the meta is of the specified type.
      * <p>
-     * The {@link java.util.function.Consumer} must only interact
+     * The {@link Consumer} must only interact
      * with this stack's {@link ItemMeta} through the provided {@link ItemMeta} instance.
      * Calling this method or any other meta-related method of the {@link ItemStack} class
      * (such as {@link #getItemMeta()}, {@link #addItemFlags(ItemFlag...)}, {@link #lore()}, etc.)
@@ -630,7 +675,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * @param <M> the meta type
      * @return {@code true} if the edit was successful, {@code false} otherwise
      */
-    public <M extends ItemMeta> boolean editMeta(final @NotNull Class<M> metaClass, final @NotNull java.util.function.Consumer<@NotNull ? super M> consumer) {
+    public <M extends ItemMeta> boolean editMeta(final @NotNull Class<M> metaClass, final @NotNull Consumer<@NotNull ? super M> consumer) {
         final @Nullable ItemMeta meta = this.getItemMeta();
         if (metaClass.isInstance(meta)) {
             consumer.accept((M) meta);
@@ -683,6 +728,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
     }
 
     // Paper start
+
     /**
      * Randomly enchants a copy of this {@link ItemStack} using the given experience levels.
      *
@@ -691,13 +737,13 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * <p>Enchantment tables use levels in the range {@code [1, 30]}.</p>
      *
      * @param levels levels to use for enchanting
-     * @param allowTreasure whether to allow enchantments where {@link org.bukkit.enchantments.Enchantment#isTreasure()} returns true
-     * @param random {@link java.util.Random} instance to use for enchanting
+     * @param allowTreasure whether to allow enchantments where {@link Enchantment#isTreasure()} returns true
+     * @param random {@link Random} instance to use for enchanting
      * @return enchanted copy of the provided ItemStack
      * @throws IllegalArgumentException on bad arguments
      */
     @NotNull
-    public ItemStack enchantWithLevels(final int levels, final boolean allowTreasure, final @NotNull java.util.Random random) {
+    public ItemStack enchantWithLevels(final int levels, final boolean allowTreasure, final @NotNull Random random) {
         return Bukkit.getServer().getItemFactory().enchantWithLevels(this, levels, allowTreasure, random);
     }
 
@@ -709,12 +755,12 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * <p>Enchantment tables use levels in the range {@code [1, 30]}.</p>
      *
      * @param levels levels to use for enchanting
-     * @param keySet registry key set defining the set of possible enchantments, e.g. {@link io.papermc.paper.registry.keys.tags.EnchantmentTagKeys#IN_ENCHANTING_TABLE}.
-     * @param random {@link java.util.Random} instance to use for enchanting
+     * @param keySet registry key set defining the set of possible enchantments, e.g. {@link EnchantmentTagKeys#IN_ENCHANTING_TABLE}.
+     * @param random {@link Random} instance to use for enchanting
      * @return enchanted copy of the provided ItemStack
      * @throws IllegalArgumentException on bad arguments
      */
-    public @NotNull ItemStack enchantWithLevels(final int levels, final @NotNull io.papermc.paper.registry.set.RegistryKeySet<@NotNull Enchantment> keySet, final @NotNull java.util.Random random) {
+    public @NotNull ItemStack enchantWithLevels(final int levels, final @NotNull RegistryKeySet<@NotNull Enchantment> keySet, final @NotNull Random random) {
         return Bukkit.getItemFactory().enchantWithLevels(this, levels, keySet, random);
     }
 
@@ -727,14 +773,14 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      */
     @NotNull
     @Override
-    public net.kyori.adventure.text.event.HoverEvent<net.kyori.adventure.text.event.HoverEvent.ShowItem> asHoverEvent(final @NotNull java.util.function.UnaryOperator<net.kyori.adventure.text.event.HoverEvent.ShowItem> op) {
-        return org.bukkit.Bukkit.getServer().getItemFactory().asHoverEvent(this, op);
+    public HoverEvent<HoverEvent.ShowItem> asHoverEvent(final @NotNull UnaryOperator<HoverEvent.ShowItem> op) {
+        return Bukkit.getServer().getItemFactory().asHoverEvent(this, op);
     }
 
     /**
      * Get the formatted display name of the {@link ItemStack}.
      *
-     * @apiNote this component include a {@link net.kyori.adventure.text.event.HoverEvent item hover event}.
+     * @apiNote this component include a {@link HoverEvent item hover event}.
      * When used in chat, make sure to follow the ItemStack rules regarding amount, type, and other properties.
      * @return display name of the {@link ItemStack}
      */
@@ -776,7 +822,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * @return ItemStack migrated to this version of Minecraft if needed.
      */
     public static @NotNull ItemStack deserializeBytes(final byte @NotNull [] bytes) {
-        return org.bukkit.Bukkit.getUnsafe().deserializeItem(bytes);
+        return Bukkit.getUnsafe().deserializeItem(bytes);
     }
 
     /**
@@ -785,11 +831,11 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * @return bytes representing this item in NBT.
      */
     public byte @NotNull [] serializeAsBytes() {
-        return org.bukkit.Bukkit.getUnsafe().serializeItem(this);
+        return Bukkit.getUnsafe().serializeItem(this);
     }
 
     /**
-     * The current version byte of the item array format used in {@link #serializeItemsAsBytes(java.util.Collection)}
+     * The current version byte of the item array format used in {@link #serializeItemsAsBytes(Collection)}
      * and {@link #deserializeItemsFromBytes(byte[])} respectively.
      */
     private static final byte ARRAY_SERIALIZATION_VERSION = 1;
@@ -797,15 +843,15 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
     /**
      * Serializes a collection of items to raw bytes in NBT. Serializes null items as {@link #empty()}.
      * <p>
-     * If you need a string representation to put into a file, you can for example use {@link java.util.Base64} encoding.
+     * If you need a string representation to put into a file, you can for example use {@link Base64} encoding.
      *
      * @param items items to serialize
      * @return bytes representing the items in NBT
      * @see #serializeAsBytes()
      */
-    public static byte @NotNull [] serializeItemsAsBytes(java.util.@NotNull Collection<ItemStack> items) {
-        try (final java.io.ByteArrayOutputStream outputStream = new java.io.ByteArrayOutputStream()) {
-            final java.io.DataOutput output = new java.io.DataOutputStream(outputStream);
+    public static byte @NotNull [] serializeItemsAsBytes(@NotNull Collection<ItemStack> items) {
+        try (final ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            final DataOutput output = new DataOutputStream(outputStream);
             output.writeByte(ARRAY_SERIALIZATION_VERSION);
             output.writeInt(items.size());
             for (final ItemStack item : items) {
@@ -820,7 +866,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
                 output.write(itemBytes);
             }
             return outputStream.toByteArray();
-        } catch (final java.io.IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException("Error while writing itemstack", e);
         }
     }
@@ -828,28 +874,28 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
     /**
      * Serializes a collection of items to raw bytes in NBT. Serializes null items as {@link #empty()}.
      * <p>
-     * If you need a string representation to put into a file, you can for example use {@link java.util.Base64} encoding.
+     * If you need a string representation to put into a file, you can for example use {@link Base64} encoding.
      *
      * @param items items to serialize
      * @return bytes representing the items in NBT
      * @see #serializeAsBytes()
      */
     public static byte @NotNull [] serializeItemsAsBytes(@Nullable ItemStack @NotNull [] items) {
-        return serializeItemsAsBytes(java.util.Arrays.asList(items));
+        return serializeItemsAsBytes(Arrays.asList(items));
     }
 
     /**
      * Deserializes this itemstack from raw NBT bytes.
      * <p>
-     * If you need a string representation to put into a file, you can for example use {@link java.util.Base64} encoding.
+     * If you need a string representation to put into a file, you can for example use {@link Base64} encoding.
      *
      * @param bytes bytes representing an item in NBT
      * @return ItemStack array migrated to this version of Minecraft if needed
      * @see #deserializeBytes(byte[])
      */
     public static @NotNull ItemStack @NotNull [] deserializeItemsFromBytes(final byte @NotNull [] bytes) {
-        try (final java.io.ByteArrayInputStream inputStream = new java.io.ByteArrayInputStream(bytes)) {
-            final java.io.DataInputStream input = new java.io.DataInputStream(inputStream);
+        try (final ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes)) {
+            final DataInputStream input = new DataInputStream(inputStream);
             final byte version = input.readByte();
             if (version != ARRAY_SERIALIZATION_VERSION) {
                 throw new IllegalArgumentException("Unsupported version or bad data: " + version);
@@ -870,7 +916,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
                 items[i] = ItemStack.deserializeBytes(itemBytes);
             }
             return items;
-        } catch (final java.io.IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException("Error while reading itemstack", e);
         }
     }
@@ -882,7 +928,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      *
      * @return Display name of Item
      * @deprecated {@link ItemStack} implements {@link net.kyori.adventure.translation.Translatable}; use that and
-     * {@link net.kyori.adventure.text.Component#translatable(net.kyori.adventure.translation.Translatable)} instead.
+     * {@link Component#translatable(net.kyori.adventure.translation.Translatable)} instead.
      */
     @Nullable
     @Deprecated
@@ -891,14 +937,14 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
     }
 
     /**
-     * @deprecated use {@link #getMaxItemUseDuration(org.bukkit.entity.LivingEntity)}; crossbows, later possibly more items require an entity parameter
+     * @deprecated use {@link #getMaxItemUseDuration(LivingEntity)}; crossbows, later possibly more items require an entity parameter
      */
     @Deprecated(forRemoval = true)
     public int getMaxItemUseDuration() {
         return getMaxItemUseDuration(null);
     }
 
-    public int getMaxItemUseDuration(@NotNull final org.bukkit.entity.LivingEntity entity) {
+    public int getMaxItemUseDuration(@NotNull final LivingEntity entity) {
         return this.craftDelegate.getMaxItemUseDuration(entity); // Paper - delegate
     }
 
@@ -971,7 +1017,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * @deprecated in favor of {@link #lore()}
      */
     @Deprecated
-    public @Nullable java.util.List<String> getLore() {
+    public @Nullable List<String> getLore() {
         if (!hasItemMeta()) {
             return null;
         }
@@ -986,7 +1032,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * If the item has lore, returns it, else it will return null
      * @return The lore, or null
      */
-    public @Nullable java.util.List<net.kyori.adventure.text.Component> lore() {
+    public @Nullable List<Component> lore() {
         if (!this.hasItemMeta()) {
             return null;
         }
@@ -1002,10 +1048,10 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * Removes lore when given null.
      *
      * @param lore the lore that will be set
-     * @deprecated in favour of {@link #lore(java.util.List)}
+     * @deprecated in favour of {@link #lore(List)}
      */
     @Deprecated
-    public void setLore(@Nullable java.util.List<String> lore) {
+    public void setLore(@Nullable List<String> lore) {
         ItemMeta itemMeta = getItemMeta();
         if (itemMeta == null) {
             throw new IllegalStateException("Cannot set lore on " + getType());
@@ -1020,7 +1066,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      *
      * @param lore the lore that will be set
      */
-    public void lore(@Nullable java.util.List<? extends net.kyori.adventure.text.Component> lore) {
+    public void lore(@Nullable List<? extends Component> lore) {
         ItemMeta itemMeta = getItemMeta();
         if (itemMeta == null) {
             throw new IllegalStateException("Cannot set lore on " + getType());
@@ -1063,10 +1109,10 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * @return A set of all itemFlags set
      */
     @NotNull
-    public java.util.Set<ItemFlag> getItemFlags() {
+    public Set<ItemFlag> getItemFlags() {
         ItemMeta itemMeta = getItemMeta();
         if (itemMeta == null) {
-            return java.util.Collections.emptySet();
+            return Collections.emptySet();
         }
         return itemMeta.getItemFlags();
     }
@@ -1101,8 +1147,8 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      */
     @NotNull
     @Deprecated(forRemoval = true, since = "1.20.5")
-    public io.papermc.paper.inventory.ItemRarity getRarity() {
-        return io.papermc.paper.inventory.ItemRarity.valueOf(this.getItemMeta().getRarity().name());
+    public ItemRarity getRarity() {
+        return ItemRarity.valueOf(this.getItemMeta().getRarity().name());
     }
 
     /**
@@ -1135,9 +1181,9 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * @param amount the amount of damage to do
      * @param livingEntity the entity related to the damage
      * @return the damaged itemstack or an empty one if it broke. May return the same instance of ItemStack
-     * @see org.bukkit.entity.LivingEntity#damageItemStack(EquipmentSlot, int) to damage itemstacks in equipment slots
+     * @see LivingEntity#damageItemStack(EquipmentSlot, int) to damage itemstacks in equipment slots
      */
-    public @NotNull ItemStack damage(int amount, @NotNull org.bukkit.entity.LivingEntity livingEntity) {
+    public @NotNull ItemStack damage(int amount, @NotNull LivingEntity livingEntity) {
         return livingEntity.damageItemStack(this, amount);
     }
 
@@ -1162,6 +1208,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
     }
     // Paper end
     // Paper start - expose itemstack tooltip lines
+
     /**
      * Computes the tooltip lines for this stack.
      * <p>
@@ -1174,23 +1221,24 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * @return an immutable list of components (can be empty)
      */
     @SuppressWarnings("deprecation") // abusing unsafe as a bridge
-    public java.util.@NotNull @org.jetbrains.annotations.Unmodifiable List<net.kyori.adventure.text.Component> computeTooltipLines(final @NotNull io.papermc.paper.inventory.tooltip.TooltipContext tooltipContext, final @Nullable org.bukkit.entity.Player player) {
+    public @NotNull @Unmodifiable List<Component> computeTooltipLines(final @NotNull TooltipContext tooltipContext, final @Nullable Player player) {
         return Bukkit.getUnsafe().computeTooltipLines(this, tooltipContext, player);
     }
     // Paper end - expose itemstack tooltip lines
 
     // Paper start - data component API
+
     /**
      * Gets the value for the data component type on this stack.
      *
      * @param type the data component type
      * @param <T> the value type
      * @return the value for the data component type, or {@code null} if not set or marked as removed
-     * @see #hasData(io.papermc.paper.datacomponent.DataComponentType) for DataComponentType.NonValued
+     * @see #hasData(DataComponentType) for DataComponentType.NonValued
      */
-    @org.jetbrains.annotations.Contract(pure = true)
-    @org.jetbrains.annotations.ApiStatus.Experimental
-    public <T> @Nullable T getData(final io.papermc.paper.datacomponent.DataComponentType.@NotNull Valued<T> type) {
+    @Contract(pure = true)
+    @ApiStatus.Experimental
+    public <T> @Nullable T getData(final DataComponentType.@NotNull Valued<T> type) {
         return this.craftDelegate.getData(type);
     }
 
@@ -1204,9 +1252,9 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * @return the value for the data component type or the fallback value
      */
     @Utility
-    @org.jetbrains.annotations.Contract(value = "_, !null -> !null", pure = true)
-    @org.jetbrains.annotations.ApiStatus.Experimental
-    public <T> @Nullable T getDataOrDefault(final io.papermc.paper.datacomponent.DataComponentType.@NotNull Valued<? extends T> type, final @Nullable T fallback) {
+    @Contract(value = "_, !null -> !null", pure = true)
+    @ApiStatus.Experimental
+    public <T> @Nullable T getDataOrDefault(final DataComponentType.@NotNull Valued<? extends T> type, final @Nullable T fallback) {
         final T object = this.getData(type);
         return object != null ? object : fallback;
     }
@@ -1217,9 +1265,9 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * @param type the data component type
      * @return {@code true} if set, {@code false} otherwise
      */
-    @org.jetbrains.annotations.Contract(pure = true)
-    @org.jetbrains.annotations.ApiStatus.Experimental
-    public boolean hasData(final io.papermc.paper.datacomponent.@NotNull DataComponentType type) {
+    @Contract(pure = true)
+    @ApiStatus.Experimental
+    public boolean hasData(final @NotNull DataComponentType type) {
         return this.craftDelegate.hasData(type);
     }
 
@@ -1228,25 +1276,25 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      *
      * @return an immutable set of data component types
      */
-    @org.jetbrains.annotations.Contract("-> new")
-    @org.jetbrains.annotations.ApiStatus.Experimental
-    public java.util.@org.jetbrains.annotations.Unmodifiable Set<io.papermc.paper.datacomponent.@NotNull DataComponentType> getDataTypes() {
+    @Contract("-> new")
+    @ApiStatus.Experimental
+    public @Unmodifiable Set<@NotNull DataComponentType> getDataTypes() {
         return this.craftDelegate.getDataTypes();
     }
 
     /**
      * Sets the value of the data component type for this itemstack. To
      * reset the value to the default for the {@link #getType() item type}, use
-     * {@link #resetData(io.papermc.paper.datacomponent.DataComponentType)}. To mark the data component type
-     * as removed, use {@link #unsetData(io.papermc.paper.datacomponent.DataComponentType)}.
+     * {@link #resetData(DataComponentType)}. To mark the data component type
+     * as removed, use {@link #unsetData(DataComponentType)}.
      *
      * @param type the data component type
      * @param valueBuilder value builder
      * @param <T> value type
      */
     @Utility
-    @org.jetbrains.annotations.ApiStatus.Experimental
-    public <T> void setData(final io.papermc.paper.datacomponent.DataComponentType.@NotNull Valued<T> type, final @NotNull io.papermc.paper.datacomponent.DataComponentBuilder<T> valueBuilder) {
+    @ApiStatus.Experimental
+    public <T> void setData(final DataComponentType.@NotNull Valued<T> type, final @NotNull DataComponentBuilder<T> valueBuilder) {
         this.setData(type, valueBuilder.build());
     }
 
@@ -1277,15 +1325,15 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
     /**
      * Sets the value of the data component type for this itemstack. To
      * reset the value to the default for the {@link #getType() item type}, use
-     * {@link #resetData(io.papermc.paper.datacomponent.DataComponentType)}. To mark the data component type
-     * as removed, use {@link #unsetData(io.papermc.paper.datacomponent.DataComponentType)}.
+     * {@link #resetData(DataComponentType)}. To mark the data component type
+     * as removed, use {@link #unsetData(DataComponentType)}.
      *
      * @param type the data component type
      * @param value value to set
      * @param <T> value type
      */
-    @org.jetbrains.annotations.ApiStatus.Experimental
-    public <T> void setData(final io.papermc.paper.datacomponent.DataComponentType.@NotNull Valued<T> type, final @NotNull T value) {
+    @ApiStatus.Experimental
+    public <T> void setData(final DataComponentType.@NotNull Valued<T> type, final @NotNull T value) {
         this.craftDelegate.setData(type, value);
     }
 
@@ -1294,8 +1342,8 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      *
      * @param type the data component type
      */
-    @org.jetbrains.annotations.ApiStatus.Experimental
-    public void setData(final io.papermc.paper.datacomponent.DataComponentType.@NotNull NonValued type) {
+    @ApiStatus.Experimental
+    public void setData(final DataComponentType.@NotNull NonValued type) {
         this.craftDelegate.setData(type);
     }
 
@@ -1304,19 +1352,19 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      *
      * @param type the data component type
      */
-    @org.jetbrains.annotations.ApiStatus.Experimental
-    public void unsetData(final io.papermc.paper.datacomponent.@NotNull DataComponentType type) {
+    @ApiStatus.Experimental
+    public void unsetData(final @NotNull DataComponentType type) {
         this.craftDelegate.unsetData(type);
     }
 
     /**
      * Resets the value of this component to be the default
-     * value for the item type from {@link Material#getDefaultData(io.papermc.paper.datacomponent.DataComponentType.Valued)}.
+     * value for the item type from {@link Material#getDefaultData(DataComponentType.Valued)}.
      *
      * @param type the data component type
      */
-    @org.jetbrains.annotations.ApiStatus.Experimental
-    public void resetData(final io.papermc.paper.datacomponent.@NotNull DataComponentType type) {
+    @ApiStatus.Experimental
+    public void resetData(final @NotNull DataComponentType type) {
         this.craftDelegate.resetData(type);
     }
 
@@ -1340,8 +1388,8 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * @param source the item stack to copy from
      * @param filter predicate for which components to copy
      */
-    @org.jetbrains.annotations.ApiStatus.Experimental
-    public void copyDataFrom(final @NotNull ItemStack source, final @NotNull Predicate<io.papermc.paper.datacomponent.@NotNull DataComponentType> filter) {
+    @ApiStatus.Experimental
+    public void copyDataFrom(final @NotNull ItemStack source, final @NotNull Predicate<@NotNull DataComponentType> filter) {
         this.craftDelegate.copyDataFrom(source, filter);
     }
 
@@ -1352,8 +1400,8 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * @param type the data component type
      * @return {@code true} if the data type is overridden
      */
-    @org.jetbrains.annotations.ApiStatus.Experimental
-    public boolean isDataOverridden(final io.papermc.paper.datacomponent.@NotNull DataComponentType type) {
+    @ApiStatus.Experimental
+    public boolean isDataOverridden(final @NotNull DataComponentType type) {
         return this.craftDelegate.isDataOverridden(type);
     }
 
@@ -1365,8 +1413,8 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * @param excludeTypes the data component types to ignore
      * @return {@code true} if the provided item is equal, ignoring the provided components
      */
-    @org.jetbrains.annotations.ApiStatus.Experimental
-    public boolean matchesWithoutData(final @NotNull ItemStack item, final @NotNull java.util.Set<io.papermc.paper.datacomponent.@NotNull DataComponentType> excludeTypes) {
+    @ApiStatus.Experimental
+    public boolean matchesWithoutData(final @NotNull ItemStack item, final @NotNull Set<@NotNull DataComponentType> excludeTypes) {
         return this.matchesWithoutData(item, excludeTypes, false);
     }
 
@@ -1379,8 +1427,8 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * @param ignoreCount ignore the count of the item
      * @return {@code true} if the provided item is equal, ignoring the provided components
      */
-    @org.jetbrains.annotations.ApiStatus.Experimental
-    public boolean matchesWithoutData(final @NotNull ItemStack item, final @NotNull java.util.Set<io.papermc.paper.datacomponent.@NotNull DataComponentType> excludeTypes, final boolean ignoreCount) {
+    @ApiStatus.Experimental
+    public boolean matchesWithoutData(final @NotNull ItemStack item, final @NotNull Set<@NotNull DataComponentType> excludeTypes, final boolean ignoreCount) {
         return this.craftDelegate.matchesWithoutData(item, excludeTypes, ignoreCount);
     }
     // Paper end - data component API
@@ -1395,7 +1443,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
         return craft;
     }
 
-     public @NotNull Component displayName() {
+    public @NotNull Component displayName() {
         if (getAmount() > 64) {
             ItemStack clone = this.clone();
             clone.setAmount(64);
@@ -1407,6 +1455,9 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
     public CraftItemStack getCraft() { // хз насколько кастинг эффективен, мб лучше юзать как раньше return craftitemstack
         if (this instanceof CraftItemStack craft) {
             return craft;
+        }
+        if (craftDelegate != null) {
+            return ((CraftItemStack) craftDelegate);
         }
         return CraftItemStack.asCraftCopy(this);
     }
@@ -1472,8 +1523,10 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
     }
 
     public CraftItemStack setUnbreakable() {
-        setData(DataComponentTypes.UNBREAKABLE);
-        return getCraft();
+        final CraftItemStack craft = getCraft();
+        craft.handle.set(DataComponents.UNBREAKABLE, Unit.INSTANCE);
+        craft.handle.update(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT, tooltipDisplay -> tooltipDisplay.withHidden(DataComponents.UNBREAKABLE, true));
+        return craft;
     }
 
     @ApiStatus.Experimental
@@ -1483,16 +1536,16 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
     }
 
     public CraftItemStack setRandomUUID() {
-        return editPersistentDataContainerC(a -> a.setString("uuid", UUID.randomUUID().toString()));
+        return setString("uuid", UUID.randomUUID().toString());
         // return editMetaC(meta -> meta.getPersistentDataContainer().set(new NamespacedKey("space", "uuid"), PersistentDataType.STRING,
         //     UUID.randomUUID().toString()));
     }
 
     public CraftItemStack setColor(int red, int green, int blue) {
-        return editMetaC(meta -> {
-            ((ColorableArmorMeta) meta).setColor(Color.fromRGB(red, green, blue));
-            meta.addItemFlags(ItemFlag.HIDE_DYE);
-        });
+        final CraftItemStack craft = getCraft();
+        craft.handle.set(DataComponents.DYED_COLOR, new DyedItemColor(ARGB.color(0, red, green, blue)));
+        craft.handle.update(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT, tooltipDisplay -> tooltipDisplay.withHidden(DataComponents.DYED_COLOR, true));
+        return craft;
     }
 
     public static boolean nameEquals(ItemStack first, ItemStack second) {
@@ -1507,71 +1560,106 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
     }
 
     public String getID() {
-        // final ItemMeta itemMeta = getItemMeta();
-        // if (itemMeta == null) {
-        //     return "";
-        // }
         return getString("id");
     }
 
     public CraftItemStack setString(String key, String value) {
-        return editPersistentDataContainerC(a -> a.setString(key, value));
-        // return editMetaC(meta -> meta.getPersistentDataContainer().set(new NamespacedKey("space", key.toLowerCase()), PersistentDataType.STRING, value));
+        getPDCCustomData(true).put("space:" + key, StringTag.valueOf(value));
+        return getCraft();
     }
 
+    public static final CraftPersistentDataTypeRegistry registry = new CraftPersistentDataTypeRegistry();
+
     public CraftPersistentDataContainer getCompound(String key) {
-        final ItemMeta itemMeta = getItemMeta();
-        if (itemMeta == null) {
-            return null;
+        final CompoundTag pdcCustomData = getPDCCustomData();
+        if (pdcCustomData == null) return null;
+        final CompoundTag compoundTag = (CompoundTag) pdcCustomData.tags.get("space:" + key);
+        if (compoundTag == null) return null;
+        final CraftPersistentDataContainer craftPersistentDataContainer = new CraftPersistentDataContainer(Map.of(), registry);
+        for (final Map.Entry<String, Tag> stringTagEntry : compoundTag.tags.entrySet()) {
+            craftPersistentDataContainer.put(stringTagEntry.getKey(), stringTagEntry.getValue());
         }
-        return (CraftPersistentDataContainer) itemMeta.getPersistentDataContainer().get(new NamespacedKey("space", key.toLowerCase()), PersistentDataType.TAG_CONTAINER);
+        return craftPersistentDataContainer;
     }
 
     public CraftItemStack setCompound(String key, PersistentDataContainer container) {
-        return editPersistentDataContainerC(a -> a.set(new NamespacedKey("space", key.toLowerCase()), PersistentDataType.TAG_CONTAINER, container));
-        // return editMetaC(meta -> meta.getPersistentDataContainer().set(new NamespacedKey("space", key.toLowerCase()), PersistentDataType.TAG_CONTAINER, container));
+        final CompoundTag compoundTag = new CompoundTag();
+        for (final Map.Entry<String, Tag> entry : ((CraftPersistentDataContainer) container).getRaw().entrySet()) {
+            compoundTag.put(entry.getKey(), entry.getValue());
+        }
+        getPDCCustomData(true).put("space:" + key, compoundTag);
+        return getCraft();
     }
 
     public CraftItemStack setGlinting() {
-        return setDataC(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, Boolean.TRUE);
+        final CraftItemStack craft = getCraft();
+        craft.handle.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, Boolean.TRUE);
+        return craft;
     }
 
     public CraftItemStack hideTooltip() {
-        return editMetaC(meta -> meta.setHideTooltip(true));
+        final CraftItemStack craft = getCraft();
+        craft.handle.set(DataComponents.TOOLTIP_DISPLAY, new TooltipDisplay(true, new LinkedHashSet<>()));
+        return craft;
     }
 
     public CraftItemStack setDouble(String key, double value) {
-        return editPersistentDataContainerC(a -> a.setDouble(key, value));
+        getPDCCustomData(true).put("space:" + key, DoubleTag.valueOf(value));
+        return getCraft();
         // return editMetaC(meta -> meta.getPersistentDataContainer().set(new NamespacedKey("space", key.toLowerCase()), PersistentDataType.DOUBLE, value));
     }
 
     public CraftItemStack setInt(String key, int value) {
-        return editPersistentDataContainerC(a -> a.setInt(key, value));
-        // return editMetaC(meta -> meta.getPersistentDataContainer().set(new NamespacedKey("space", key.toLowerCase()), PersistentDataType.INTEGER, value));
+        getPDCCustomData(true).put("space:" + key, IntTag.valueOf(value));
+        return getCraft();
+    }
+
+    public CompoundTag getPDCCustomData() {
+        return getPDCCustomData(false);
+    }
+
+    // todo кэширование custom data в нмс итемстаке
+    // возвращать pair можно чтоб экономить вызовы craft
+    public CompoundTag getPDCCustomData(boolean setIfAbsent) {
+        final CraftItemStack craft = getCraft();
+        CustomData customData = craft.handle.get(DataComponents.CUSTOM_DATA);
+        if (customData == null) {
+            if (!setIfAbsent) {
+                return null;
+            }
+            final CompoundTag tag = new CompoundTag();
+            final CompoundTag pdc = new CompoundTag();
+            tag.put(CraftItemStack.PDC_CUSTOM_DATA_KEY, pdc);
+            craft.handle.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+            return pdc;
+        }
+        final Tag tag = customData.getUnsafe().tags.get(CraftItemStack.PDC_CUSTOM_DATA_KEY);
+        if (tag == null) return null;
+        return ((CompoundTag) tag);
     }
 
     public String getString(String key) {
-        final String space = getPersistentDataContainer().get(new NamespacedKey("space", key.toLowerCase()), PersistentDataType.STRING);
-        if (space == null) {
-            return "";
-        }
-        return space;
+        final CompoundTag pdcCustomData = getPDCCustomData();
+        // todo убрать space + убрать pdc и писать в плейн кастом дату
+        final Tag tag1 = pdcCustomData.tags.get("space:" + key);
+        if (tag1 == null) return "";
+        return ((StringTag) tag1).value();
     }
 
     public int getInt(String key) {
-        final Integer space = getPersistentDataContainer().get(new NamespacedKey("space", key.toLowerCase()), PersistentDataType.INTEGER);
-        if (space == null) {
-            return 0;
-        }
-        return space;
+        final CompoundTag pdcCustomData = getPDCCustomData();
+        if (pdcCustomData == null) return 0;
+        final Tag tag = pdcCustomData.tags.get("space:" + key);
+        if (tag == null) return 0;
+        return ((IntTag) tag).value();
     }
 
     public double getDouble(String key) {
-        final Double space = getPersistentDataContainer().get(new NamespacedKey("space", key.toLowerCase()), PersistentDataType.DOUBLE);
-        if (space == null) {
-            return 0.0;
-        }
-        return space;
+        final CompoundTag pdcCustomData = getPDCCustomData();
+        if (pdcCustomData == null) return 0.0;
+        final Tag tag = pdcCustomData.tags.get("space:" + key);
+        if (tag == null) return 0.0;
+        return ((DoubleTag) tag).value();
     }
 
     public CraftItemStack cloneC() {
