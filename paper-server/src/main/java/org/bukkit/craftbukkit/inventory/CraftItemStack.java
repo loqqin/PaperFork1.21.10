@@ -21,6 +21,8 @@ import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.component.PatchedDataComponentMap;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.IntTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
@@ -42,6 +44,7 @@ public final class CraftItemStack extends ItemStack {
 
     // Paper start - delegate api-ItemStack to CraftItemStack
     private static final java.lang.invoke.VarHandle API_ITEM_STACK_CRAFT_DELEGATE_FIELD;
+
     static {
         try {
             API_ITEM_STACK_CRAFT_DELEGATE_FIELD = java.lang.invoke.MethodHandles.privateLookupIn(
@@ -342,6 +345,7 @@ public final class CraftItemStack extends ItemStack {
     public ItemMeta getItemMeta() {
         return CraftItemStack.getItemMeta(this.handle);
     }
+
     // Paper start - improve handled tags on type change
     public void adjustTagForItemMeta(final Material oldType) {
         final CraftMetaItem oldMeta = (CraftMetaItem) CraftItemFactory.instance().getItemMeta(oldType);
@@ -377,13 +381,16 @@ public final class CraftItemStack extends ItemStack {
         // Paper start - handled tags on type change
         return getItemMeta(item, metaForType, null);
     }
+
     public static ItemMeta getItemMeta(net.minecraft.world.item.ItemStack item, org.bukkit.inventory.ItemType metaForType, final java.util.Set<net.minecraft.core.component.DataComponentType<?>> extraHandledDcts) {
         // Paper end - handled tags on type change
         if (!CraftItemStack.hasItemMeta(item)) {
             return CraftItemFactory.instance().getItemMeta(CraftItemStack.getType(item));
         }
 
-        if (metaForType != null) { return ((CraftItemType<?>) metaForType).getItemMeta(item, extraHandledDcts); } // Paper
+        if (metaForType != null) {
+            return ((CraftItemType<?>) metaForType).getItemMeta(item, extraHandledDcts);
+        } // Paper
         return ((CraftItemType<?>) CraftItemType.minecraftToBukkitNew(item.getItem())).getItemMeta(item, extraHandledDcts); // Paper
     }
 
@@ -461,6 +468,7 @@ public final class CraftItemStack extends ItemStack {
     static boolean hasItemMeta(net.minecraft.world.item.ItemStack item) {
         return !(item == null || item.getComponentsPatch().isEmpty());
     }
+
     // Paper start - with type
     @Override
     public ItemStack withType(final Material type) {
@@ -483,6 +491,7 @@ public final class CraftItemStack extends ItemStack {
     // Paper end
 
     public static final String PDC_CUSTOM_DATA_KEY = "PublicBukkitValues";
+
     private net.minecraft.nbt.CompoundTag getPdcTag() {
         if (this.handle == null) {
             return new net.minecraft.nbt.CompoundTag();
@@ -511,6 +520,7 @@ public final class CraftItemStack extends ItemStack {
             return CraftItemStack.this.getPdcTag().get(key);
         }
     };
+
     @Override
     public io.papermc.paper.persistence.PersistentDataContainerView getPersistentDataContainer() {
         return this.pdcView;
@@ -672,4 +682,40 @@ public final class CraftItemStack extends ItemStack {
     }
 
     // Paper end - data component API
+
+
+    @Override
+    public CompoundTag getPDCCustomData(final boolean setIfAbsent, final Consumer<CompoundTag> consumer) {
+        CustomData customData = handle.get(DataComponents.CUSTOM_DATA);
+        if (customData == null) {
+            if (!setIfAbsent) {
+                return null;
+            }
+            final CompoundTag tag = new CompoundTag();
+            final CompoundTag pdc = new CompoundTag();
+            if (consumer != null) {
+                consumer.accept(pdc);
+            }
+            tag.put(CraftItemStack.PDC_CUSTOM_DATA_KEY, pdc);
+            handle.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+            return pdc;
+        }
+        final Map<String, Tag> tags = customData.getUnsafe().tags;
+        // System.out.println("tags = " + (tags));
+        Tag tag = tags.get(CraftItemStack.PDC_CUSTOM_DATA_KEY);
+        if (tag == null) {
+            if (!setIfAbsent) {
+                return null;
+            }
+            tag = new CompoundTag();
+            customData.getUnsafe().tags.put(CraftItemStack.PDC_CUSTOM_DATA_KEY, tag);
+        };
+        final CompoundTag tag1 = (CompoundTag) tag;
+        if (consumer != null) {
+            consumer.accept(tag1);
+            handle.set(DataComponents.CUSTOM_DATA, customData);
+        }
+        // System.out.println("tag1.tags = " + (tag1.tags));
+        return tag1;
+    }
 }

@@ -1456,9 +1456,9 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
         if (this instanceof CraftItemStack craft) {
             return craft;
         }
-        if (craftDelegate != null) {
-            return ((CraftItemStack) craftDelegate);
-        }
+        // if (craftDelegate != null) {
+        //     return ((CraftItemStack) craftDelegate);
+        // }
         return CraftItemStack.asCraftCopy(this);
     }
 
@@ -1496,7 +1496,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
     }
 
     public boolean hasUUID() {
-        return getPersistentDataContainer().has(new NamespacedKey("space", "uuid"));
+        return !getString("uuid").isEmpty();
     }
 
     public static boolean equals(ItemStack itemStack, ItemStack itemStack1) {
@@ -1514,7 +1514,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
     }
 
     public static boolean nullOrAir(ItemStack itemStack) {
-        return itemStack == null || itemStack.getType().isAir();
+        return itemStack == null || itemStack.isEmpty(); // isempty быстрее получения type
     }
 
     public CraftItemStack setName(String name) {
@@ -1563,33 +1563,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
         return getString("id");
     }
 
-    public CraftItemStack setString(String key, String value) {
-        getPDCCustomData(true).put("space:" + key, StringTag.valueOf(value));
-        return getCraft();
-    }
-
     public static final CraftPersistentDataTypeRegistry registry = new CraftPersistentDataTypeRegistry();
-
-    public CraftPersistentDataContainer getCompound(String key) {
-        final CompoundTag pdcCustomData = getPDCCustomData();
-        if (pdcCustomData == null) return null;
-        final CompoundTag compoundTag = (CompoundTag) pdcCustomData.tags.get("space:" + key);
-        if (compoundTag == null) return null;
-        final CraftPersistentDataContainer craftPersistentDataContainer = new CraftPersistentDataContainer(Map.of(), registry);
-        for (final Map.Entry<String, Tag> stringTagEntry : compoundTag.tags.entrySet()) {
-            craftPersistentDataContainer.put(stringTagEntry.getKey(), stringTagEntry.getValue());
-        }
-        return craftPersistentDataContainer;
-    }
-
-    public CraftItemStack setCompound(String key, PersistentDataContainer container) {
-        final CompoundTag compoundTag = new CompoundTag();
-        for (final Map.Entry<String, Tag> entry : ((CraftPersistentDataContainer) container).getRaw().entrySet()) {
-            compoundTag.put(entry.getKey(), entry.getValue());
-        }
-        getPDCCustomData(true).put("space:" + key, compoundTag);
-        return getCraft();
-    }
 
     public CraftItemStack setGlinting() {
         final CraftItemStack craft = getCraft();
@@ -1603,44 +1577,44 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
         return craft;
     }
 
-    public CraftItemStack setDouble(String key, double value) {
-        getPDCCustomData(true).put("space:" + key, DoubleTag.valueOf(value));
+    public CraftItemStack setCompound(String key, PersistentDataContainer container) {
+        final CompoundTag compoundTag = new CompoundTag();
+        for (final Map.Entry<String, Tag> entry : ((CraftPersistentDataContainer) container).getRaw().entrySet()) {
+            compoundTag.put(entry.getKey(), entry.getValue());
+        }
+        getPDCCustomData(true, compoundTag1 -> compoundTag1.tags.put("space:" + key, compoundTag));
         return getCraft();
-        // return editMetaC(meta -> meta.getPersistentDataContainer().set(new NamespacedKey("space", key.toLowerCase()), PersistentDataType.DOUBLE, value));
+    }
+
+    public CraftItemStack setDouble(String key, double value) {
+        getPDCCustomData(true, compoundTag -> compoundTag.tags.put("space:" + key, DoubleTag.valueOf(value)));
+        return getCraft();
+    }
+
+    public CraftItemStack setString(String key, String value) {
+        getPDCCustomData(true, compoundTag -> compoundTag.tags.put("space:" + key, StringTag.valueOf(value)));
+        return getCraft();
     }
 
     public CraftItemStack setInt(String key, int value) {
-        getPDCCustomData(true).put("space:" + key, IntTag.valueOf(value));
+        getPDCCustomData(true, compoundTag -> compoundTag.tags.put("space:" + key, IntTag.valueOf(value)));
         return getCraft();
     }
 
     public CompoundTag getPDCCustomData() {
-        return getPDCCustomData(false);
+        return getPDCCustomData(false, null);
     }
 
     // todo кэширование custom data в нмс итемстаке
     // возвращать pair можно чтоб экономить вызовы craft
-    public CompoundTag getPDCCustomData(boolean setIfAbsent) {
-        final CraftItemStack craft = getCraft();
-        CustomData customData = craft.handle.get(DataComponents.CUSTOM_DATA);
-        if (customData == null) {
-            if (!setIfAbsent) {
-                return null;
-            }
-            final CompoundTag tag = new CompoundTag();
-            final CompoundTag pdc = new CompoundTag();
-            tag.put(CraftItemStack.PDC_CUSTOM_DATA_KEY, pdc);
-            craft.handle.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
-            return pdc;
-        }
-        final Tag tag = customData.getUnsafe().tags.get(CraftItemStack.PDC_CUSTOM_DATA_KEY);
-        if (tag == null) return null;
-        return ((CompoundTag) tag);
+    public CompoundTag getPDCCustomData(boolean setIfAbsent, Consumer<CompoundTag> consumer) {
+        return getCraft().getPDCCustomData(setIfAbsent, consumer);
     }
 
+    // todo убрать space + убрать pdc и писать в плейн кастом дату
     public String getString(String key) {
         final CompoundTag pdcCustomData = getPDCCustomData();
-        // todo убрать space + убрать pdc и писать в плейн кастом дату
+        if (pdcCustomData == null) return "";
         final Tag tag1 = pdcCustomData.tags.get("space:" + key);
         if (tag1 == null) return "";
         return ((StringTag) tag1).value();
@@ -1660,6 +1634,18 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
         final Tag tag = pdcCustomData.tags.get("space:" + key);
         if (tag == null) return 0.0;
         return ((DoubleTag) tag).value();
+    }
+
+    public CraftPersistentDataContainer getCompound(String key) {
+        final CompoundTag pdcCustomData = getPDCCustomData();
+        if (pdcCustomData == null) return null;
+        final CompoundTag compoundTag = (CompoundTag) pdcCustomData.tags.get("space:" + key);
+        if (compoundTag == null) return null;
+        final CraftPersistentDataContainer craftPersistentDataContainer = new CraftPersistentDataContainer(Map.of(), registry);
+        for (final Map.Entry<String, Tag> stringTagEntry : compoundTag.tags.entrySet()) {
+            craftPersistentDataContainer.put(stringTagEntry.getKey(), stringTagEntry.getValue());
+        }
+        return craftPersistentDataContainer;
     }
 
     public CraftItemStack cloneC() {
