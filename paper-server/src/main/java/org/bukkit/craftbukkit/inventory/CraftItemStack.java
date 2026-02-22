@@ -683,6 +683,7 @@ public final class CraftItemStack extends ItemStack {
 
 
     public CompoundTag getPDCNmsViewReadOnly() {
+        if (this.handle == null || this.handle.isEmpty()) return null;
         CustomData customData = handle.get(DataComponents.CUSTOM_DATA);
         if (customData == null) {
             return null;
