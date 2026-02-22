@@ -20,7 +20,6 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -46,11 +45,9 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.Unit;
-import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.component.DyedItemColor;
 import net.minecraft.world.item.component.TooltipDisplay;
 import org.bukkit.Bukkit;
-import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Translatable;
@@ -65,12 +62,10 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.meta.BlockDataMeta;
-import org.bukkit.inventory.meta.ColorableArmorMeta;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.material.MaterialData;
 import org.bukkit.persistence.PersistentDataContainer;
-import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -1582,38 +1577,29 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
         for (final Map.Entry<String, Tag> entry : ((CraftPersistentDataContainer) container).getRaw().entrySet()) {
             compoundTag.put(entry.getKey(), entry.getValue());
         }
-        getPDCCustomData(true, compoundTag1 -> compoundTag1.tags.put("space:" + key, compoundTag));
+        editPDCNms(compoundTag1 -> compoundTag1.tags.put("space:" + key, compoundTag));
         return getCraft();
     }
 
     public CraftItemStack setDouble(String key, double value) {
-        getPDCCustomData(true, compoundTag -> compoundTag.tags.put("space:" + key, DoubleTag.valueOf(value)));
+        editPDCNms(compoundTag -> compoundTag.tags.put("space:" + key, DoubleTag.valueOf(value)));
         return getCraft();
     }
 
     public CraftItemStack setString(String key, String value) {
-        getPDCCustomData(true, compoundTag -> compoundTag.tags.put("space:" + key, StringTag.valueOf(value)));
+        editPDCNms(compoundTag -> compoundTag.tags.put("space:" + key, StringTag.valueOf(value)));
         return getCraft();
     }
 
     public CraftItemStack setInt(String key, int value) {
-        getPDCCustomData(true, compoundTag -> compoundTag.tags.put("space:" + key, IntTag.valueOf(value)));
+        editPDCNms(compoundTag -> compoundTag.tags.put("space:" + key, IntTag.valueOf(value)));
         return getCraft();
     }
 
-    public CompoundTag getPDCCustomData() {
-        return getPDCCustomData(false, null);
-    }
-
     // todo кэширование custom data в нмс итемстаке
-    // возвращать pair можно чтоб экономить вызовы craft
-    public CompoundTag getPDCCustomData(boolean setIfAbsent, Consumer<CompoundTag> consumer) {
-        return getCraft().getPDCCustomData(setIfAbsent, consumer);
-    }
-
     // todo убрать space + убрать pdc и писать в плейн кастом дату
     public String getString(String key) {
-        final CompoundTag pdcCustomData = getPDCCustomData();
+        final CompoundTag pdcCustomData = getPDCNmsViewReadOnly();
         if (pdcCustomData == null) return "";
         final Tag tag1 = pdcCustomData.tags.get("space:" + key);
         if (tag1 == null) return "";
@@ -1621,7 +1607,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
     }
 
     public int getInt(String key) {
-        final CompoundTag pdcCustomData = getPDCCustomData();
+        final CompoundTag pdcCustomData = getPDCNmsViewReadOnly();
         if (pdcCustomData == null) return 0;
         final Tag tag = pdcCustomData.tags.get("space:" + key);
         if (tag == null) return 0;
@@ -1629,7 +1615,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
     }
 
     public double getDouble(String key) {
-        final CompoundTag pdcCustomData = getPDCCustomData();
+        final CompoundTag pdcCustomData = getPDCNmsViewReadOnly();
         if (pdcCustomData == null) return 0.0;
         final Tag tag = pdcCustomData.tags.get("space:" + key);
         if (tag == null) return 0.0;
@@ -1637,7 +1623,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
     }
 
     public CraftPersistentDataContainer getCompound(String key) {
-        final CompoundTag pdcCustomData = getPDCCustomData();
+        final CompoundTag pdcCustomData = getPDCNmsViewReadOnly();
         if (pdcCustomData == null) return null;
         final CompoundTag compoundTag = (CompoundTag) pdcCustomData.tags.get("space:" + key);
         if (compoundTag == null) return null;
@@ -1651,6 +1637,14 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
     public CraftItemStack cloneC() {
         return getCraft().clone();
         // return ((CraftItemStack) clone());
+    }
+
+    public CompoundTag getPDCNmsViewReadOnly() {
+        return getCraft().getPDCNmsViewReadOnly();
+    }
+
+    public CraftItemStack editPDCNms(Consumer<CompoundTag> consumer) {
+        return getCraft().editPDCNms(consumer);
     }
 
     // loqqin end

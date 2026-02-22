@@ -1,7 +1,6 @@
 package org.bukkit.craftbukkit.inventory;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 import io.papermc.paper.adventure.PaperAdventure;
 import java.util.Collections;
 import java.util.Map;
@@ -21,7 +20,6 @@ import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.component.PatchedDataComponentMap;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.component.CustomData;
@@ -684,38 +682,72 @@ public final class CraftItemStack extends ItemStack {
     // Paper end - data component API
 
 
-    @Override
-    public CompoundTag getPDCCustomData(final boolean setIfAbsent, final Consumer<CompoundTag> consumer) {
+    public CompoundTag getPDCNmsViewReadOnly() {
         CustomData customData = handle.get(DataComponents.CUSTOM_DATA);
         if (customData == null) {
-            if (!setIfAbsent) {
-                return null;
-            }
-            final CompoundTag tag = new CompoundTag();
-            final CompoundTag pdc = new CompoundTag();
-            if (consumer != null) {
-                consumer.accept(pdc);
-            }
-            tag.put(CraftItemStack.PDC_CUSTOM_DATA_KEY, pdc);
-            handle.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
-            return pdc;
+            return null;
         }
         final Map<String, Tag> tags = customData.getUnsafe().tags;
-        // System.out.println("tags = " + (tags));
-        Tag tag = tags.get(CraftItemStack.PDC_CUSTOM_DATA_KEY);
-        if (tag == null) {
-            if (!setIfAbsent) {
-                return null;
-            }
-            tag = new CompoundTag();
-            customData.getUnsafe().tags.put(CraftItemStack.PDC_CUSTOM_DATA_KEY, tag);
-        };
-        final CompoundTag tag1 = (CompoundTag) tag;
-        if (consumer != null) {
-            consumer.accept(tag1);
-            handle.set(DataComponents.CUSTOM_DATA, customData);
+        CompoundTag pdcTag = (CompoundTag) tags.get(CraftItemStack.PDC_CUSTOM_DATA_KEY);
+        if (pdcTag == null) {
+            return null;
         }
-        // System.out.println("tag1.tags = " + (tag1.tags));
-        return tag1;
+        return pdcTag;
     }
+
+    public CraftItemStack editPDCNms(Consumer<CompoundTag> consumer) {
+        if (this.handle == null || this.handle.isEmpty()) return this;
+        CustomData customData = this.handle.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
+        CompoundTag pdcTag = customData.getUnsafe().getCompound(PDC_CUSTOM_DATA_KEY).orElse(null);
+        if (pdcTag == null) {
+            pdcTag = new CompoundTag();
+        } else {
+            pdcTag = pdcTag.copy();
+        }
+        consumer.accept(pdcTag);
+        if (!pdcTag.isEmpty()) {
+            final CompoundTag finalPdcTag = pdcTag;
+            customData = customData.update(tag -> tag.put(PDC_CUSTOM_DATA_KEY, finalPdcTag));
+        } else if (customData.contains(PDC_CUSTOM_DATA_KEY)) {
+            customData = customData.update(tag -> tag.remove(PDC_CUSTOM_DATA_KEY));
+        }
+        this.handle.set(DataComponents.CUSTOM_DATA, customData.isEmpty() ? null : customData);
+        return this;
+    }
+
+    // @Override
+    // public CompoundTag getPDCCustomDataView(final boolean setIfAbsent, final Consumer<CompoundTag> consumer) {
+    //     CustomData customData = handle.get(DataComponents.CUSTOM_DATA);
+    //     if (customData == null) {
+    //         if (!setIfAbsent) {
+    //             return null;
+    //         }
+    //         final CompoundTag tag = new CompoundTag();
+    //         final CompoundTag pdc = new CompoundTag();
+    //         if (consumer != null) {
+    //             consumer.accept(pdc);
+    //         }
+    //         tag.put(CraftItemStack.PDC_CUSTOM_DATA_KEY, pdc);
+    //         handle.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+    //         return pdc;
+    //     } else if (consumer != null) {
+    //         customData = CustomData.of(customData.copyTag());
+    //     }
+    //     final Map<String, Tag> tags = customData.getUnsafe().tags;
+    //     // System.out.println("tags = " + (tags));
+    //     CompoundTag pdcTag = (CompoundTag) tags.get(CraftItemStack.PDC_CUSTOM_DATA_KEY);
+    //     if (pdcTag == null) {
+    //         if (!setIfAbsent) {
+    //             return null;
+    //         }
+    //         pdcTag = new CompoundTag();
+    //         customData.getUnsafe().tags.put(CraftItemStack.PDC_CUSTOM_DATA_KEY, pdcTag);
+    //     }
+    //     if (consumer != null) {
+    //         consumer.accept(pdcTag);
+    //         handle.set(DataComponents.CUSTOM_DATA, customData);
+    //     }
+    //     // System.out.println("tag1.tags = " + (tag1.tags));
+    //     return pdcTag;
+    // }
 }
