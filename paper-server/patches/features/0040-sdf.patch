@@ -1,0 +1,19 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: loqqin <soubmatic@gmail.com>
+Date: Mon, 2 Mar 2026 23:09:59 +0200
+Subject: [PATCH] sdf
+
+
+diff --git a/net/minecraft/world/entity/LivingEntity.java b/net/minecraft/world/entity/LivingEntity.java
+index 36885d7ea4d27d64226892161526fd1980ec91aa..e4a5c54e0a702b8c822371d88654deda8113033a 100644
+--- a/net/minecraft/world/entity/LivingEntity.java
++++ b/net/minecraft/world/entity/LivingEntity.java
+@@ -262,7 +262,7 @@ public abstract class LivingEntity extends Entity implements Attackable, Waypoin
+     private BlockPos lastPos;
+     private Optional<BlockPos> lastClimbablePos = Optional.empty();
+     @Nullable
+-    private DamageSource lastDamageSource;
++    public DamageSource lastDamageSource;
+     private long lastDamageStamp;
+     protected int autoSpinAttackTicks;
+     protected float autoSpinAttackDmg;
