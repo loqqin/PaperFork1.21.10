@@ -1,5 +1,7 @@
 package org.spigotmc;
 
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArraySet;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Display;
@@ -20,7 +22,12 @@ public final class TrackingRange {
      *
      * @param defaultRange Default range defined by Mojang
      */
+    public static final Int2IntOpenHashMap ENTITIES = new Int2IntOpenHashMap();
     public static int getEntityTrackingRange(final Entity entity, final int defaultRange) {
+        final int i = ENTITIES.get(entity.getId());
+        if (i != 0) {
+            return i;
+        }
         if (defaultRange == 0) {
             return defaultRange;
         }
