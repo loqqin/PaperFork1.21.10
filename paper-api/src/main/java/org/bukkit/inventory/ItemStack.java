@@ -1577,22 +1577,22 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
         for (final Map.Entry<String, Tag> entry : ((CraftPersistentDataContainer) container).getRaw().entrySet()) {
             compoundTag.put(entry.getKey(), entry.getValue());
         }
-        editPDCNms(compoundTag1 -> compoundTag1.tags.put("space:" + key, compoundTag));
+        editPDCNms(compoundTag1 -> compoundTag1.tags.put("space:" + key.toLowerCase(), compoundTag));
         return getCraft();
     }
 
     public CraftItemStack setDouble(String key, double value) {
-        editPDCNms(compoundTag -> compoundTag.tags.put("space:" + key, DoubleTag.valueOf(value)));
+        editPDCNms(compoundTag -> compoundTag.tags.put("space:" + key.toLowerCase(), DoubleTag.valueOf(value)));
         return getCraft();
     }
 
     public CraftItemStack setString(String key, String value) {
-        editPDCNms(compoundTag -> compoundTag.tags.put("space:" + key, StringTag.valueOf(value)));
+        editPDCNms(compoundTag -> compoundTag.tags.put("space:" + key.toLowerCase(), StringTag.valueOf(value)));
         return getCraft();
     }
 
     public CraftItemStack setInt(String key, int value) {
-        editPDCNms(compoundTag -> compoundTag.tags.put("space:" + key, IntTag.valueOf(value)));
+        editPDCNms(compoundTag -> compoundTag.tags.put("space:" + key.toLowerCase(), IntTag.valueOf(value)));
         return getCraft();
     }
 
@@ -1601,7 +1601,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
     public String getString(String key) {
         final CompoundTag pdcCustomData = getPDCNmsViewReadOnly();
         if (pdcCustomData == null) return "";
-        final Tag tag1 = pdcCustomData.tags.get("space:" + key);
+        final Tag tag1 = pdcCustomData.tags.get("space:" + key.toLowerCase());
         if (tag1 == null) return "";
         return ((StringTag) tag1).value();
     }
@@ -1609,7 +1609,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
     public int getInt(String key) {
         final CompoundTag pdcCustomData = getPDCNmsViewReadOnly();
         if (pdcCustomData == null) return 0;
-        final Tag tag = pdcCustomData.tags.get("space:" + key);
+        final Tag tag = pdcCustomData.tags.get("space:" + key.toLowerCase());
         if (tag == null) return 0;
         return ((IntTag) tag).value();
     }
@@ -1617,7 +1617,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
     public double getDouble(String key) {
         final CompoundTag pdcCustomData = getPDCNmsViewReadOnly();
         if (pdcCustomData == null) return 0.0;
-        final Tag tag = pdcCustomData.tags.get("space:" + key);
+        final Tag tag = pdcCustomData.tags.get("space:" + key.toLowerCase());
         if (tag == null) return 0.0;
         return ((DoubleTag) tag).value();
     }
@@ -1625,7 +1625,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
     public CraftPersistentDataContainer getCompound(String key) {
         final CompoundTag pdcCustomData = getPDCNmsViewReadOnly();
         if (pdcCustomData == null) return null;
-        final CompoundTag compoundTag = (CompoundTag) pdcCustomData.tags.get("space:" + key);
+        final CompoundTag compoundTag = (CompoundTag) pdcCustomData.tags.get("space:" + key.toLowerCase());
         if (compoundTag == null) return null;
         final CraftPersistentDataContainer craftPersistentDataContainer = new CraftPersistentDataContainer(Map.of(), registry);
         for (final Map.Entry<String, Tag> stringTagEntry : compoundTag.tags.entrySet()) {
