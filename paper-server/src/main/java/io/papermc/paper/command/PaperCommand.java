@@ -48,7 +48,7 @@ public final class PaperCommand extends Command {
         commands.put(Set.of("version"), new VersionCommand());
         commands.put(Set.of("dumpplugins"), new DumpPluginsCommand());
         commands.put(Set.of("syncloadinfo"), new SyncLoadInfoCommand());
-        commands.put(Set.of("dumpitem"), new DumpItemCommand());
+        commands.put(Set.of("dumpitem"), DumpItemCommand.INSTANCE);
         commands.put(Set.of("mobcaps", "playermobcaps"), new MobcapsCommand());
         commands.put(Set.of("dumplisteners"), new DumpListenersCommand());
         FeatureHooks.registerPaperCommands(commands);

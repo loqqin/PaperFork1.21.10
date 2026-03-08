@@ -50,6 +50,7 @@ import static net.kyori.adventure.text.format.TextDecoration.ITALIC;
 
 @DefaultQualifier(NonNull.class)
 public final class DumpItemCommand implements PaperSubcommand {
+    public static final DumpItemCommand INSTANCE = new DumpItemCommand();
     @Override
     public boolean execute(final CommandSender sender, final String subCommand, final String[] args) {
         this.doDumpItem(sender, args.length > 0 && "all".equals(args[0]));
@@ -57,10 +58,10 @@ public final class DumpItemCommand implements PaperSubcommand {
     }
 
     @SuppressWarnings({"unchecked", "OptionalAssignedToNull", "rawtypes"})
-    private void doDumpItem(final CommandSender sender, final boolean includeAllComponents) {
+    public String doDumpItem(final CommandSender sender, final boolean includeAllComponents) {
         if (!(sender instanceof final Player player)) {
             sender.sendMessage("Only players can use this command");
-            return;
+            return null;
         }
         final ItemStack itemStack = CraftItemStack.asNMSCopy(player.getInventory().getItemInMainHand());
         final TextComponent.Builder visualOutput = Component.text();
@@ -111,7 +112,9 @@ public final class DumpItemCommand implements PaperSubcommand {
         }
         player.sendMessage(visualOutput.build().compact());
         final Component copyMsg = text("Click to copy item definition to clipboard for use with /give", GRAY, ITALIC);
-        sender.sendMessage(copyMsg.clickEvent(copyToClipboard(itemCommandBuilder.toString())));
+        final String string = itemCommandBuilder.toString();
+        sender.sendMessage(copyMsg.clickEvent(copyToClipboard(string)));
+        return string;
     }
 
     private static void writeComponentValue(final Consumer<Component> visualOutput, final Consumer<String> commandOutput, final String path, final Tag serialized) {
