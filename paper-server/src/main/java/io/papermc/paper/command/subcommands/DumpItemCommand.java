@@ -53,17 +53,17 @@ public final class DumpItemCommand implements PaperSubcommand {
     public static final DumpItemCommand INSTANCE = new DumpItemCommand();
     @Override
     public boolean execute(final CommandSender sender, final String subCommand, final String[] args) {
-        this.doDumpItem(sender, args.length > 0 && "all".equals(args[0]));
+        this.doDumpItem(sender, args.length > 0 && "all".equals(args[0]), null);
         return true;
     }
 
     @SuppressWarnings({"unchecked", "OptionalAssignedToNull", "rawtypes"})
-    public String doDumpItem(final CommandSender sender, final boolean includeAllComponents) {
+    public String doDumpItem(final CommandSender sender, final boolean includeAllComponents, @Nullable ItemStack item) {
         if (!(sender instanceof final Player player)) {
             sender.sendMessage("Only players can use this command");
             return null;
         }
-        final ItemStack itemStack = CraftItemStack.asNMSCopy(player.getInventory().getItemInMainHand());
+        final ItemStack itemStack = item != null ? item : CraftItemStack.asNMSCopy(player.getInventory().getItemInMainHand());
         final TextComponent.Builder visualOutput = Component.text();
         final StringBuilder itemCommandBuilder = new StringBuilder();
         final String itemName = itemStack.getItemHolder().unwrapKey().orElseThrow().location().toString();

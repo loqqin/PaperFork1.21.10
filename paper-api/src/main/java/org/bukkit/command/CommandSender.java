@@ -71,6 +71,10 @@ public interface CommandSender extends net.kyori.adventure.audience.Audience, Pe
     @NotNull
     public String getName();
 
+    public default String getLowerCaseName(){
+        return getName();
+    }
+
     // Spigot start
     public class Spigot {
 

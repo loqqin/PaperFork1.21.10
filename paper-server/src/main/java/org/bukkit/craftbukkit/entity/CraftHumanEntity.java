@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -238,6 +239,15 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
     @Override
     public String getName() {
         return this.getHandle().getScoreboardName();
+    }
+
+    public String lowerCaseName = null;
+    @Override
+    public String getLowerCaseName() {
+        if (lowerCaseName == null) {
+            lowerCaseName = getName().toLowerCase(Locale.ROOT);
+        }
+        return lowerCaseName;
     }
 
     @Override
