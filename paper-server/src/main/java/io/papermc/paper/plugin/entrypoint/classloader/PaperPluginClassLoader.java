@@ -19,6 +19,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
@@ -49,7 +50,12 @@ public class PaperPluginClassLoader extends PaperSimplePluginClassLoader impleme
     private PluginClassLoaderGroup group;
 
     public PaperPluginClassLoader(Logger logger, Path source, JarFile file, PaperPluginMeta configuration, ClassLoader parentLoader, URLClassLoader libraryLoader) throws IOException {
-        super(source, file, configuration, parentLoader);
+        this(logger, source, file, configuration, parentLoader, libraryLoader, null);
+    }
+
+    public PaperPluginClassLoader(Logger logger, Path source, JarFile file, PaperPluginMeta configuration, ClassLoader parentLoader, URLClassLoader libraryLoader,
+                                  URL[] urls) throws IOException {
+        super(source, file, configuration, parentLoader, urls);
         this.libraryLoader = libraryLoader;
 
         this.logger = logger;
@@ -77,24 +83,24 @@ public class PaperPluginClassLoader extends PaperSimplePluginClassLoader impleme
         });
     }
 
-    @Override
-    public URL getResource(String name) {
-        URL resource = findResource(name);
-        if (resource == null && this.libraryLoader != null) {
-            return this.libraryLoader.getResource(name);
-        }
-        return resource;
-    }
+    // @Override
+    // public URL getResource(String name) {
+    //     URL resource = findResource(name);
+    //     if (resource == null && this.libraryLoader != null) {
+    //         return this.libraryLoader.getResource(name);
+    //     }
+    //     return resource;
+    // }
 
-    @Override
-    public Enumeration<URL> getResources(String name) throws IOException {
-        List<URL> resources = new ArrayList<>();
-        this.addEnumeration(resources, this.findResources(name));
-        if (this.libraryLoader != null) {
-            addEnumeration(resources, this.libraryLoader.getResources(name));
-        }
-        return Collections.enumeration(resources);
-    }
+    // @Override
+    // public Enumeration<URL> getResources(String name) throws IOException {
+    //     List<URL> resources = new ArrayList<>();
+    //     this.addEnumeration(resources, this.findResources(name));
+    //     if (this.libraryLoader != null) {
+    //         addEnumeration(resources, this.libraryLoader.getResources(name));
+    //     }
+    //     return Collections.enumeration(resources);
+    // }
 
     private <T> void addEnumeration(List<T> list, Enumeration<T> enumeration) {
         while (enumeration.hasMoreElements()) {
@@ -114,19 +120,23 @@ public class PaperPluginClassLoader extends PaperSimplePluginClassLoader impleme
 
     @Override
     public Class<?> loadClass(@NotNull String name, boolean resolve, boolean checkGroup, boolean checkLibraries) throws ClassNotFoundException {
+        // System.out.println("load class " + name + " " + resolve + " " + checkGroup + " " + checkLibraries);
         try {
             Class<?> result = super.loadClass(name, resolve);
-
+            // System.out.println("result = " + result);
             // SPIGOT-6749: Library classes will appear in the above, but we don't want to return them to other plugins
-            if (checkGroup || result.getClassLoader() == this) {
-                return result;
-            }
+            // if (checkGroup || result.getClassLoader() == this) {
+            return result;
+            // }
         } catch (ClassNotFoundException ignored) {
+            // System.out.println("catch notfound " + Arrays.toString(getURLs()));
         }
 
         if (checkLibraries) {
             try {
-                return this.libraryLoader.loadClass(name);
+                final Class<?> aClass = this.libraryLoader.loadClass(name);
+                System.out.println("from library = " + aClass) ;
+                return aClass;
             } catch (ClassNotFoundException ignored) {
             }
         }

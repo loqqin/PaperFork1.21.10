@@ -31,11 +31,14 @@ class PaperPluginProviderFactory implements PluginTypeFactory<PaperPluginParent,
         PaperClasspathBuilder builder = new PaperClasspathBuilder(context);
 
         if (configuration.getLoader() != null) {
+            // System.out.println("paper plugin provider factory " + file + " " + source);
             try (
                 PaperSimplePluginClassLoader simplePluginClassLoader = new PaperSimplePluginClassLoader(source, file, configuration, this.getClass().getClassLoader())
             ) {
+                // System.out.println("simplePluginClassLoader = " + simplePluginClassLoader);
                 PluginLoader loader = ProviderUtil.loadClass(configuration.getLoader(), PluginLoader.class, simplePluginClassLoader);
                 loader.classloader(builder);
+                // System.out.println("builder = " + builder);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

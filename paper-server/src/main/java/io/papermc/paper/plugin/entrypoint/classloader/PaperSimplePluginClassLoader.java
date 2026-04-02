@@ -11,6 +11,7 @@ import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.security.CodeSigner;
 import java.security.CodeSource;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -31,6 +32,24 @@ public class PaperSimplePluginClassLoader extends URLClassLoader {
     protected final Manifest jarManifest;
     protected final URL jarUrl;
     protected final JarFile jar;
+
+    public PaperSimplePluginClassLoader(
+        Path source, JarFile file, PluginMeta configuration, ClassLoader parentLoader,
+        URL[] urls
+    ) throws IOException {
+        final URL[] newUrls = urls == null ? null : new URL[urls.length + 1];
+        if (newUrls != null) {
+            System.arraycopy(urls, 0, newUrls, 1, urls.length);
+            newUrls[0] = source.toUri().toURL();
+        }
+        super(source.getFileName().toString(), newUrls == null ? new URL[]{source.toUri().toURL()} : newUrls, parentLoader);
+
+        this.source = source;
+        this.jarManifest = file.getManifest();
+        this.jarUrl = source.toUri().toURL();
+        this.configuration = configuration;
+        this.jar = file;
+    }
 
     public PaperSimplePluginClassLoader(Path source, JarFile file, PluginMeta configuration, ClassLoader parentLoader) throws IOException {
         super(source.getFileName().toString(), new URL[]{source.toUri().toURL()}, parentLoader);
@@ -53,55 +72,56 @@ public class PaperSimplePluginClassLoader extends URLClassLoader {
     }
 
     // Bytecode modification supported loader
-    @Override
-    protected Class<?> findClass(String name) throws ClassNotFoundException {
-        NamespaceChecker.validateNameSpaceForClassloading(name);
-
-        // See UrlClassLoader#findClass(String)
-        String path = name.replace('.', '/').concat(".class");
-        JarEntry entry = this.jar.getJarEntry(path);
-        if (entry == null) {
-            throw new ClassNotFoundException(name);
-        }
-
-        // See URLClassLoader#defineClass(String, Resource)
-        byte[] classBytes;
-
-        try (InputStream is = this.jar.getInputStream(entry)) {
-            classBytes = is.readAllBytes();
-        } catch (IOException ex) {
-            throw new ClassNotFoundException(name, ex);
-        }
-
-        classBytes = ClassloaderBytecodeModifier.bytecodeModifier().modify(this.configuration, classBytes);
-
-        int dot = name.lastIndexOf('.');
-        if (dot != -1) {
-            String pkgName = name.substring(0, dot);
-            // Get defined package does not correctly handle sealed packages.
-            if (this.getDefinedPackage(pkgName) == null) {
-                try {
-                    if (this.jarManifest != null) {
-                        this.definePackage(pkgName, this.jarManifest, this.jarUrl);
-                    } else {
-                        this.definePackage(pkgName, null, null, null, null, null, null, null);
-                    }
-                } catch (IllegalArgumentException ex) {
-                    // parallel-capable class loaders: re-verify in case of a
-                    // race condition
-                    if (this.getDefinedPackage(pkgName) == null) {
-                        // Should never happen
-                        throw new IllegalStateException("Cannot find package " + pkgName);
-                    }
-                }
-            }
-        }
-
-        CodeSigner[] signers = entry.getCodeSigners();
-        CodeSource source = new CodeSource(this.jarUrl, signers);
-
-        return this.defineClass(name, classBytes, 0, classBytes.length, source);
-    }
+    // @Override
+    // protected Class<?> findClass(String name) throws ClassNotFoundException {
+    //     NamespaceChecker.validateNameSpaceForClassloading(name);
+    //     System.out.println("paper simple plugin class loader find class " + name);
+    //
+    //     // See UrlClassLoader#findClass(String)
+    //     String path = name.replace('.', '/').concat(".class");
+    //     JarEntry entry = this.jar.getJarEntry(path);
+    //     if (entry == null) {
+    //         throw new ClassNotFoundException(name);
+    //     }
+    //
+    //     // See URLClassLoader#defineClass(String, Resource)
+    //     byte[] classBytes;
+    //
+    //     try (InputStream is = this.jar.getInputStream(entry)) {
+    //         classBytes = is.readAllBytes();
+    //     } catch (IOException ex) {
+    //         throw new ClassNotFoundException(name, ex);
+    //     }
+    //
+    //     classBytes = ClassloaderBytecodeModifier.bytecodeModifier().modify(this.configuration, classBytes);
+    //
+    //     int dot = name.lastIndexOf('.');
+    //     if (dot != -1) {
+    //         String pkgName = name.substring(0, dot);
+    //         // Get defined package does not correctly handle sealed packages.
+    //         if (this.getDefinedPackage(pkgName) == null) {
+    //             try {
+    //                 if (this.jarManifest != null) {
+    //                     this.definePackage(pkgName, this.jarManifest, this.jarUrl);
+    //                 } else {
+    //                     this.definePackage(pkgName, null, null, null, null, null, null, null);
+    //                 }
+    //             } catch (IllegalArgumentException ex) {
+    //                 // parallel-capable class loaders: re-verify in case of a
+    //                 // race condition
+    //                 if (this.getDefinedPackage(pkgName) == null) {
+    //                     // Should never happen
+    //                     throw new IllegalStateException("Cannot find package " + pkgName);
+    //                 }
+    //             }
+    //         }
+    //     }
+    //
+    //     CodeSigner[] signers = entry.getCodeSigners();
+    //     CodeSource source = new CodeSource(this.jarUrl, signers);
+    //
+    //     return this.defineClass(name, classBytes, 0, classBytes.length, source);
+    // }
 
     @Override
     public String toString() {
