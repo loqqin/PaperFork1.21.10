@@ -392,8 +392,8 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
         if (result.getFirst() != null) adventure$title = result.getFirst(); // Paper - Add titleOverride to InventoryOpenEvent
 
         //player.connection.send(new ClientboundOpenScreenPacket(container.containerId, windowType, CraftChatMessage.fromString(title)[0])); // Paper - comment
-        if (!player.isImmobile()) player.connection.send(new ClientboundOpenScreenPacket(container.containerId, windowType, io.papermc.paper.adventure.PaperAdventure.asVanilla(adventure$title))); // Paper - Prevent opening inventories when frozen
         player.containerMenu = container;
+        if (!player.isImmobile()) player.connection.send(new ClientboundOpenScreenPacket(container.containerId, windowType, io.papermc.paper.adventure.PaperAdventure.asVanilla(adventure$title))); // Paper - Prevent opening inventories when frozen
         player.initMenu(container);
     }
 
