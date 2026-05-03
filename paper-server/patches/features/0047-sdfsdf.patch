@@ -1,0 +1,28 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Sun, 12 Apr 2026 18:46:20 +0300
+Subject: [PATCH] sdfsdf
+
+
+diff --git a/net/minecraft/world/entity/projectile/ProjectileUtil.java b/net/minecraft/world/entity/projectile/ProjectileUtil.java
+index 99ccf25ba1a01e44d1328c5cdfc03544e1cdea31..7ef510b8d124a1909d770dcdf7fd1039271a46d2 100644
+--- a/net/minecraft/world/entity/projectile/ProjectileUtil.java
++++ b/net/minecraft/world/entity/projectile/ProjectileUtil.java
+@@ -107,6 +107,8 @@ public final class ProjectileUtil {
+         return Math.max(0.0F, Math.min(0.3F, (entity.tickCount - 2) / 20.0F));
+     }
+ 
++    public static final it.unimi.dsi.fastutil.ints.Int2DoubleOpenHashMap boundingBoxInflateMapForProjectileClip = new it.unimi.dsi.fastutil.ints.Int2DoubleOpenHashMap();
++
+     @Nullable
+     public static EntityHitResult getEntityHitResult(
+         Level level, Entity source, Vec3 startVec, Vec3 endVec, AABB boundingBox, Predicate<Entity> filter, float margin
+@@ -116,7 +118,7 @@ public final class ProjectileUtil {
+         Entity entity = null;
+ 
+         for (Entity entity1 : level.getEntities(source, boundingBox, filter)) {
+-            AABB aabb = entity1.getBoundingBox().inflate(margin);
++            AABB aabb = entity1.getBoundingBox().inflate(margin + boundingBoxInflateMapForProjectileClip.getOrDefault(source.getId(), 0));
+             Optional<Vec3> optional1 = aabb.clip(startVec, endVec);
+             if (optional1.isPresent()) {
+                 double d1 = startVec.distanceToSqr(optional1.get());
