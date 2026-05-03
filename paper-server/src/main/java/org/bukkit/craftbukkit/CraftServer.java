@@ -1334,7 +1334,7 @@ public final class CraftServer implements Server {
             return false;
         }
 
-        if (handle.dimension() == net.minecraft.world.level.Level.OVERWORLD) {
+        if (handle.dimension() == net.minecraft.world.level.Level.OVERWORLD && !Boolean.getBoolean("allowUnloadOverworld")) {
             return false;
         }
 
