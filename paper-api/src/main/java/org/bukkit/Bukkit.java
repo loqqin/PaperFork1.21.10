@@ -68,6 +68,7 @@ import org.jetbrains.annotations.Nullable;
  * Represents the Bukkit core, for version and Server singleton handling
  */
 public final class Bukkit {
+    public static final java.util.HashSet<String> worldNamesWithAllowedGrowthWithLowBrightness = new java.util.HashSet<>();
     private static Server server;
 
     /**
@@ -115,11 +116,12 @@ public final class Bukkit {
         // Paper start - add git information
         server.getLogger().info(getVersionMessage());
     }
+
     /**
-      * Gets message describing the version server is running.
-      *
-      * @return message describing the version server is running
-      */
+     * Gets message describing the version server is running.
+     *
+     * @return message describing the version server is running
+     */
     @NotNull
     public static String getVersionMessage() {
         final io.papermc.paper.ServerBuildInfo version = io.papermc.paper.ServerBuildInfo.buildInfo();
@@ -160,6 +162,7 @@ public final class Bukkit {
     }
 
     // Paper start - expose game version
+
     /**
      * Gets the version of game this server implements
      *
@@ -191,7 +194,7 @@ public final class Bukkit {
      * affect the collection are fully supported. The effects following
      * (non-exhaustive) {@link Entity#teleport(Location) teleportation},
      * {@link Player#setHealth(double) death}, and {@link Player#kick(
-     * Component) kicking} are undefined. Any use of this collection from
+     *Component) kicking} are undefined. Any use of this collection from
      * asynchronous threads is unsafe.
      * <p>
      * For safe consequential iteration or mimicking the old array behavior,
@@ -255,7 +258,7 @@ public final class Bukkit {
      * specified.
      *
      * @return the IP string that this server is bound to, otherwise empty
-     *     string
+     * string
      */
     @NotNull
     public static String getIp() {
@@ -362,7 +365,7 @@ public final class Bukkit {
      * not specified.
      *
      * @return the SHA-1 digest of the server resource pack, otherwise empty
-     *     string
+     * string
      */
     @NotNull
     public static String getResourcePackHash() {
@@ -374,7 +377,7 @@ public final class Bukkit {
      * pack is required, or empty string if not specified.
      *
      * @return the custom prompt message to be shown when the server resource,
-     *     otherwise empty string
+     * otherwise empty string
      */
     @NotNull
     public static String getResourcePackPrompt() {
@@ -410,7 +413,7 @@ public final class Bukkit {
 
     /**
      * Gets whether the server whitelist is enforced.
-     *
+     * <p>
      * If the whitelist is enforced, non-whitelisted players will be
      * disconnected when the server whitelist is reloaded.
      *
@@ -422,7 +425,7 @@ public final class Bukkit {
 
     /**
      * Sets if the server whitelist is enforced.
-     *
+     * <p>
      * If the whitelist is enforced, non-whitelisted players will be
      * disconnected when the server whitelist is reloaded.
      *
@@ -465,6 +468,7 @@ public final class Bukkit {
     }
 
     // Paper start
+
     /**
      * Sends the component to all online players.
      *
@@ -746,6 +750,7 @@ public final class Bukkit {
     }
 
     // Paper start
+
     /**
      * Gets the unique ID of the player currently known as the specified player name
      * In Offline Mode, will return an Offline UUID
@@ -800,12 +805,13 @@ public final class Bukkit {
     }
 
     // Paper start
+
     /**
      * Gets whether the worlds are being ticked right now.
      *
      * @return true if the worlds are being ticked, false otherwise.
      */
-    public static boolean isTickingWorlds(){
+    public static boolean isTickingWorlds() {
         return server.isTickingWorlds();
     }
     // Paper end
@@ -849,7 +855,7 @@ public final class Bukkit {
      * ensuring that you're not un/loading worlds midtick by checking {@link Bukkit#isTickingWorlds()}
      *
      * @param world the world to unload
-     * @param save whether to save the chunks before unloading
+     * @param save  whether to save the chunks before unloading
      * @return true if successful, false otherwise
      */
     public static boolean unloadWorld(@NotNull World world, boolean save) {
@@ -878,6 +884,7 @@ public final class Bukkit {
         return server.getWorld(uid);
     }
     // Paper start
+
     /**
      * Gets the world from the given NamespacedKey
      *
@@ -905,7 +912,6 @@ public final class Bukkit {
      * Create a new virtual {@link WorldBorder}.
      *
      * @return the created world border instance
-     *
      * @see Player#setWorldBorder(WorldBorder)
      */
     @NotNull
@@ -939,13 +945,12 @@ public final class Bukkit {
      * Create a new explorer map targeting the closest nearby structure of a
      * given {@link StructureType}.
      *
-     * @param world the world the map will belong to
-     * @param location the origin location to find the nearest structure
+     * @param world         the world the map will belong to
+     * @param location      the origin location to find the nearest structure
      * @param structureType the type of structure to find
      * @return a newly created item stack
-     *
      * @see World#locateNearestStructure(org.bukkit.Location,
-     *      org.bukkit.StructureType, int, boolean)
+     * org.bukkit.StructureType, int, boolean)
      * @deprecated use {@link #createExplorerMap(World, Location, org.bukkit.generator.structure.StructureType, org.bukkit.map.MapCursor.Type)}
      */
     @Deprecated // Paper
@@ -961,16 +966,15 @@ public final class Bukkit {
      * This method uses implementation default values for radius and
      * findUnexplored (usually 100, true).
      *
-     * @param world the world the map will belong to
-     * @param location the origin location to find the nearest structure
-     * @param structureType the type of structure to find
-     * @param radius radius to search, see World#locateNearestStructure for more
-     *               information
+     * @param world          the world the map will belong to
+     * @param location       the origin location to find the nearest structure
+     * @param structureType  the type of structure to find
+     * @param radius         radius to search, see World#locateNearestStructure for more
+     *                       information
      * @param findUnexplored whether to find unexplored structures
      * @return the newly created item stack
-     *
      * @see World#locateNearestStructure(org.bukkit.Location,
-     *      org.bukkit.StructureType, int, boolean)
+     * org.bukkit.StructureType, int, boolean)
      * @deprecated use {@link #createExplorerMap(World, Location, org.bukkit.generator.structure.StructureType, org.bukkit.map.MapCursor.Type, int, boolean)}
      */
     @Deprecated // Paper
@@ -979,6 +983,7 @@ public final class Bukkit {
         return server.createExplorerMap(world, location, structureType, radius, findUnexplored);
     }
     // Paper start
+
     /**
      * Create a new explorer map targeting the closest nearby structure of a
      * given {@link org.bukkit.generator.structure.StructureType}.
@@ -986,14 +991,13 @@ public final class Bukkit {
      * This method uses implementation default values for radius and
      * findUnexplored (usually 100, true).
      *
-     * @param world the world the map will belong to
-     * @param location the origin location to find the nearest structure
+     * @param world         the world the map will belong to
+     * @param location      the origin location to find the nearest structure
      * @param structureType the type of structure to find
-     * @param mapIcon the map icon to use on the map
+     * @param mapIcon       the map icon to use on the map
      * @return a newly created item stack or null if it can't find a location
-     *
      * @see World#locateNearestStructure(org.bukkit.Location,
-     *      org.bukkit.generator.structure.StructureType, int, boolean)
+     * org.bukkit.generator.structure.StructureType, int, boolean)
      */
     public static @Nullable ItemStack createExplorerMap(@NotNull World world, @NotNull Location location, @NotNull org.bukkit.generator.structure.StructureType structureType, @NotNull org.bukkit.map.MapCursor.Type mapIcon) {
         return server.createExplorerMap(world, location, structureType, mapIcon);
@@ -1003,17 +1007,16 @@ public final class Bukkit {
      * Create a new explorer map targeting the closest nearby structure of a
      * given {@link org.bukkit.generator.structure.StructureType}.
      *
-     * @param world the world the map will belong to
-     * @param location the origin location to find the nearest structure
-     * @param structureType the type of structure to find
-     * @param mapIcon the map icon to use on the map
-     * @param radius radius to search, see World#locateNearestStructure for more
-     *               information
+     * @param world          the world the map will belong to
+     * @param location       the origin location to find the nearest structure
+     * @param structureType  the type of structure to find
+     * @param mapIcon        the map icon to use on the map
+     * @param radius         radius to search, see World#locateNearestStructure for more
+     *                       information
      * @param findUnexplored whether to find unexplored structures
      * @return the newly created item stack or null if it can't find a location
-     *
      * @see World#locateNearestStructure(org.bukkit.Location,
-     *      org.bukkit.generator.structure.StructureType, int, boolean)
+     * org.bukkit.generator.structure.StructureType, int, boolean)
      */
     public static @Nullable ItemStack createExplorerMap(@NotNull World world, @NotNull Location location, @NotNull org.bukkit.generator.structure.StructureType structureType, @NotNull org.bukkit.map.MapCursor.Type mapIcon, int radius, boolean findUnexplored) {
         return server.createExplorerMap(world, location, structureType, mapIcon, radius, findUnexplored);
@@ -1036,9 +1039,11 @@ public final class Bukkit {
     }
 
     // Paper start - update reloadable data
+
     /**
      * Updates all advancement, tag, and recipe data for all connected clients.
      * Useful for updating clients to new advancements/recipes/tags.
+     *
      * @see #updateRecipes()
      */
     public static void updateResources() {
@@ -1048,6 +1053,7 @@ public final class Bukkit {
     /**
      * Updates recipe data and the recipe book for all connected clients. Useful for
      * updating clients to new recipes.
+     *
      * @see #updateResources()
      */
     public static void updateRecipes() {
@@ -1059,11 +1065,11 @@ public final class Bukkit {
      * Returns the primary logger associated with this server instance.
      *
      * @return Logger associated with this server
-     * @see org.bukkit.plugin.Plugin#getSLF4JLogger()
      * @apiNote This logger is for the Minecraft server software, not for specific plugins. You should
      * use a logger for a specific plugin, either via {@link org.bukkit.plugin.Plugin#getSLF4JLogger()}
      * or {@link org.bukkit.plugin.Plugin#getLogger()} or create a specific logger for a class via slf4j.
      * That way, log messages contain contextual information about the source of the message.
+     * @see org.bukkit.plugin.Plugin#getSLF4JLogger()
      */
     @NotNull
     @org.jetbrains.annotations.ApiStatus.Internal // Paper - internalize Bukkit#getLogger
@@ -1092,12 +1098,12 @@ public final class Bukkit {
     /**
      * Dispatches a command on this server, and executes it if found.
      *
-     * @param sender the apparent sender of the command
+     * @param sender      the apparent sender of the command
      * @param commandLine the command + arguments. Example: <code>test abc
-     *     123</code>
+     *                    123</code>
      * @return returns false if no target is found
      * @throws CommandException thrown when the executor for the given command
-     *     fails with an unhandled exception
+     *                          fails with an unhandled exception
      */
     public static boolean dispatchCommand(@NotNull CommandSender sender, @NotNull String commandLine) throws CommandException {
         return server.dispatchCommand(sender, commandLine);
@@ -1122,10 +1128,10 @@ public final class Bukkit {
     /**
      * Adds a recipe to the crafting manager.
      *
-     * @apiNote resendRecipes is ignored at the moment for stability reasons, recipes will always be updated
-     * @param recipe the recipe to add
+     * @param recipe        the recipe to add
      * @param resendRecipes true to update the client with the full set of recipes
      * @return true if the recipe was added, false if it wasn't for some reason
+     * @apiNote resendRecipes is ignored at the moment for stability reasons, recipes will always be updated
      */
     @Contract("null, _ -> false")
     public static boolean addRecipe(@Nullable Recipe recipe, boolean resendRecipes) {
@@ -1172,7 +1178,7 @@ public final class Bukkit {
      *
      * @param craftingMatrix list of items to be crafted from.
      *                       Must not contain more than 9 items.
-     * @param world The world the crafting takes place in.
+     * @param world          The world the crafting takes place in.
      * @return the {@link Recipe} resulting from the given crafting matrix.
      */
     @Nullable
@@ -1200,8 +1206,8 @@ public final class Bukkit {
      *
      * @param craftingMatrix list of items to be crafted from.
      *                       Must not contain more than 9 items.
-     * @param world The world the crafting takes place in.
-     * @param player The player to imitate the crafting event on.
+     * @param world          The world the crafting takes place in.
+     * @param player         The player to imitate the crafting event on.
      * @return resulting {@link ItemCraftResult} containing the resulting item, matrix and any overflow items.
      */
     @NotNull
@@ -1223,7 +1229,7 @@ public final class Bukkit {
      *
      * @param craftingMatrix list of items to be crafted from.
      *                       Must not contain more than 9 items.
-     * @param world The world the crafting takes place in.
+     * @param world          The world the crafting takes place in.
      * @return resulting {@link ItemCraftResult} containing the resulting item, matrix and any overflow items.
      */
     @NotNull
@@ -1252,8 +1258,8 @@ public final class Bukkit {
      *
      * @param craftingMatrix list of items to be crafted from.
      *                       Must not contain more than 9 items.
-     * @param world The world the crafting takes place in.
-     * @param player The player to imitate the crafting event on.
+     * @param world          The world the crafting takes place in.
+     * @param player         The player to imitate the crafting event on.
      * @return the {@link ItemStack} resulting from the given crafting matrix, if no recipe is found
      * an ItemStack of {@link Material#AIR} is returned.
      */
@@ -1276,7 +1282,7 @@ public final class Bukkit {
      *
      * @param craftingMatrix list of items to be crafted from.
      *                       Must not contain more than 9 items.
-     * @param world The world the crafting takes place in.
+     * @param world          The world the crafting takes place in.
      * @return the {@link ItemStack} resulting from the given crafting matrix, if no recipe is found
      * an ItemStack of {@link Material#AIR} is returned.
      */
@@ -1324,6 +1330,7 @@ public final class Bukkit {
     }
 
     // Paper start - method to resend recipes
+
     /**
      * Remove a recipe from the server.
      * <p>
@@ -1331,7 +1338,7 @@ public final class Bukkit {
      * associated with that recipe (eg whether it has been discovered by
      * players).</b>
      *
-     * @param key NamespacedKey of recipe to remove.
+     * @param key           NamespacedKey of recipe to remove.
      * @param resendRecipes true to update all clients on the new recipe list.
      *                      Will only update if a recipe was actually removed
      * @return True if recipe was removed
@@ -1458,6 +1465,7 @@ public final class Bukkit {
     }
 
     // Paper start
+
     /**
      * Broadcast a message to all players.
      * <p>
@@ -1470,26 +1478,28 @@ public final class Bukkit {
     public static int broadcast(net.kyori.adventure.text.@NotNull Component message) {
         return server.broadcast(message);
     }
+
     /**
      * Broadcasts the specified message to every user with the given
      * permission name.
      *
-     * @param message message to broadcast
+     * @param message    message to broadcast
      * @param permission the required permission {@link Permissible
-     *     permissibles} must have to receive the broadcast
+     *                   permissibles} must have to receive the broadcast
      * @return number of message recipients
      */
     public static int broadcast(net.kyori.adventure.text.@NotNull Component message, @NotNull String permission) {
         return server.broadcast(message, permission);
     }
     // Paper end
+
     /**
      * Broadcasts the specified message to every user with the given
      * permission name.
      *
-     * @param message message to broadcast
+     * @param message    message to broadcast
      * @param permission the required permission {@link Permissible
-     *     permissibles} must have to receive the broadcast
+     *                   permissibles} must have to receive the broadcast
      * @return number of message recipients
      * @deprecated in favour of {@link #broadcast(Component, String)}
      */
@@ -1518,6 +1528,7 @@ public final class Bukkit {
     }
 
     // Paper start
+
     /**
      * Gets the player by the given name, regardless if they are offline or
      * online.
@@ -1557,10 +1568,10 @@ public final class Bukkit {
      * Creates a new {@link PlayerProfile}.
      *
      * @param uniqueId the unique id
-     * @param name the name
+     * @param name     the name
      * @return the new PlayerProfile
      * @throws IllegalArgumentException if both the unique id is
-     * <code>null</code> and the name is <code>null</code> or blank
+     *                                  <code>null</code> and the name is <code>null</code> or blank
      * @deprecated use {@link #createProfile(UUID, String)}
      */
     @NotNull
@@ -1589,7 +1600,7 @@ public final class Bukkit {
      * @param name the name
      * @return the new PlayerProfile
      * @throws IllegalArgumentException if the name is <code>null</code> or
-     * blank
+     *                                  blank
      * @deprecated use {@link #createProfile(String)}
      */
     @NotNull
@@ -1612,7 +1623,6 @@ public final class Bukkit {
      * Bans the specified address from the server.
      *
      * @param address the IP address to ban
-     *
      * @deprecated see {@link #banIP(InetAddress)}
      */
     @Deprecated(since = "1.20.1")
@@ -1624,7 +1634,6 @@ public final class Bukkit {
      * Unbans the specified address from the server.
      *
      * @param address the IP address to unban
-     *
      * @deprecated see {@link #unbanIP(InetAddress)}
      */
     @Deprecated(since = "1.20.1")
@@ -1664,8 +1673,7 @@ public final class Bukkit {
      * Gets a ban list for the supplied type.
      *
      * @param type the type of list to fetch, cannot be null
-     * @param <T> The ban target
-     *
+     * @param <T>  The ban target
      * @return a ban list of the specified type
      * @deprecated use {@link #getBanList(io.papermc.paper.ban.BanListType)} to enforce the correct return value at compile time.
      */
@@ -1675,12 +1683,12 @@ public final class Bukkit {
         return server.getBanList(type);
     }
     // Paper start - add BanListType (which has a generic)
+
     /**
      * Gets a ban list for the supplied type.
      *
      * @param type the type of list to fetch, cannot be null
-     * @param <B> The ban target
-     *
+     * @param <B>  The ban target
      * @return a ban list of the specified type
      */
     @NotNull
@@ -1739,6 +1747,7 @@ public final class Bukkit {
     }
 
     // Paper start
+
     /**
      * Creates a special {@link CommandSender} which redirects command feedback (in the form of chat messages) to the
      * specified listener. The returned sender will have the same effective permissions as {@link #getConsoleSender()}.
@@ -1807,11 +1816,10 @@ public final class Bukkit {
      * {@link Player#openEnchanting(Location, boolean)} instead.
      *
      * @param owner the holder of the inventory, or null to indicate no holder
-     * @param type the type of inventory to create
+     * @param type  the type of inventory to create
      * @return a new inventory
      * @throws IllegalArgumentException if the {@link InventoryType} cannot be
-     * viewed.
-     *
+     *                                  viewed.
      * @see InventoryType#isCreatable()
      */
     @NotNull
@@ -1820,6 +1828,7 @@ public final class Bukkit {
     }
 
     // Paper start
+
     /**
      * Creates an empty inventory with the specified type and title. If the type
      * is {@link InventoryType#CHEST}, the new inventory has a size of 27;
@@ -1836,12 +1845,11 @@ public final class Bukkit {
      * {@link Player#openEnchanting(Location, boolean)} instead.
      *
      * @param owner The holder of the inventory; can be null if there's no holder.
-     * @param type The type of inventory to create.
+     * @param type  The type of inventory to create.
      * @param title The title of the inventory, to be displayed when it is viewed.
      * @return The new inventory.
      * @throws IllegalArgumentException if the {@link InventoryType} cannot be
-     * viewed.
-     *
+     *                                  viewed.
      * @see InventoryType#isCreatable()
      */
     @NotNull
@@ -1866,14 +1874,13 @@ public final class Bukkit {
      * {@link Player#openEnchanting(Location, boolean)} instead.
      *
      * @param owner The holder of the inventory; can be null if there's no holder.
-     * @param type The type of inventory to create.
+     * @param type  The type of inventory to create.
      * @param title The title of the inventory, to be displayed when it is viewed.
      * @return The new inventory.
      * @throws IllegalArgumentException if the {@link InventoryType} cannot be
-     * viewed.
-     * @deprecated in favour of {@link #createInventory(InventoryHolder, InventoryType, Component)}
-     *
+     *                                  viewed.
      * @see InventoryType#isCreatable()
+     * @deprecated in favour of {@link #createInventory(InventoryHolder, InventoryType, Component)}
      */
     @Deprecated // Paper
     @NotNull
@@ -1886,7 +1893,7 @@ public final class Bukkit {
      * specified size.
      *
      * @param owner the holder of the inventory, or null to indicate no holder
-     * @param size a multiple of 9 as the size of inventory to create
+     * @param size  a multiple of 9 as the size of inventory to create
      * @return a new inventory
      * @throws IllegalArgumentException if the size is not a multiple of 9
      */
@@ -1896,14 +1903,15 @@ public final class Bukkit {
     }
 
     // Paper start
+
     /**
      * Creates an empty inventory of type {@link InventoryType#CHEST} with the
      * specified size and title.
      *
      * @param owner the holder of the inventory, or null to indicate no holder
-     * @param size a multiple of 9 as the size of inventory to create
+     * @param size  a multiple of 9 as the size of inventory to create
      * @param title the title of the inventory, displayed when inventory is
-     *     viewed
+     *              viewed
      * @return a new inventory
      * @throws IllegalArgumentException if the size is not a multiple of 9
      */
@@ -1918,9 +1926,9 @@ public final class Bukkit {
      * specified size and title.
      *
      * @param owner the holder of the inventory, or null to indicate no holder
-     * @param size a multiple of 9 as the size of inventory to create
+     * @param size  a multiple of 9 as the size of inventory to create
      * @param title the title of the inventory, displayed when inventory is
-     *     viewed
+     *              viewed
      * @return a new inventory
      * @throws IllegalArgumentException if the size is not a multiple of 9
      * @deprecated in favour of {@link #createInventory(InventoryHolder, InventoryType, Component)}
@@ -1932,11 +1940,12 @@ public final class Bukkit {
     }
 
     // Paper start
+
     /**
      * Creates an empty merchant.
      *
      * @param title the title of the corresponding merchant inventory, displayed
-     * when the merchant inventory is viewed
+     *              when the merchant inventory is viewed
      * @return a new merchant
      * @deprecated The title parameter is no-longer needed when used with
      * {@link MenuType#MERCHANT} and {@link MenuType.Typed#builder()}.
@@ -1946,11 +1955,12 @@ public final class Bukkit {
         return server.createMerchant(title);
     }
     // Paper start
+
     /**
      * Creates an empty merchant.
      *
      * @param title the title of the corresponding merchant inventory, displayed
-     * when the merchant inventory is viewed
+     *              when the merchant inventory is viewed
      * @return a new merchant
      * @deprecated in favour of {@link #createMerchant(Component)}. The title parameter is
      * no-longer needed when used with {@link MenuType#MERCHANT} and {@link MenuType.Typed#builder()}
@@ -2077,19 +2087,21 @@ public final class Bukkit {
      * preclude</b> the same assumption.
      *
      * @return true if the current thread matches the expected primary thread,
-     *     false otherwise
+     * false otherwise
      */
     public static boolean isPrimaryThread() {
         return server.isPrimaryThread();
     }
 
     // Paper start
+
     /**
      * Gets the message that is displayed on the server list.
      *
      * @return the server's MOTD
      */
-    @NotNull public static Component motd() {
+    @NotNull
+    public static Component motd() {
         return server.motd();
     }
 
@@ -2218,8 +2230,8 @@ public final class Bukkit {
      * Gets an instance of the server's default server-icon.
      *
      * @return the default server-icon; null values may be used by the
-     *     implementation to indicate no defined icon, but this behavior is
-     *     not guaranteed
+     * implementation to indicate no defined icon, but this behavior is
+     * not guaranteed
      */
     @Nullable
     public static CachedServerIcon getServerIcon() {
@@ -2235,10 +2247,10 @@ public final class Bukkit {
      *
      * @param file the file to load from
      * @return a cached server-icon that can be used for a {@link
-     *     ServerListPingEvent#setServerIcon(CachedServerIcon)}
+     * ServerListPingEvent#setServerIcon(CachedServerIcon)}
      * @throws IllegalArgumentException if image is null
-     * @throws Exception if the image does not meet current server server-icon
-     *     specifications
+     * @throws Exception                if the image does not meet current server server-icon
+     *                                  specifications
      */
     @NotNull
     public static CachedServerIcon loadServerIcon(@NotNull File file) throws IllegalArgumentException, Exception {
@@ -2253,10 +2265,10 @@ public final class Bukkit {
      *
      * @param image the image to use
      * @return a cached server-icon that can be used for a {@link
-     *     ServerListPingEvent#setServerIcon(CachedServerIcon)}
+     * ServerListPingEvent#setServerIcon(CachedServerIcon)}
      * @throws IllegalArgumentException if image is null
-     * @throws Exception if the image does not meet current server
-     *     server-icon specifications
+     * @throws Exception                if the image does not meet current server
+     *                                  server-icon specifications
      */
     @NotNull
     public static CachedServerIcon loadServerIcon(@NotNull BufferedImage image) throws IllegalArgumentException, Exception {
@@ -2310,7 +2322,7 @@ public final class Bukkit {
 
     /**
      * Create a ChunkData for use in a generator.
-     *
+     * <p>
      * See {@link ChunkGenerator#generateChunkData(org.bukkit.World, java.util.Random, int, int, org.bukkit.generator.ChunkGenerator.BiomeGrid)}
      *
      * @param world the world to create the ChunkData for
@@ -2344,7 +2356,7 @@ public final class Bukkit {
      * This instance is added to the persistent storage of the server and will
      * be editable by commands and restored after restart.
      *
-     * @param key the key of the boss bar that is used to access the boss bar
+     * @param key   the key of the boss bar that is used to access the boss bar
      * @param title the title of the boss bar
      * @param color the color of the boss bar
      * @param style the style of the boss bar
@@ -2365,7 +2377,7 @@ public final class Bukkit {
      *     {@link #createBossBar(String, BarColor, BarStyle, BarFlag...)}
      *   </li>
      * </ul>
-     *
+     * <p>
      * e.g. bossbars created using the bossbar command
      *
      * @return a bossbar iterator
@@ -2384,7 +2396,7 @@ public final class Bukkit {
      *     {@link #createBossBar(String, BarColor, BarStyle, BarFlag...)}
      *   </li>
      * </ul>
-     *
+     * <p>
      * e.g. bossbars created using the bossbar command
      *
      * @param key unique bossbar key
@@ -2404,7 +2416,7 @@ public final class Bukkit {
      *     {@link #createBossBar(String, BarColor, BarStyle, BarFlag...)}
      *   </li>
      * </ul>
-     *
+     * <p>
      * e.g. bossbars created using the bossbar command
      *
      * @param key unique bossbar key
@@ -2426,8 +2438,10 @@ public final class Bukkit {
     }
 
     // Paper start
+
     /**
      * Gets the current server TPS
+     *
      * @return current server TPS (1m, 5m, 15m in Paper-Server)
      */
     public static double @NotNull [] getTPS() {
@@ -2519,7 +2533,7 @@ public final class Bukkit {
      * provided in data.
      *
      * @param material the material
-     * @param data data string
+     * @param data     data string
      * @return new data instance
      * @throws IllegalArgumentException if the specified data is not valid
      */
@@ -2541,10 +2555,10 @@ public final class Bukkit {
      * Server implementations are allowed to handle only the registries
      * indicated in {@link Tag}.
      *
-     * @param <T> type of the tag
+     * @param <T>      type of the tag
      * @param registry the tag registry to look at
-     * @param tag the name of the tag
-     * @param clazz the class of the tag entries
+     * @param tag      the name of the tag
+     * @param clazz    the class of the tag entries
      * @return the tag or null
      */
     @Nullable
@@ -2560,9 +2574,9 @@ public final class Bukkit {
      * <br>
      * No guarantees are made about the mutability of the returned iterator.
      *
-     * @param <T> type of the tag
+     * @param <T>      type of the tag
      * @param registry the tag registry to look at
-     * @param clazz the class of the tag entries
+     * @param clazz    the class of the tag entries
      * @return all defined tags
      */
     @NotNull
@@ -2594,12 +2608,12 @@ public final class Bukkit {
      * '@' selectors, but this method should not check such permissions from the
      * sender.
      *
-     * @param sender the sender to execute as, must be provided
+     * @param sender   the sender to execute as, must be provided
      * @param selector the selection string
      * @return a list of the selected entities. The list will not be null, but
      * no further guarantees are made.
      * @throws IllegalArgumentException if the selector is malformed in any way
-     * or a parameter is null
+     *                                  or a parameter is null
      */
     @NotNull
     public static List<Entity> selectEntities(@NotNull CommandSender sender, @NotNull String selector) throws IllegalArgumentException {
@@ -2625,7 +2639,7 @@ public final class Bukkit {
      * {@link Registry} will be returned by this method.
      *
      * @param tClass of the registry to get
-     * @param <T> type of the registry
+     * @param <T>    type of the registry
      * @return the corresponding registry or null if not present
      * @deprecated use {@link io.papermc.paper.registry.RegistryAccess#getRegistry(io.papermc.paper.registry.RegistryKey)}
      * with keys from {@link io.papermc.paper.registry.RegistryKey}
@@ -2648,6 +2662,7 @@ public final class Bukkit {
 
 
     // Paper start
+
     /**
      * Gets the active {@link org.bukkit.command.CommandMap}
      *
@@ -2708,7 +2723,7 @@ public final class Bukkit {
 
     /**
      * Creates a PlayerProfile for the specified uuid, with name as null.
-     *
+     * <p>
      * If a player with the passed uuid exists on the server at the time of creation, the returned player profile will
      * be populated with the properties of said player (including their uuid and name).
      *
@@ -2722,7 +2737,7 @@ public final class Bukkit {
 
     /**
      * Creates a PlayerProfile for the specified name, with UUID as null.
-     *
+     * <p>
      * If a player with the passed name exists on the server at the time of creation, the returned player profile will
      * be populated with the properties of said player (including their uuid and name).
      * <p>
@@ -2743,7 +2758,7 @@ public final class Bukkit {
 
     /**
      * Creates a PlayerProfile for the specified name/uuid
-     *
+     * <p>
      * Both UUID and Name can not be null at same time. One must be supplied.
      * If a player with the passed uuid or name exists on the server at the time of creation, the returned player
      * profile will be populated with the properties of said player (including their uuid and name).
@@ -2752,7 +2767,7 @@ public final class Bukkit {
      * yield a profile with the name 'jeb_', their uuid and their textures.
      * To bypass this pre-population on a case-insensitive name match, see {@link #createProfileExact(UUID, String)}.
      * <p>
-     *
+     * <p>
      * The name comparison will compare the {@link String#toLowerCase()} version of both the passed name parameter and
      * a players name to honour the case-insensitive nature of a mojang profile lookup.
      *
@@ -2769,7 +2784,7 @@ public final class Bukkit {
 
     /**
      * Creates an exact PlayerProfile for the specified name/uuid
-     *
+     * <p>
      * Both UUID and Name can not be null at same time. One must be supplied.
      * If a player with the passed uuid or name exists on the server at the time of creation, the returned player
      * profile will be populated with the properties of said player.
@@ -2831,6 +2846,7 @@ public final class Bukkit {
     // Paper end
 
     // Paper start - Folia region threading API
+
     /**
      * Returns the region task scheduler. The region task scheduler can be used to schedule
      * tasks by location to be executed on the region which owns the location.
@@ -2841,6 +2857,7 @@ public final class Bukkit {
      * will not.
      * </p>
      * <p><b>If you do not need/want to make your plugin run on Folia, use {@link #getScheduler()} instead.</b></p>
+     *
      * @return the region task scheduler
      */
     public static @NotNull io.papermc.paper.threadedregions.scheduler.RegionScheduler getRegionScheduler() {
@@ -2850,6 +2867,7 @@ public final class Bukkit {
     /**
      * Returns the async task scheduler. The async task scheduler can be used to schedule tasks
      * that execute asynchronously from the server tick process.
+     *
      * @return the async task scheduler
      */
     public static @NotNull io.papermc.paper.threadedregions.scheduler.AsyncScheduler getAsyncScheduler() {
@@ -2864,6 +2882,7 @@ public final class Bukkit {
      * sleep night skipping, executing commands for console, and other misc. tasks that do not belong to any specific region.
      * </p>
      * <p><b>If you do not need/want to make your plugin run on Folia, use {@link #getScheduler()} instead.</b></p>
+     *
      * @return the global region scheduler
      */
     public static @NotNull io.papermc.paper.threadedregions.scheduler.GlobalRegionScheduler getGlobalRegionScheduler() {
@@ -2873,7 +2892,8 @@ public final class Bukkit {
     /**
      * Returns whether the current thread is ticking a region and that the region being ticked
      * owns the chunk at the specified world and block position.
-     * @param world Specified world.
+     *
+     * @param world    Specified world.
      * @param position Specified block position.
      */
     public static boolean isOwnedByCurrentRegion(@NotNull World world, @NotNull io.papermc.paper.math.Position position) {
@@ -2885,8 +2905,9 @@ public final class Bukkit {
      * owns the chunks centered at the specified block position within the specified square radius.
      * Specifically, this function checks that every chunk with position x in [centerX - radius, centerX + radius] and
      * position z in [centerZ - radius, centerZ + radius] is owned by the current ticking region.
-     * @param world Specified world.
-     * @param position Specified block position.
+     *
+     * @param world              Specified world.
+     * @param position           Specified block position.
      * @param squareRadiusChunks Specified square radius. Must be >= 0. Note that this parameter is <i>not</i> a <i>squared</i>
      *                           radius, but rather a <i>Chebyshev Distance</i>.
      */
@@ -2897,6 +2918,7 @@ public final class Bukkit {
     /**
      * Returns whether the current thread is ticking a region and that the region being ticked
      * owns the chunk at the specified world and block position as included in the specified location.
+     *
      * @param location Specified location, must have a non-null world.
      */
     public static boolean isOwnedByCurrentRegion(@NotNull Location location) {
@@ -2909,7 +2931,8 @@ public final class Bukkit {
      * within the specified square radius.
      * Specifically, this function checks that every chunk with position x in [centerX - radius, centerX + radius] and
      * position z in [centerZ - radius, centerZ + radius] is owned by the current ticking region.
-     * @param location Specified location, must have a non-null world.
+     *
+     * @param location           Specified location, must have a non-null world.
      * @param squareRadiusChunks Specified square radius. Must be >= 0. Note that this parameter is <i>not</i> a <i>squared</i>
      *                           radius, but rather a <i>Chebyshev Distance</i>.
      */
@@ -2920,6 +2943,7 @@ public final class Bukkit {
     /**
      * Returns whether the current thread is ticking a region and that the region being ticked
      * owns the chunk at the specified block position.
+     *
      * @param block Specified block position.
      */
     public static boolean isOwnedByCurrentRegion(@NotNull org.bukkit.block.Block block) {
@@ -2929,7 +2953,8 @@ public final class Bukkit {
     /**
      * Returns whether the current thread is ticking a region and that the region being ticked
      * owns the chunk at the specified world and chunk position.
-     * @param world Specified world.
+     *
+     * @param world  Specified world.
      * @param chunkX Specified x-coordinate of the chunk position.
      * @param chunkZ Specified z-coordinate of the chunk position.
      */
@@ -2943,9 +2968,10 @@ public final class Bukkit {
      * square radius.
      * Specifically, this function checks that every chunk with position x in [centerX - radius, centerX + radius] and
      * position z in [centerZ - radius, centerZ + radius] is owned by the current ticking region.
-     * @param world Specified world.
-     * @param chunkX Specified x-coordinate of the chunk position.
-     * @param chunkZ Specified z-coordinate of the chunk position.
+     *
+     * @param world              Specified world.
+     * @param chunkX             Specified x-coordinate of the chunk position.
+     * @param chunkZ             Specified z-coordinate of the chunk position.
      * @param squareRadiusChunks Specified square radius. Must be >= 0. Note that this parameter is <i>not</i> a <i>squared</i>
      *                           radius, but rather a <i>Chebyshev Distance</i>.
      */
@@ -2958,7 +2984,8 @@ public final class Bukkit {
      * owns the chunks in the rectangle specified by the min and max parameters.
      * Specifically, this function checks that every chunk with position x in [minChunkX, maxChunkX] and
      * position z in [minChunkZ, maxChunkZ] is owned by the current ticking region.
-     * @param world Specified world.
+     *
+     * @param world     Specified world.
      * @param minChunkX Specified x-coordinate of the minimum chunk position.
      * @param minChunkZ Specified z-coordinate of the minimum chunk position.
      * @param maxChunkX Specified x-coordinate of the maximum chunk position.
@@ -2973,6 +3000,7 @@ public final class Bukkit {
      * owns the specified entity. Note that this function is the only appropriate method of checking
      * for ownership of an entity, as retrieving the entity's location is undefined unless the entity is owned
      * by the current region.
+     *
      * @param entity Specified entity.
      */
     public static boolean isOwnedByCurrentRegion(@NotNull Entity entity) {
@@ -2981,6 +3009,7 @@ public final class Bukkit {
 
     /**
      * Returns whether the current thread is ticking the global region.
+     *
      * @see io.papermc.paper.threadedregions.scheduler.GlobalRegionScheduler
      */
     public static boolean isGlobalTickThread() {
