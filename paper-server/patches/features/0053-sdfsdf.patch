@@ -1,0 +1,68 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Mon, 18 May 2026 15:57:15 +0300
+Subject: [PATCH] sdfsdf
+
+
+diff --git a/net/minecraft/world/entity/monster/EnderMan.java b/net/minecraft/world/entity/monster/EnderMan.java
+index d798e107daa4dc89ff694cacdf53f2d338acc685..c4271aba62a692a51b45c6fbcace29c19d395336 100644
+--- a/net/minecraft/world/entity/monster/EnderMan.java
++++ b/net/minecraft/world/entity/monster/EnderMan.java
+@@ -300,30 +300,33 @@ public class EnderMan extends Monster implements NeutralMob {
+     }
+ 
+     private boolean teleport(double x, double y, double z) {
+-        BlockPos.MutableBlockPos mutableBlockPos = new BlockPos.MutableBlockPos(x, y, z);
+-
+-        while (mutableBlockPos.getY() > this.level().getMinY() && !this.level().getBlockState(mutableBlockPos).blocksMotion()) {
+-            mutableBlockPos.move(Direction.DOWN);
+-        }
+-
+-        BlockState blockState = this.level().getBlockState(mutableBlockPos);
+-        boolean flag = blockState.blocksMotion();
+-        boolean isWater = blockState.getFluidState().is(FluidTags.WATER);
+-        if (flag && !isWater) {
+-            Vec3 vec3 = this.position();
+-            boolean flag1 = this.randomTeleport(x, y, z, true);
+-            if (flag1) {
+-                this.level().gameEvent(GameEvent.TELEPORT, vec3, GameEvent.Context.of(this));
+-                if (!this.isSilent()) {
+-                    this.level().playSound(null, this.xo, this.yo, this.zo, SoundEvents.ENDERMAN_TELEPORT, this.getSoundSource(), 1.0F, 1.0F);
+-                    this.playSound(SoundEvents.ENDERMAN_TELEPORT, 1.0F, 1.0F);
+-                }
+-            }
+-
+-            return flag1;
+-        } else {
+-            return false;
+-        }
++        // kenny удалил телепортацию эндермена потому что он 18.05.2026 телепортировался в чанк в котором был initializelight а телепортация происходила синхронно
++        // и произошел дедлок
++        return false;
++        // BlockPos.MutableBlockPos mutableBlockPos = new BlockPos.MutableBlockPos(x, y, z);
++        //
++        // while (mutableBlockPos.getY() > this.level().getMinY() && !this.level().getBlockState(mutableBlockPos).blocksMotion()) {
++        //     mutableBlockPos.move(Direction.DOWN);
++        // }
++        //
++        // BlockState blockState = this.level().getBlockState(mutableBlockPos);
++        // boolean flag = blockState.blocksMotion();
++        // boolean isWater = blockState.getFluidState().is(FluidTags.WATER);
++        // if (flag && !isWater) {
++        //     Vec3 vec3 = this.position();
++        //     boolean flag1 = this.randomTeleport(x, y, z, true);
++        //     if (flag1) {
++        //         this.level().gameEvent(GameEvent.TELEPORT, vec3, GameEvent.Context.of(this));
++        //         if (!this.isSilent()) {
++        //             this.level().playSound(null, this.xo, this.yo, this.zo, SoundEvents.ENDERMAN_TELEPORT, this.getSoundSource(), 1.0F, 1.0F);
++        //             this.playSound(SoundEvents.ENDERMAN_TELEPORT, 1.0F, 1.0F);
++        //         }
++        //     }
++        //
++        //     return flag1;
++        // } else {
++        //     return false;
++        // }
+     }
+ 
+     @Override
