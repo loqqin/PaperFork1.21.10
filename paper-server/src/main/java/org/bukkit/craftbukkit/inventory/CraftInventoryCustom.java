@@ -70,7 +70,7 @@ public class CraftInventoryCustom extends CraftInventory {
         private int maxStack = MAX_STACK;
         private final List<HumanEntity> viewers;
         public String title;
-        private final net.kyori.adventure.text.Component adventure$title; // Paper
+        public net.kyori.adventure.text.Component adventure$title; // Paper
         private InventoryType type;
         private final InventoryHolder owner;
 
