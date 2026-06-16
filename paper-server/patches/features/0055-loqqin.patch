@@ -1,0 +1,48 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Tue, 16 Jun 2026 20:33:44 +0300
+Subject: [PATCH] loqqin
+
+
+diff --git a/net/minecraft/world/level/block/CactusBlock.java b/net/minecraft/world/level/block/CactusBlock.java
+index 2063925aa668f162fc3119c60c0a94fabc5e3571..c69880ab05802a494bd96045ebeaa7b4b0d002d8 100644
+--- a/net/minecraft/world/level/block/CactusBlock.java
++++ b/net/minecraft/world/level/block/CactusBlock.java
+@@ -83,11 +83,36 @@ public class CactusBlock extends Block {
+             }
+ 
+             if (ageValue < 15) {
+-                level.setBlock(pos, state.setValue(AGE, ageValue + 1), Block.UPDATE_NONE);
++              int multiplier = getMultiplier(growthPercentIncrease.getDouble(level.serverLevelData.settings.levelName));
++              int i1 = 1 + multiplier;
++                level.setBlock(pos, state.setValue(AGE, Math.min(15, ageValue + i1)), Block.UPDATE_NONE);
+             }
+         }
+     }
+ 
++    public static boolean randomChance(Number chance) {
++        double v = chance.doubleValue();
++        if (v >= 100) {
++            return true;
++        }
++        if (v <= 0) {
++            return false;
++        }
++        return Math.random() * 100 <= v;
++    }
++
++  private static int getMultiplier(double fortune) {
++    int multiplier = 1;
++    while (fortune >= 100) {
++      multiplier++;
++      fortune -= 100;
++    }
++    if (randomChance((float) fortune)) {
++      multiplier++;
++    }
++    return multiplier;
++  }
++
+     @Override
+     protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+         return SHAPE_COLLISION;
