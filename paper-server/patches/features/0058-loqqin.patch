@@ -1,0 +1,58 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Sat, 27 Jun 2026 01:16:30 +0300
+Subject: [PATCH] loqqin
+
+
+diff --git a/net/minecraft/world/level/block/CropBlock.java b/net/minecraft/world/level/block/CropBlock.java
+index 72cd548025be272f6206c26746bf8e1ecf5fc39f..2ac53d68573fef6060c33b3e9db84e276945ec60 100644
+--- a/net/minecraft/world/level/block/CropBlock.java
++++ b/net/minecraft/world/level/block/CropBlock.java
+@@ -120,19 +120,20 @@ public class CropBlock extends VegetationBlock implements BonemealableBlock {
+     protected static float getGrowthSpeed(Block block, BlockGetter level, BlockPos pos) {
+         float f = 1.0F;
+         BlockPos blockPos = pos.below();
++        boolean contains = growthPercentIncrease.containsKey(((ServerLevel)level).serverLevelData.settings.levelName);
+ 
+         for (int i = -1; i <= 1; i++) {
+             for (int i1 = -1; i1 <= 1; i1++) {
+                 float f1 = 0.0F;
+-                BlockState blockState = level.getBlockState(blockPos.offset(i, 0, i1));
+-                if (blockState.is(Blocks.FARMLAND)) {
++                BlockState blockState = null;
++                if (contains || (blockState = level.getBlockState(blockPos.offset(i, 0, i1))).is(Blocks.FARMLAND)) {
+                     f1 = 1.0F;
+-                    if (blockState.getValue(FarmBlock.MOISTURE) > 0) {
++                    if (contains || blockState.getValue(FarmBlock.MOISTURE) > 0) {
+                         f1 = 3.0F;
+                     }
+                 }
+ 
+-                if (i != 0 || i1 != 0) {
++                if (!contains && (i != 0 || i1 != 0)) {
+                     f1 /= 4.0F;
+                 }
+ 
+@@ -146,9 +147,9 @@ public class CropBlock extends VegetationBlock implements BonemealableBlock {
+         BlockPos blockPos4 = pos.east();
+         boolean flag = level.getBlockState(blockPos3).is(block) || level.getBlockState(blockPos4).is(block);
+         boolean flag1 = level.getBlockState(blockPos1).is(block) || level.getBlockState(blockPos2).is(block);
+-        if (flag && flag1) {
++        if (!contains && flag && flag1) {
+             f /= 2.0F;
+-        } else {
++        } else if(!contains) {
+             boolean flag2 = level.getBlockState(blockPos3.north()).is(block)
+                 || level.getBlockState(blockPos4.north()).is(block)
+                 || level.getBlockState(blockPos4.south()).is(block)
+@@ -158,6 +159,10 @@ public class CropBlock extends VegetationBlock implements BonemealableBlock {
+             }
+         }
+ 
++      if (contains) {
++        return f / 11;
++      }
++
+         return f;
+     }
+ 
