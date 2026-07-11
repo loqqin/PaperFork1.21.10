@@ -1,0 +1,31 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Sat, 11 Jul 2026 20:52:00 +0300
+Subject: [PATCH] loqqin
+
+
+diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
+index d091366e0d519fc340463538b75568333d497283..cef564cad6704c07abfd278b08e9b583a0938316 100644
+--- a/net/minecraft/world/entity/Entity.java
++++ b/net/minecraft/world/entity/Entity.java
+@@ -146,6 +146,8 @@ import net.minecraft.world.scores.PlayerTeam;
+ import net.minecraft.world.scores.ScoreHolder;
+ import net.minecraft.world.scores.Team;
+ import net.minecraft.world.waypoints.WaypointTransmitter;
++import org.bukkit.Bukkit;
++import org.bukkit.event.entity.MoveTowardsClosestSpaceEvent;
+ import org.jetbrains.annotations.Contract;
+ import org.slf4j.Logger;
+ 
+@@ -3822,6 +3824,11 @@ public abstract class Entity implements SyncedDataHolder, DebugValueSource, Name
+     }
+ 
+     protected void moveTowardsClosestSpace(double x, double y, double z) {
++        MoveTowardsClosestSpaceEvent event = new MoveTowardsClosestSpaceEvent(getBukkitEntity());
++        Bukkit.getPluginManager().callEvent(event);
++        if (event.isCancelled()) {
++          return;
++        }
+         BlockPos blockPos = BlockPos.containing(x, y, z);
+         Vec3 vec3 = new Vec3(x - blockPos.getX(), y - blockPos.getY(), z - blockPos.getZ());
+         BlockPos.MutableBlockPos mutableBlockPos = new BlockPos.MutableBlockPos();
