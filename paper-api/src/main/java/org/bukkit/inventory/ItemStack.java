@@ -100,7 +100,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
     /**
      * Creates an itemstack with the specified item type and count.
      *
-     * @param type the item type to use
+     * @param type   the item type to use
      * @param amount the count of items in the stack
      * @return a new itemstack
      * @throws IllegalArgumentException if the Material provided is not an item ({@link Material#isItem()})
@@ -139,7 +139,8 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
     // Paper end - pdc
 
     @Utility
-    protected ItemStack() {}
+    protected ItemStack() {
+    }
 
     /**
      * Defaults stack size to 1, with no extra data.
@@ -164,7 +165,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * <i>items</i>. Do not use this class to encapsulate Materials for which
      * {@link Material#isItem()} returns false.</b>
      *
-     * @param type item material
+     * @param type   item material
      * @param amount stack size
      * @apiNote Use {@link #of(Material, int)}
      * @see #of(Material, int)
@@ -177,7 +178,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
     /**
      * An item stack with the specified damage / durability
      *
-     * @param type item material
+     * @param type   item material
      * @param amount stack size
      * @param damage durability / damage
      * @deprecated see {@link #setDurability(short)}
@@ -188,10 +189,10 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
     }
 
     /**
-     * @param type the type
+     * @param type   the type
      * @param amount the amount in the stack
      * @param damage the damage value of the item
-     * @param data the data value or null
+     * @param data   the data value or null
      * @deprecated this method uses an ambiguous data byte object
      */
     @Deprecated(since = "1.4.5", forRemoval = true)
@@ -220,7 +221,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      *
      * @param stack the stack to copy
      * @throws IllegalArgumentException if the specified stack is null or
-     *     returns an item meta not created by the item factory
+     *                                  returns an item meta not created by the item factory
      * @apiNote Use {@link #clone()}
      * @see #clone()
      */
@@ -253,15 +254,15 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * {@link Material#isItem()} returns false.</b>
      *
      * @param type New type to set the items in this stack to
+     * @see ItemStack#withType(Material)
      * @deprecated <b>Setting the material type of ItemStacks is no longer supported.</b>
      * <p>
      * This method is deprecated due to potential illegal behavior that may occur
      * during the context of which this ItemStack is being used, allowing for certain item validation to be bypassed.
      * It is recommended to instead create a new ItemStack object with the desired
      * Material type, and if possible, set it in the appropriate context.
-     *
+     * <p>
      * Using this method in ItemStacks passed in events will result in undefined behavior.
-     * @see ItemStack#withType(Material)
      */
     @Deprecated // Paper
     public void setType(@NotNull Material type) {
@@ -459,8 +460,8 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * @param enchantments Enchantments to add
      * @throws IllegalArgumentException if the specified enchantments is null
      * @throws IllegalArgumentException if any specific enchantment or level
-     *     is null. <b>Warning</b>: Some enchantments may be added before this
-     *     exception is thrown.
+     *                                  is null. <b>Warning</b>: Some enchantments may be added before this
+     *                                  exception is thrown.
      */
     @Utility
     public void addEnchantments(@NotNull Map<Enchantment, Integer> enchantments) {
@@ -477,9 +478,9 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * level), it will be replaced.
      *
      * @param enchant Enchantment to add
-     * @param level Level of the enchantment
+     * @param level   Level of the enchantment
      * @throws IllegalArgumentException if enchantment null, or enchantment is
-     *     not applicable
+     *                                  not applicable
      */
     @Utility
     public void addEnchantment(@NotNull Enchantment enchant, int level) {
@@ -519,7 +520,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * Use at your own discretion.
      *
      * @param enchant Enchantment to add
-     * @param level Level of the enchantment
+     * @param level   Level of the enchantment
      */
     public void addUnsafeEnchantment(@NotNull Enchantment enchant, int level) {
         this.craftDelegate.addUnsafeEnchantment(enchant, level); // Paper - delegate
@@ -666,8 +667,8 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * </p>
      *
      * @param metaClass the type of meta to edit
-     * @param consumer the meta consumer
-     * @param <M> the meta type
+     * @param consumer  the meta consumer
+     * @param <M>       the meta type
      * @return {@code true} if the edit was successful, {@code false} otherwise
      */
     public <M extends ItemMeta> boolean editMeta(final @NotNull Class<M> metaClass, final @NotNull Consumer<@NotNull ? super M> consumer) {
@@ -705,9 +706,9 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      *
      * @param itemMeta new ItemMeta, or null to indicate meta data be cleared.
      * @return True if successfully applied ItemMeta, see {@link
-     *     ItemFactory#isApplicable(ItemMeta, ItemStack)}
+     * ItemFactory#isApplicable(ItemMeta, ItemStack)}
      * @throws IllegalArgumentException if the item meta was not created by
-     *     the {@link ItemFactory}
+     *                                  the {@link ItemFactory}
      */
     public boolean setItemMeta(@Nullable ItemMeta itemMeta) {
         return this.craftDelegate.setItemMeta(itemMeta); // Paper - delegate
@@ -731,9 +732,9 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      *
      * <p>Enchantment tables use levels in the range {@code [1, 30]}.</p>
      *
-     * @param levels levels to use for enchanting
+     * @param levels        levels to use for enchanting
      * @param allowTreasure whether to allow enchantments where {@link Enchantment#isTreasure()} returns true
-     * @param random {@link Random} instance to use for enchanting
+     * @param random        {@link Random} instance to use for enchanting
      * @return enchanted copy of the provided ItemStack
      * @throws IllegalArgumentException on bad arguments
      */
@@ -796,7 +797,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
 
     /**
      * Minecraft updates are converting simple item stacks into more complex NBT oriented Item Stacks.
-     *
+     * <p>
      * Use this method to ensure any desired data conversions are processed.
      * The input itemstack will not be the same as the returned itemstack.
      *
@@ -810,9 +811,10 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
     /**
      * Deserializes this itemstack from raw NBT bytes. NBT is safer for data migrations as it will
      * use the built in data converter instead of bukkits dangerous serialization system.
-     *
+     * <p>
      * This expects that the DataVersion was stored on the root of the Compound, as saved from
      * the {@link #serializeAsBytes()} API returned.
+     *
      * @param bytes bytes representing an item in NBT
      * @return ItemStack migrated to this version of Minecraft if needed.
      */
@@ -823,6 +825,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
     /**
      * Serializes this itemstack to raw bytes in NBT. NBT is safer for data migrations as it will
      * use the built in data converter instead of bukkits dangerous serialization system.
+     *
      * @return bytes representing this item in NBT.
      */
     public byte @NotNull [] serializeAsBytes() {
@@ -945,6 +948,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
 
     /**
      * Clones the itemstack and returns it a single quantity.
+     *
      * @return The new itemstack with 1 quantity
      */
     @NotNull
@@ -954,6 +958,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
 
     /**
      * Clones the itemstack and returns it as the specified quantity
+     *
      * @param qty The quantity of the cloned item
      * @return The new itemstack with specified quantity
      */
@@ -966,6 +971,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
 
     /**
      * Adds 1 to this itemstack. Will not go over the items max stack size.
+     *
      * @return The same item (not a clone)
      */
     @NotNull
@@ -987,6 +993,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
 
     /**
      * Subtracts 1 to this itemstack.  Going to 0 or less will invalidate the item.
+     *
      * @return The same item (not a clone)
      */
     @NotNull
@@ -1008,6 +1015,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
 
     /**
      * If the item has lore, returns it, else it will return null
+     *
      * @return The lore, or null
      * @deprecated in favor of {@link #lore()}
      */
@@ -1025,6 +1033,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
 
     /**
      * If the item has lore, returns it, else it will return null
+     *
      * @return The lore, or null
      */
     public @Nullable List<Component> lore() {
@@ -1173,7 +1182,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * runs all logic associated with damaging an itemstack like
      * events and stat changes.
      *
-     * @param amount the amount of damage to do
+     * @param amount       the amount of damage to do
      * @param livingEntity the entity related to the damage
      * @return the damaged itemstack or an empty one if it broke. May return the same instance of ItemStack
      * @see LivingEntity#damageItemStack(EquipmentSlot, int) to damage itemstacks in equipment slots
@@ -1184,7 +1193,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
 
     /**
      * Returns an empty item stack, consists of an air material and a stack size of 0.
-     *
+     * <p>
      * Any item stack with a material of air or a stack size of 0 is seen
      * as being empty by {@link ItemStack#isEmpty}.
      */
@@ -1212,7 +1221,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * Minecraft versions.
      *
      * @param tooltipContext the tooltip context
-     * @param player a player for player-specific tooltip lines
+     * @param player         a player for player-specific tooltip lines
      * @return an immutable list of components (can be empty)
      */
     @SuppressWarnings("deprecation") // abusing unsafe as a bridge
@@ -1227,7 +1236,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * Gets the value for the data component type on this stack.
      *
      * @param type the data component type
-     * @param <T> the value type
+     * @param <T>  the value type
      * @return the value for the data component type, or {@code null} if not set or marked as removed
      * @see #hasData(DataComponentType) for DataComponentType.NonValued
      */
@@ -1241,9 +1250,9 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * Gets the value for the data component type on this stack with
      * a fallback value.
      *
-     * @param type the data component type
+     * @param type     the data component type
      * @param fallback the fallback value if the value isn't present
-     * @param <T> the value type
+     * @param <T>      the value type
      * @return the value for the data component type or the fallback value
      */
     @Utility
@@ -1283,9 +1292,9 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * {@link #resetData(DataComponentType)}. To mark the data component type
      * as removed, use {@link #unsetData(DataComponentType)}.
      *
-     * @param type the data component type
+     * @param type         the data component type
      * @param valueBuilder value builder
-     * @param <T> value type
+     * @param <T>          value type
      */
     @Utility
     @ApiStatus.Experimental
@@ -1323,9 +1332,9 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * {@link #resetData(DataComponentType)}. To mark the data component type
      * as removed, use {@link #unsetData(DataComponentType)}.
      *
-     * @param type the data component type
+     * @param type  the data component type
      * @param value value to set
-     * @param <T> value type
+     * @param <T>   value type
      */
     @ApiStatus.Experimental
     public <T> void setData(final DataComponentType.@NotNull Valued<T> type, final @NotNull T value) {
@@ -1404,7 +1413,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * Checks if this itemstack matches another given itemstack excluding the provided components.
      * This is useful if you are wanting to ignore certain properties of itemstacks, such as durability.
      *
-     * @param item the item to compare
+     * @param item         the item to compare
      * @param excludeTypes the data component types to ignore
      * @return {@code true} if the provided item is equal, ignoring the provided components
      */
@@ -1417,9 +1426,9 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * Checks if this itemstack matches another given itemstack excluding the provided components.
      * This is useful if you are wanting to ignore certain properties of itemstacks, such as durability.
      *
-     * @param item the item to compare
+     * @param item         the item to compare
      * @param excludeTypes the data component types to ignore
-     * @param ignoreCount ignore the count of the item
+     * @param ignoreCount  ignore the count of the item
      * @return {@code true} if the provided item is equal, ignoring the provided components
      */
     @ApiStatus.Experimental
@@ -1451,9 +1460,11 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
         if (this instanceof CraftItemStack craft) {
             return craft;
         }
-        // if (craftDelegate != null) {
-        //     return ((CraftItemStack) craftDelegate);
-        // }
+        if (craftDelegate != null) {
+            return ((CraftItemStack) craftDelegate);
+        }
+        // на всякий случай оставил, почему-то раньше была такая проверка, но хз как может быть тут null
+        // если instanceof craftitemstack ток, но тогда вернул бы себя
         return CraftItemStack.asCraftCopy(this);
     }
 
