@@ -268,7 +268,7 @@ public final class Bukkit {
     /**
      * Get world type (level-type setting) for default world.
      *
-     * @return the value of level-type (e.g. DEFAULT, FLAT, DEFAULT_1_1)
+     * @return the value of level-type (e.g. minecraft:normal, minecraft:flat, minecraft:large_biomes, minecraft:amplified)
      */
     @NotNull
     public static String getWorldType() {
@@ -863,11 +863,15 @@ public final class Bukkit {
     }
 
     /**
-     * Gets the world with the given name.
+     * Gets the world with the given legacy Bukkit name.
      *
-     * @param name the name of the world to retrieve
-     * @return a world with the given name, or null if none exists
+     * <p>This method is considered obsolete and is a candidate for future deprecation.
+     * Prefer using {@link #getWorld(NamespacedKey)}.</p>
+     *
+     * @param name the legacy Bukkit name of the world to retrieve
+     * @return a world with the given legacy Bukkit name, or null if none exists
      */
+    @ApiStatus.Obsolete
     @Nullable
     public static World getWorld(@NotNull String name) {
         return server.getWorld(name);
@@ -883,7 +887,6 @@ public final class Bukkit {
     public static World getWorld(@NotNull UUID uid) {
         return server.getWorld(uid);
     }
-    // Paper start
 
     /**
      * Gets the world from the given NamespacedKey
@@ -906,7 +909,6 @@ public final class Bukkit {
     public static World getWorld(@NotNull net.kyori.adventure.key.Key worldKey) {
         return server.getWorld(worldKey);
     }
-    // Paper end
 
     /**
      * Create a new virtual {@link WorldBorder}.
@@ -1762,10 +1764,14 @@ public final class Bukkit {
     // Paper end
 
     /**
-     * Gets the folder that contains all of the various {@link World}s.
+     * Gets the folder that contains {@link Server#getLevelDirectory()}.
      *
-     * @return folder that contains all worlds
+     * <p>This is usually the server's current working directory
+     * but can be overridden using command line flags (i.e. {@code --universe} or {@code --world-container}).</p>
+     *
+     * @return folder that contains the level directory
      */
+    @ApiStatus.Obsolete
     @NotNull
     public static File getWorldContainer() {
         return server.getWorldContainer();
