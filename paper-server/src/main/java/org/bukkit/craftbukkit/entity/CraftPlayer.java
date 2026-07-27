@@ -306,7 +306,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
 
     @Override
     public boolean isOnline() {
-        return this.server.getPlayer(this.getUniqueId()) != null;
+        return this.entity != null && this.server.getPlayer(this.getUniqueId()) != null;
     }
 
     // Paper start
