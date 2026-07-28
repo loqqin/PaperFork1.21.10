@@ -1465,8 +1465,11 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
         }
         // на всякий случай оставил, почему-то раньше была такая проверка, но хз как может быть тут null
         // если instanceof craftitemstack ток, но тогда вернул бы себя
+        asCraftCopyCounter++;
         return CraftItemStack.asCraftCopy(this);
     }
+
+    public static long asCraftCopyCounter = 0;
 
     public CraftItemStack setAmountC(int amount) {
         setAmount(amount);
