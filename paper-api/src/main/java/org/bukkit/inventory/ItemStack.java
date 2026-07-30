@@ -1568,8 +1568,14 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
         return first.name().equals(second.name());
     }
 
+    private static final String SPACE_ID_KEY = "space:id";
+
     public String getID() {
-        return getString("id");
+        final CompoundTag pdcCustomData = getPDCNmsViewReadOnly();
+        if (pdcCustomData == null) return "";
+        final Tag tag = pdcCustomData.tags.get(SPACE_ID_KEY);
+        if (tag instanceof StringTag(String value)) return value;
+        return "";
     }
 
     public static final CraftPersistentDataTypeRegistry registry = new CraftPersistentDataTypeRegistry();

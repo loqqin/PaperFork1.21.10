@@ -236,9 +236,15 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
         return CraftLocation.toBukkit(bed, this.getWorld());
     }
 
+    public String lastName;
+
     @Override
     public String getName() {
-        return this.getHandle().getScoreboardName();
+        final Player handle = this.getHandle();
+        if (handle == null) {
+            return lastName;
+        }
+        return (lastName = handle.getScoreboardName());
     }
 
     public String lowerCaseName = null;
