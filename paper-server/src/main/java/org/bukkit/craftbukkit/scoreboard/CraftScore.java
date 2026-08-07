@@ -15,8 +15,8 @@ import org.bukkit.scoreboard.Score;
  * <p>
  * Also, as an added perk, a CraftScore will (intentionally) stay a valid reference so long as objective is valid.
  */
-final class CraftScore implements Score {
-    private final ScoreHolder entry;
+public final class CraftScore implements Score {
+    public final ScoreHolder entry;
     private final CraftObjective objective;
 
     CraftScore(CraftObjective objective, ScoreHolder entry) {

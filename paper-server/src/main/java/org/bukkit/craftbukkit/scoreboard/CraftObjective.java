@@ -21,7 +21,7 @@ public final class CraftObjective extends CraftScoreboardComponent implements Ob
         this.criteria = CraftCriteria.getFromNMS(objective);
     }
 
-    net.minecraft.world.scores.Objective getHandle() {
+    public net.minecraft.world.scores.Objective getHandle() {
         return this.objective;
     }
 
@@ -198,7 +198,7 @@ public final class CraftObjective extends CraftScoreboardComponent implements Ob
     }
 
     @Override
-    void checkState() {
+    public void checkState() {
         Preconditions.checkState(this.getScoreboard().getHandle().getObjective(this.objective.getName()) != null, "Unregistered scoreboard component");
     }
 
