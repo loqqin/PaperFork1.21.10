@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/level/block/CactusBlock.java
 +++ b/net/minecraft/world/level/block/CactusBlock.java
-@@ -50,36 +_,68 @@
+@@ -50,6 +_,9 @@
          }
      }
  
@@ -10,9 +10,7 @@
      @Override
      protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
          BlockPos blockPos = pos.above();
--        if (level.isEmptyBlock(blockPos)) {
-+        if (level.isEmptyBlock(blockPos) && canSurvive(state, level, blockPos)) {
-             int i = 1;
+@@ -58,18 +_,22 @@
              int ageValue = state.getValue(AGE);
  
              while (level.getBlockState(pos.below(i)).is(this)) {
@@ -41,42 +39,6 @@
                  BlockState blockState = state.setValue(AGE, 0);
                  level.setBlock(pos, blockState, Block.UPDATE_NONE);
                  level.neighborChanged(blockState, blockPos, this, null, false);
-             }
- 
-             if (ageValue < 15) {
--                level.setBlock(pos, state.setValue(AGE, ageValue + 1), Block.UPDATE_NONE);
-+              int multiplier = getMultiplier(growthPercentIncrease.getDouble(level.serverLevelData.settings.levelName));
-+              int i1 = 1 + multiplier;
-+                level.setBlock(pos, state.setValue(AGE, Math.min(15, ageValue + i1)), Block.UPDATE_NONE);
-             }
-         }
-     }
-+
-+    public static boolean randomChance(Number chance) {
-+        double v = chance.doubleValue();
-+        if (v >= 100) {
-+            return true;
-+        }
-+        if (v <= 0) {
-+            return false;
-+        }
-+        return Math.random() * 100 <= v;
-+    }
-+
-+  private static int getMultiplier(double fortune) {
-+    int multiplier = 1;
-+    while (fortune >= 100) {
-+      multiplier++;
-+      fortune -= 100;
-+    }
-+    if (randomChance((float) fortune)) {
-+      multiplier++;
-+    }
-+    return multiplier;
-+  }
- 
-     @Override
-     protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
 @@ -124,7 +_,8 @@
  
      @Override

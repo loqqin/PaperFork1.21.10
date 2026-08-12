@@ -22,15 +22,6 @@
      @Nullable
      private Item item;
      private static final int CACHE_SIZE = 256;
-@@ -329,7 +_,7 @@
-     }
- 
-     public static boolean isShapeFullBlock(VoxelShape shape) {
--        return SHAPE_FULL_BLOCK_CACHE.getUnchecked(shape);
-+        return ((ca.spottedleaf.moonrise.patches.collisions.shape.CollisionVoxelShape)shape).moonrise$isFullBlock(); // Paper - optimise collisions
-     }
- 
-     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
 @@ -357,6 +_,27 @@
          return state.getDrops(builder);
      }

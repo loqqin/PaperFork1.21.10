@@ -1,25 +1,6 @@
 --- a/net/minecraft/server/Main.java
 +++ b/net/minecraft/server/Main.java
-@@ -62,12 +_,29 @@
- public class Main {
-     private static final Logger LOGGER = LogUtils.getLogger();
- 
-+    public static double executeAndLog(String action, Runnable runnable) {
-+        long l = System.nanoTime();
-+        runnable.run();
-+        double value = (System.nanoTime() - l) / 1_000_000.0;
-+        System.out.println(action + " in " + value + "ms");
-+        return value;
-+    }
-+
-+    public static <T> T executeAndLogAndReturn(String action, java.util.function.Supplier<T> runnable) {
-+        long l = System.nanoTime();
-+        T t = runnable.get();
-+        System.out.println(action + " in " + (System.nanoTime() - l) / 1_000_000.0);
-+        return t;
-+    }
-+
-     @SuppressForbidden(
+@@ -66,8 +_,10 @@
          reason = "System.out needed before bootstrap"
      )
      @DontObfuscate
@@ -31,7 +12,7 @@
          OptionParser optionParser = new OptionParser();
          OptionSpec<Void> optionSpec = optionParser.accepts("nogui");
          OptionSpec<Void> optionSpec1 = optionParser.accepts("initSettings", "Initializes 'server.properties' and 'eula.txt', then quits");
-@@ -92,41 +_,116 @@
+@@ -92,41 +_,94 @@
                  optionParser.printHelpOn(System.err);
                  return;
              }
@@ -50,44 +31,21 @@
                  JvmProfiler.INSTANCE.start(Environment.SERVER);
              }
  
--            Bootstrap.bootStrap();
--            Bootstrap.validate();
-+            executeAndLog("plugin initializer manager", () -> {
-+                try {
-+                    io.papermc.paper.plugin.PluginInitializerManager.load(optionSet);
-+                } catch (Exception e) {
-+                    e.printStackTrace();
-+                }
-+            }); // Paper
-+            executeAndLog("bootstrap", () -> Bootstrap.bootStrap());
-+            executeAndLog("bootstrap validate", () -> Bootstrap.validate());
++            io.papermc.paper.plugin.PluginInitializerManager.load(optionSet); // Paper
+             Bootstrap.bootStrap();
+             Bootstrap.validate();
              Util.startTimerHackThread();
              Path path1 = Paths.get("server.properties");
 -            DedicatedServerSettings dedicatedServerSettings = new DedicatedServerSettings(path1);
--            dedicatedServerSettings.forceSave();
-+            DedicatedServerSettings dedicatedServerSettings = executeAndLogAndReturn("dedicatred server swettings", () -> new DedicatedServerSettings(optionSet)); // CraftBukkit - CLI argument support
-+            executeAndLog("force save", () -> dedicatedServerSettings.forceSave());
++            DedicatedServerSettings dedicatedServerSettings = new DedicatedServerSettings(optionSet); // CraftBukkit - CLI argument support
+             dedicatedServerSettings.forceSave();
              RegionFileVersion.configure(dedicatedServerSettings.getProperties().regionFileComression);
              Path path2 = Paths.get("eula.txt");
              Eula eula = new Eula(path2);
 -            if (optionSet.has(optionSpec1)) {
 +            // Paper start - load config files early for access below if needed
-+            org.bukkit.configuration.file.YamlConfiguration bukkitConfiguration = executeAndLogAndReturn("yaml config", () -> {
-+                try {
-+                    return io.papermc.paper.configuration.PaperConfigurations.loadLegacyConfigFile((File) optionSet.valueOf("bukkit-settings"));
-+                } catch (Exception e) {
-+                    e.printStackTrace();
-+                }
-+                return null;
-+            });
-+            org.bukkit.configuration.file.YamlConfiguration spigotConfiguration = executeAndLogAndReturn("yaml config 2 ", () -> {
-+                try {
-+                    return io.papermc.paper.configuration.PaperConfigurations.loadLegacyConfigFile((File) optionSet.valueOf("spigot-settings"));
-+                } catch (Exception e) {
-+                    e.printStackTrace();
-+                }
-+                return null;
-+            });
++            org.bukkit.configuration.file.YamlConfiguration bukkitConfiguration = io.papermc.paper.configuration.PaperConfigurations.loadLegacyConfigFile((File) optionSet.valueOf("bukkit-settings"));
++            org.bukkit.configuration.file.YamlConfiguration spigotConfiguration = io.papermc.paper.configuration.PaperConfigurations.loadLegacyConfigFile((File) optionSet.valueOf("spigot-settings"));
 +            // Paper end - load config files early for access below if needed
 +            if (optionSet.has("initSettings")) { // CraftBukkit
 +                // CraftBukkit start - SPIGOT-5761: Create bukkit.yml and commands.yml if not present
@@ -148,9 +106,7 @@
 +                file = new File(bukkitConfiguration.getString("settings.world-container", "."));
 +            }
 +            // Paper end - fix SPIGOT-5824
-+            final long l = System.nanoTime();
 +            Services services = Services.create(new com.destroystokyo.paper.profile.PaperAuthenticationService(Proxy.NO_PROXY), file, userCacheFile, optionSet); // Paper - pass OptionSet to load paper config files; override authentication service; fix world-container
-+            System.out.println("services init took " + ((System.nanoTime() - l) / 1_000_000.0) + " ms");
 +            // CraftBukkit start
 +            String string = Optional.ofNullable((String) optionSet.valueOf("world")).orElse(dedicatedServerSettings.getProperties().levelName);
              LevelStorageSource levelStorageSource = LevelStorageSource.createDefault(file.toPath());
@@ -160,7 +116,7 @@
              Dynamic<?> dataTag;
              if (levelStorageAccess.hasWorldData()) {
                  LevelSummary summary;
-@@ -168,49 +_,82 @@
+@@ -168,12 +_,36 @@
              }
  
              Dynamic<?> dynamic = dataTag;
@@ -198,72 +154,24 @@
  
              WorldStem worldStem;
              try {
--                WorldLoader.InitConfig initConfig = loadOrCreateConfig(dedicatedServerSettings.getProperties(), dynamic, hasOptionSpec, packRepository);
--                worldStem = Util.<WorldStem>blockUntilDone(
--                        executor -> WorldLoader.load(
--                            initConfig,
--                            context -> {
--                                Registry<LevelStem> registry = context.datapackDimensions().lookupOrThrow(Registries.LEVEL_STEM);
--                                if (dynamic != null) {
--                                    LevelDataAndDimensions levelDataAndDimensions = LevelStorageSource.getLevelDataAndDimensions(
--                                        dynamic, context.dataConfiguration(), registry, context.datapackWorldgen()
--                                    );
--                                    return new WorldLoader.DataLoadOutput<>(
--                                        levelDataAndDimensions.worldData(), levelDataAndDimensions.dimensions().dimensionsRegistryAccess()
--                                    );
--                                } else {
--                                    LOGGER.info("No existing world data, creating new world");
--                                    return createNewWorldData(
+@@ -182,6 +_,7 @@
+                         executor -> WorldLoader.load(
+                             initConfig,
+                             context -> {
++                                worldLoader.set(context); // CraftBukkit
+                                 Registry<LevelStem> registry = context.datapackDimensions().lookupOrThrow(Registries.LEVEL_STEM);
+                                 if (dynamic != null) {
+                                     LevelDataAndDimensions levelDataAndDimensions = LevelStorageSource.getLevelDataAndDimensions(
+@@ -193,7 +_,7 @@
+                                 } else {
+                                     LOGGER.info("No existing world data, creating new world");
+                                     return createNewWorldData(
 -                                        dedicatedServerSettings, context, registry, optionSet.has(optionSpec2), optionSet.has(optionSpec3)
--                                    );
--                                }
--                            },
--                            WorldStem::new,
--                            Util.backgroundExecutor(),
--                            executor
--                        )
--                    )
--                    .get();
-+                worldStem = executeAndLogAndReturn("world load", () -> {
-+                    WorldLoader.InitConfig initConfig = loadOrCreateConfig(dedicatedServerSettings.getProperties(), dynamic, hasOptionSpec, packRepository);
-+                    try {
-+                        return Util.<WorldStem>blockUntilDone(
-+                                executor -> WorldLoader.load(
-+                                    initConfig,
-+                                    context -> {
-+                                        worldLoader.set(context); // CraftBukkit
-+                                        Registry<LevelStem> registry = context.datapackDimensions().lookupOrThrow(Registries.LEVEL_STEM);
-+                                        if (dynamic != null) {
-+                                            LevelDataAndDimensions levelDataAndDimensions = LevelStorageSource.getLevelDataAndDimensions(
-+                                                dynamic, context.dataConfiguration(), registry, context.datapackWorldgen()
-+                                            );
-+                                            return new WorldLoader.DataLoadOutput<>(
-+                                                levelDataAndDimensions.worldData(), levelDataAndDimensions.dimensions().dimensionsRegistryAccess()
-+                                            );
-+                                        } else {
-+                                            LOGGER.info("No existing world data, creating new world");
-+                                            return createNewWorldData(
-+                                                dedicatedServerSettings, context, registry, optionSet.has("demo"), optionSet.has("bonusChest") // CraftBukkit
-+                                            );
-+                                        }
-+                                    },
-+                                    WorldStem::new,
-+                                    Util.backgroundExecutor(),
-+                                    executor
-+                                )
-+                            )
-+                            .get();
-+                    } catch (Throwable throwable) {
-+                        throwable.printStackTrace();
-+                        return null;
-+                    }
-+                });
-             } catch (Exception var39) {
-                 LOGGER.warn(
-                     "Failed to load datapacks, can't proceed with server load. You can either fix your datapacks or reset to vanilla with --safeMode",
--                    (Throwable)var39
-+                    (Throwable) var39
-                 );
++                                        dedicatedServerSettings, context, registry, optionSet.has("demo"), optionSet.has("bonusChest") // CraftBukkit
+                                     );
+                                 }
+                             },
+@@ -211,6 +_,7 @@
                  return;
              }
  
@@ -271,12 +179,11 @@
              RegistryAccess.Frozen frozen = worldStem.registries().compositeAccess();
              WorldData worldData = worldStem.worldData();
              boolean hasOptionSpec1 = optionSet.has(optionSpec6);
-@@ -219,22 +_,51 @@
+@@ -219,22 +_,50 @@
              }
  
              levelStorageAccess.saveDataTag(frozen, worldData);
 +            */
-+            Class.forName(net.minecraft.world.entity.npc.VillagerTrades.class.getName()); // Paper - load this sync so it won't fail later async
              final DedicatedServer dedicatedServer = MinecraftServer.spin(
                  thread1 -> {
                      DedicatedServer dedicatedServer1 = new DedicatedServer(
@@ -326,24 +233,21 @@
              Thread thread = new Thread("Server Shutdown Thread") {
                  @Override
                  public void run() {
-@@ -243,13 +_,14 @@
+@@ -243,12 +_,13 @@
              };
              thread.setUncaughtExceptionHandler(new DefaultUncaughtExceptionHandler(LOGGER));
              Runtime.getRuntime().addShutdownHook(thread);
 +            */ // CraftBukkit end
          } catch (Exception var42) {
--            LOGGER.error(LogUtils.FATAL_MARKER, "Failed to start the minecraft server", (Throwable)var42);
-+            LOGGER.error(LogUtils.FATAL_MARKER, "Failed to start the minecraft server", (Throwable) var42);
+             LOGGER.error(LogUtils.FATAL_MARKER, "Failed to start the minecraft server", (Throwable)var42);
          }
      }
  
 -    private static WorldLoader.DataLoadOutput<WorldData> createNewWorldData(
--        DedicatedServerSettings settings, WorldLoader.DataLoadContext context, Registry<LevelStem> stemRegistry, boolean demo, boolean generateBonusChest
 +    public static WorldLoader.DataLoadOutput<WorldData> createNewWorldData( // Paper - public
-+                                                                            DedicatedServerSettings settings, WorldLoader.DataLoadContext context, Registry<LevelStem> stemRegistry, boolean demo, boolean generateBonusChest
+         DedicatedServerSettings settings, WorldLoader.DataLoadContext context, Registry<LevelStem> stemRegistry, boolean demo, boolean generateBonusChest
      ) {
          LevelSettings levelSettings;
-         WorldOptions worldOptions;
 @@ -316,7 +_,7 @@
          RegistryAccess registryAccess,
          boolean recreateRegionFiles
@@ -353,12 +257,3 @@
  
          try (WorldUpgrader worldUpgrader = new WorldUpgrader(levelStorage, dataFixer, worldData, registryAccess, eraseCache, recreateRegionFiles)) {
              Component component = null;
-@@ -331,7 +_,7 @@
-                 int totalChunks = worldUpgrader.getTotalChunks();
-                 if (totalChunks > 0) {
-                     int i = worldUpgrader.getConverted() + worldUpgrader.getSkipped();
--                    LOGGER.info("{}% completed ({} / {} chunks)...", Mth.floor((float)i / totalChunks * 100.0F), i, totalChunks);
-+                    LOGGER.info("{}% completed ({} / {} chunks)...", Mth.floor((float) i / totalChunks * 100.0F), i, totalChunks);
-                 }
- 
-                 if (!running.getAsBoolean()) {

@@ -1,0 +1,28 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Sun, 3 May 2026 18:45:16 +0300
+Subject: [PATCH] sdfsdf
+
+
+diff --git a/net/minecraft/world/entity/monster/EnderMan.java b/net/minecraft/world/entity/monster/EnderMan.java
+index 9b63c55a61b511ebad6c94b48926cfdf544b0449..d798e107daa4dc89ff694cacdf53f2d338acc685 100644
+--- a/net/minecraft/world/entity/monster/EnderMan.java
++++ b/net/minecraft/world/entity/monster/EnderMan.java
+@@ -374,6 +374,8 @@ public class EnderMan extends Monster implements NeutralMob {
+         return this.entityData.get(DATA_CARRY_STATE).orElse(null);
+     }
+ 
++    public boolean projectileDamageAllowed = false;
++
+     @Override
+     public boolean hurtServer(ServerLevel level, DamageSource damageSource, float amount) {
+         if (this.isInvulnerableTo(level, damageSource)) {
+@@ -382,7 +384,7 @@ public class EnderMan extends Monster implements NeutralMob {
+             AbstractThrownPotion abstractThrownPotion1 = damageSource.getDirectEntity() instanceof AbstractThrownPotion abstractThrownPotion
+                 ? abstractThrownPotion
+                 : null;
+-            if (!damageSource.is(DamageTypeTags.IS_PROJECTILE) && abstractThrownPotion1 == null) { // Paper - EndermanEscapeEvent - diff on change - below logic relies on this path covering non-projectile damage.
++            if ((!damageSource.is(DamageTypeTags.IS_PROJECTILE) || projectileDamageAllowed) && abstractThrownPotion1 == null) { // Paper - EndermanEscapeEvent - diff on change - below logic relies on this path covering non-projectile damage.
+                 boolean flag = super.hurtServer(level, damageSource, amount);
+                 if (!(damageSource.getEntity() instanceof LivingEntity) && this.random.nextInt(10) != 0) {
+                     if (this.tryEscape(damageSource.is(net.minecraft.tags.DamageTypeTags.IS_DROWNING) ? com.destroystokyo.paper.event.entity.EndermanEscapeEvent.Reason.DROWN : com.destroystokyo.paper.event.entity.EndermanEscapeEvent.Reason.CRITICAL_HIT)) { // Paper - EndermanEscapeEvent

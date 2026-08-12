@@ -1,14 +1,5 @@
 --- a/net/minecraft/world/level/block/entity/RandomizableContainerBlockEntity.java
 +++ b/net/minecraft/world/level/block/entity/RandomizableContainerBlockEntity.java
-@@ -54,7 +_,7 @@
- 
-     @Override
-     public ItemStack getItem(int index) {
--        this.unpackLootTable(null);
-+        if (index == 0) this.unpackLootTable(null); // Paper - Perf: Optimize Hoppers
-         return super.getItem(index);
-     }
- 
 @@ -116,4 +_,13 @@
          output.discard("LootTable");
          output.discard("LootTableSeed");

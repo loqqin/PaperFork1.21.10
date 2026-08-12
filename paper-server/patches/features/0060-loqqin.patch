@@ -1,0 +1,94 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Wed, 8 Jul 2026 23:40:02 +0300
+Subject: [PATCH] loqqin
+
+
+diff --git a/ca/spottedleaf/moonrise/patches/collisions/CollisionUtil.java b/ca/spottedleaf/moonrise/patches/collisions/CollisionUtil.java
+index 2082b7506a403ed6815076cbd0d3b7eecd7225a0..ededbb017203f83aae9eb72e345a3b7f86fa06a0 100644
+--- a/ca/spottedleaf/moonrise/patches/collisions/CollisionUtil.java
++++ b/ca/spottedleaf/moonrise/patches/collisions/CollisionUtil.java
+@@ -10,8 +10,10 @@ import ca.spottedleaf.moonrise.patches.collisions.shape.CollisionVoxelShape;
+ import ca.spottedleaf.moonrise.patches.block_counting.BlockCountingChunkSection;
+ import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+ import it.unimi.dsi.fastutil.doubles.DoubleList;
++import net.FakeBlocks;
+ import net.minecraft.core.BlockPos;
+ import net.minecraft.core.Direction;
++import net.minecraft.server.level.ServerPlayer;
+ import net.minecraft.util.Mth;
+ import net.minecraft.world.entity.Entity;
+ import net.minecraft.world.entity.vehicle.AbstractMinecart;
+@@ -1995,7 +1997,14 @@ public final class CollisionUtil {
+                                     continue;
+                                 }
+ 
+-                                final BlockState blockData = blocks.get(localBlockIndex);
++                                BlockState blockData = blocks.get(localBlockIndex);
++                                try {
++                                    if (entity instanceof ServerPlayer serverPlayer) {
++                                        blockData = FakeBlocks.function.apply(serverPlayer, new BlockPos(blockX, blockY, blockZ), serverPlayer.level());
++                                    }
++                                } catch (Throwable throwable) {
++                                    throwable.printStackTrace();
++                                }
+ 
+                                 if (((CollisionBlockState)blockData).moonrise$emptyContextCollisionShape()) {
+                                     continue;
+diff --git a/net/FakeBlocks.java b/net/FakeBlocks.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..9c508964aa5d0549ed2375e5c092b511056b1d61
+--- /dev/null
++++ b/net/FakeBlocks.java
+@@ -0,0 +1,16 @@
++package net;
++
++import net.minecraft.core.BlockPos;
++import net.minecraft.server.level.ServerLevel;
++import net.minecraft.server.level.ServerPlayer;
++import net.minecraft.world.level.Level;
++import net.minecraft.world.level.block.state.BlockState;
++import org.apache.commons.lang3.function.TriFunction;
++
++import java.util.function.BiFunction;
++
++public class FakeBlocks {
++  public static TriFunction<ServerPlayer, BlockPos, ServerLevel, BlockState> function = (serverPlayer, blockPos, serverLevel) -> {
++    return serverLevel.getBlockState(blockPos);
++  };
++}
+diff --git a/net/minecraft/SharedConstants.java b/net/minecraft/SharedConstants.java
+index 5961f904ee58ea95b92a5d47f4b018f5c1f879c7..add9d756f8999795be0e287b685175241e6bc0a3 100644
+--- a/net/minecraft/SharedConstants.java
++++ b/net/minecraft/SharedConstants.java
+@@ -78,7 +78,7 @@ public class SharedConstants {
+     public static final boolean DEBUG_POI = debugFlag("POI");
+     public static final boolean DEBUG_BEES = debugFlag("BEES");
+     public static final boolean DEBUG_RAIDS = debugFlag("RAIDS");
+-    public static final boolean DEBUG_BLOCK_BREAK = debugFlag("BLOCK_BREAK");
++    public static boolean DEBUG_BLOCK_BREAK = debugFlag("BLOCK_BREAK");
+     public static final boolean DEBUG_MONITOR_TICK_TIMES = debugFlag("MONITOR_TICK_TIMES");
+     public static final boolean DEBUG_KEEP_JIGSAW_BLOCKS_DURING_STRUCTURE_GEN = debugFlag("KEEP_JIGSAW_BLOCKS_DURING_STRUCTURE_GEN");
+     public static final boolean DEBUG_DONT_SAVE_WORLD = debugFlag("DONT_SAVE_WORLD");
+diff --git a/net/minecraft/server/level/ServerPlayerGameMode.java b/net/minecraft/server/level/ServerPlayerGameMode.java
+index 7166889bce8065508030ecd5b1400ee9be031bf3..44360b7963e1144396af05665a8ad3ce88251c6e 100644
+--- a/net/minecraft/server/level/ServerPlayerGameMode.java
++++ b/net/minecraft/server/level/ServerPlayerGameMode.java
+@@ -4,6 +4,8 @@ import com.mojang.logging.LogUtils;
+ import java.util.List;
+ import java.util.Objects;
+ import javax.annotation.Nullable;
++
++import net.FakeBlocks;
+ import net.minecraft.SharedConstants;
+ import net.minecraft.advancements.CriteriaTriggers;
+ import net.minecraft.core.BlockPos;
+@@ -276,7 +278,7 @@ public class ServerPlayerGameMode {
+             } else if (action == ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK) {
+                 if (pos.equals(this.destroyPos)) {
+                     int i1 = this.gameTicks - this.destroyProgressStart;
+-                    BlockState blockStatex = this.level.getBlockState(pos);
++                    BlockState blockStatex = FakeBlocks.function.apply(this.player, pos, this.level);
+                     if (!blockStatex.isAir()) {
+                         float f1 = blockStatex.getDestroyProgress(this.player, this.player.level(), pos) * (i1 + 1);
+                         if (f1 >= 0.7F) {

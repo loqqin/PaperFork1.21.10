@@ -83,7 +83,7 @@
              CompletableFuture<Vec3> completableFuture = savedPosition.position()
                  .map(CompletableFuture::completedFuture)
                  .orElseGet(() -> PlayerSpawnFinder.findSpawn(serverLevel, respawnData.pos()));
-@@ -113,12 +_,13 @@
+@@ -113,11 +_,12 @@
      }
  
      final class Preparing implements PrepareSpawnTask.State {
@@ -95,21 +95,14 @@
 +        private Vec2 spawnAngle; // Paper - remove final
          @Nullable
          private CompletableFuture<?> chunkLoadFuture;
--        private final ChunkLoadCounter chunkLoadCounter = new ChunkLoadCounter();
 +        private @Nullable CompletableFuture<org.bukkit.Location> eventFuture; // Paper
-+        private final ChunkLoadCounter chunkLoadCounter = new ca.spottedleaf.moonrise.patches.chunk_system.MoonriseChunkLoadCounter(); // Paper - rewrite chunk system
+         private final ChunkLoadCounter chunkLoadCounter = new ChunkLoadCounter();
  
          Preparing(final ServerLevel spawnLevel, final CompletableFuture<Vec3> spawnPosition, final Vec2 spawnAngle) {
-             this.spawnLevel = spawnLevel;
-@@ -137,12 +_,52 @@
+@@ -137,6 +_,50 @@
              } else {
                  Vec3 vec3 = this.spawnPosition.join();
                  if (this.chunkLoadFuture == null) {
--                    ChunkPos chunkPos = new ChunkPos(BlockPos.containing(vec3));
--                    this.chunkLoadCounter
--                        .track(
--                            this.spawnLevel,
--                            () -> this.chunkLoadFuture = this.spawnLevel.getChunkSource().addTicketAndLoadWithRadius(TicketType.PLAYER_SPAWN, chunkPos, 3)
 +                    // Paper start - PlayerSpawnLocationEvent
 +                    if (this.eventFuture == null && org.spigotmc.event.player.PlayerSpawnLocationEvent.getHandlerList().getRegisteredListeners().length != 0) {
 +                        ServerPlayer serverPlayer;
@@ -123,7 +116,7 @@
 +                        org.spigotmc.event.player.PlayerSpawnLocationEvent ev = new org.spigotmc.event.player.PlayerSpawnLocationEvent(
 +                            serverPlayer.getBukkitEntity(),
 +                            org.bukkit.craftbukkit.util.CraftLocation.toBukkit(vec3, this.spawnLevel, this.spawnAngle.x, this.spawnAngle.y)
-                         );
++                        );
 +                        ev.callEvent();
 +                        vec3 = io.papermc.paper.util.MCUtil.toVec3(ev.getSpawnLocation());
 +                        this.spawnLevel = ((org.bukkit.craftbukkit.CraftWorld) ev.getSpawnLocation().getWorld()).getHandle();
@@ -154,11 +147,9 @@
 +                        this.spawnAngle = new Vec2(location.getYaw(), location.getPitch());
 +                    }
 +                    // Paper end - PlayerSpawnLocationEvent
-+                    ChunkPos chunkPos = new ChunkPos(BlockPos.containing(vec3));
-+                    this.chunkLoadFuture = ((ca.spottedleaf.moonrise.patches.chunk_system.MoonriseChunkLoadCounter)this.chunkLoadCounter).trackLoadWithRadius(this.spawnLevel, chunkPos, 3, net.minecraft.world.level.chunk.status.ChunkStatus.FULL, ca.spottedleaf.concurrentutil.util.Priority.HIGH, () -> { Preparing.this.spawnLevel.getChunkSource().addTicketWithRadius(TicketType.PLAYER_SPAWN, chunkPos, 3); });
-                     PrepareSpawnTask.this.loadListener.start(LevelLoadListener.Stage.LOAD_PLAYER_CHUNKS, this.chunkLoadCounter.totalChunks());
-                     PrepareSpawnTask.this.loadListener.updateFocus(this.spawnLevel.dimension(), chunkPos);
-                 }
+                     ChunkPos chunkPos = new ChunkPos(BlockPos.containing(vec3));
+                     this.chunkLoadCounter
+                         .track(
 @@ -177,15 +_,48 @@
          public ServerPlayer spawn(Connection connection, CommonListenerCookie cookie) {
              ChunkPos chunkPos = new ChunkPos(BlockPos.containing(this.spawnPosition));

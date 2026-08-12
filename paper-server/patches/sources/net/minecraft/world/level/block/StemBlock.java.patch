@@ -8,8 +8,7 @@
 +
      @Override
      protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
--        if (level.getRawBrightness(pos, 0) >= 9) {
-+        if (level.getRawBrightness(pos, 0) >= 9 || org.bukkit.Bukkit.worldNamesWithAllowedGrowthWithLowBrightness.contains(level.getWorld().getName())) {
+         if (level.getRawBrightness(pos, 0) >= 9) {
              float growthSpeed = CropBlock.getGrowthSpeed(this, level, pos);
 -            if (random.nextInt((int)(25.0F / growthSpeed) + 1) == 0) {
 +            double modifier = this == Blocks.PUMPKIN_STEM ? level.spigotConfig.pumpkinModifier : level.spigotConfig.melonModifier;

@@ -1,16 +1,5 @@
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
-@@ -202,8 +_,9 @@
- import net.minecraft.world.scores.criteria.ObjectiveCriteria;
- import org.slf4j.Logger;
- 
--public class ServerPlayer extends Player {
-+public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patches.chunk_system.player.ChunkSystemServerPlayer { // Paper - rewrite chunk system
-     private static final Logger LOGGER = LogUtils.getLogger();
-+    public long lastSave = MinecraftServer.currentTick; // Paper - Incremental chunk and player saving
-     private static final int NEUTRAL_MOB_DEATH_NOTIFICATION_RADII_XZ = 32;
-     private static final int NEUTRAL_MOB_DEATH_NOTIFICATION_RADII_Y = 10;
-     private static final int FLY_STAT_RECORDING_SPEED = 25;
 @@ -254,7 +_,8 @@
      private int levitationStartTime;
      private boolean disconnected;
@@ -68,7 +57,7 @@
          @Override
          public void dataChanged(AbstractContainerMenu containerMenu, int dataSlotIndex, int value) {
          }
-@@ -366,10 +_,78 @@
+@@ -366,10 +_,43 @@
          public void sendSystemMessage(Component message) {
              ServerPlayer.this.sendSystemMessage(message);
          }
@@ -90,11 +79,6 @@
 +    public boolean queueHealthUpdatePacket;
 +    public @Nullable net.minecraft.network.protocol.game.ClientboundSetHealthPacket queuedHealthUpdatePacket;
 +    // Paper end - cancellable death event
-+    // Paper start - Optional per player mob spawns
-+    public static final int MOBCATEGORY_TOTAL_ENUMS = net.minecraft.world.entity.MobCategory.values().length;
-+    public final int[] mobCounts = new int[MOBCATEGORY_TOTAL_ENUMS];
-+    // Paper end - Optional per player mob spawns
-+    public final int[] mobBackoffCounts = new int[MOBCATEGORY_TOTAL_ENUMS]; // Paper - per player mob count backoff
 +    // CraftBukkit start
 +    public @Nullable String lastKnownName; // Better rename detection
 +    public String displayName;
@@ -114,40 +98,10 @@
 +    public boolean isRealPlayer; // Paper
 +    public @Nullable com.destroystokyo.paper.event.entity.PlayerNaturallySpawnCreaturesEvent playerNaturallySpawnedEvent; // Paper - PlayerNaturallySpawnCreaturesEvent
 +    public @Nullable org.bukkit.event.player.PlayerQuitEvent.QuitReason quitReason = null; // Paper - Add API for quit reason; there are a lot of changes to do if we change all methods leading to the event
-+
-+    // Paper start - rewrite chunk system
-+    private ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader.PlayerChunkLoaderData chunkLoader;
-+    private final ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader.ViewDistanceHolder viewDistanceHolder = new ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader.ViewDistanceHolder();
-+
-+    @Override
-+    public final boolean moonrise$isRealPlayer() {
-+        return this.isRealPlayer;
-+    }
-+
-+    @Override
-+    public final void moonrise$setRealPlayer(final boolean real) {
-+        this.isRealPlayer = real;
-+    }
-+
-+    @Override
-+    public final ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader.PlayerChunkLoaderData moonrise$getChunkLoader() {
-+        return this.chunkLoader;
-+    }
-+
-+    @Override
-+    public final void moonrise$setChunkLoader(final ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader.PlayerChunkLoaderData loader) {
-+        this.chunkLoader = loader;
-+    }
-+
-+    @Override
-+    public final ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader.ViewDistanceHolder moonrise$getViewDistanceHolder() {
-+        return this.viewDistanceHolder;
-+    }
-+    // Paper end - rewrite chunk system
  
      public ServerPlayer(MinecraftServer server, ServerLevel level, GameProfile gameProfile, ClientInformation clientInformation) {
          super(level, gameProfile);
-@@ -380,14 +_,20 @@
+@@ -380,8 +_,14 @@
          this.recipeBook = new ServerRecipeBook((recipe, output) -> server.getRecipeManager().listDisplaysForRecipe(recipe, output));
          this.stats = server.getPlayerList().getPlayerStats(this);
          this.advancements = server.getPlayerList().getPlayerAdvancements(this);
@@ -163,13 +117,6 @@
      }
  
      @Override
-     public BlockPos adjustSpawnLocation(ServerLevel level, BlockPos pos) {
-         CompletableFuture<Vec3> completableFuture = PlayerSpawnFinder.findSpawn(level, pos);
--        this.server.managedBlock(completableFuture::isDone);
-+        level.chunkSource.mainThreadProcessor.managedBlock(completableFuture::isDone); // Paper - rewrite chunk system
-         return BlockPos.containing(completableFuture.join());
-     }
- 
 @@ -399,6 +_,7 @@
          this.seenCredits = input.getBooleanOr("seenCredits", false);
          input.read("recipeBook", ServerRecipeBook.Packed.CODEC)

@@ -1,0 +1,19 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: loqqin <soubmatic@gmail.com>
+Date: Sun, 8 Mar 2026 00:01:34 +0200
+Subject: [PATCH] path not final
+
+
+diff --git a/net/minecraft/world/level/pathfinder/Path.java b/net/minecraft/world/level/pathfinder/Path.java
+index 4a17d60e09bc2a73c50a1c981e4b50ae3eabe9ee..9216edef050ef427b0d03f0d6679e8ad80361b3c 100644
+--- a/net/minecraft/world/level/pathfinder/Path.java
++++ b/net/minecraft/world/level/pathfinder/Path.java
+@@ -11,7 +11,7 @@ import net.minecraft.util.VisibleForDebug;
+ import net.minecraft.world.entity.Entity;
+ import net.minecraft.world.phys.Vec3;
+ 
+-public final class Path {
++public class Path {
+     public static final StreamCodec<FriendlyByteBuf, Path> STREAM_CODEC = StreamCodec.of((buffer, value) -> value.writeToStream(buffer), Path::createFromStream);
+     public final List<Node> nodes;
+     @Nullable

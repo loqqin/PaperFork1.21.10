@@ -1,53 +1,5 @@
 --- a/net/minecraft/network/protocol/game/ClientboundLevelChunkPacketData.java
 +++ b/net/minecraft/network/protocol/game/ClientboundLevelChunkPacketData.java
-@@ -32,17 +_,45 @@
-     private final Map<Heightmap.Types, long[]> heightmaps;
-     private final byte[] buffer;
-     private final List<ClientboundLevelChunkPacketData.BlockEntityInfo> blockEntitiesData;
--
-+    // Paper start - Handle oversized block entities in chunks
-+    private final java.util.List<net.minecraft.network.protocol.Packet<?>> extraPackets = new java.util.ArrayList<>();
-+    private static final int BLOCK_ENTITY_LIMIT = Integer.getInteger("Paper.excessiveTELimit", 750);
-+
-+    public List<net.minecraft.network.protocol.Packet<?>> getExtraPackets() {
-+        return this.extraPackets;
-+    }
-+    // Paper end - Handle oversized block entities in chunks
-+
-+    // Paper start - Anti-Xray - Add chunk packet info
-+    @Deprecated @io.papermc.paper.annotation.DoNotUse
-     public ClientboundLevelChunkPacketData(LevelChunk levelChunk) {
-+        this(levelChunk, null);
-+    }
-+    public ClientboundLevelChunkPacketData(LevelChunk levelChunk, io.papermc.paper.antixray.ChunkPacketInfo<net.minecraft.world.level.block.state.BlockState> chunkPacketInfo) {
-+        // Paper end - Anti-Xray - Add chunk packet info
-         this.heightmaps = levelChunk.getHeightmaps()
-             .stream()
-             .filter(entry1 -> entry1.getKey().sendToClient())
-             .collect(Collectors.toMap(Entry::getKey, entry1 -> (long[])entry1.getValue().getRawData().clone()));
-         this.buffer = new byte[calculateChunkSize(levelChunk)];
--        extractChunkData(new FriendlyByteBuf(this.getWriteBuffer()), levelChunk);
-+        // Paper start - Anti-Xray - Add chunk packet info
-+        if (chunkPacketInfo != null) {
-+            chunkPacketInfo.setBuffer(this.buffer);
-+        }
-+        extractChunkData(new FriendlyByteBuf(this.getWriteBuffer()), levelChunk, chunkPacketInfo);
-         this.blockEntitiesData = Lists.newArrayList();
-+        int totalTileEntities = 0; // Paper - Handle oversized block entities in chunks
- 
-         for (Entry<BlockPos, BlockEntity> entry : levelChunk.getBlockEntities().entrySet()) {
-+            // Paper start - Handle oversized block entities in chunks
-+            if (++totalTileEntities > BLOCK_ENTITY_LIMIT) {
-+                net.minecraft.network.protocol.Packet<ClientGamePacketListener> packet = entry.getValue().getUpdatePacket();
-+                if (packet != null) {
-+                    this.extraPackets.add(packet);
-+                    continue;
-+                }
-+            }
-+            // Paper end - Handle oversized block entities in chunks
-             this.blockEntitiesData.add(ClientboundLevelChunkPacketData.BlockEntityInfo.create(entry.getValue()));
-         }
-     }
 @@ -50,7 +_,7 @@
      public ClientboundLevelChunkPacketData(RegistryFriendlyByteBuf buffer, int x, int z) {
          this.heightmaps = HEIGHTMAPS_STREAM_CODEC.decode(buffer);
@@ -57,25 +9,6 @@
              throw new RuntimeException("Chunk Packet trying to allocate too much memory on read.");
          } else {
              this.buffer = new byte[varInt];
-@@ -82,9 +_,17 @@
-         return byteBuf;
-     }
- 
-+    // Paper start - Anti-Xray - Add chunk packet info
-+    @Deprecated @io.papermc.paper.annotation.DoNotUse
-     public static void extractChunkData(FriendlyByteBuf buffer, LevelChunk chunk) {
-+        ClientboundLevelChunkPacketData.extractChunkData(buffer, chunk, null);
-+    }
-+    public static void extractChunkData(FriendlyByteBuf buffer, LevelChunk chunk, io.papermc.paper.antixray.ChunkPacketInfo<net.minecraft.world.level.block.state.BlockState> chunkPacketInfo) {
-+        int chunkSectionIndex = 0;
-         for (LevelChunkSection levelChunkSection : chunk.getSections()) {
--            levelChunkSection.write(buffer);
-+            levelChunkSection.write(buffer, chunkPacketInfo, chunkSectionIndex);
-+            chunkSectionIndex++;
-+            // Paper end  - Anti-Xray - Add chunk packet info
-         }
- 
-         if (buffer.writerIndex() != buffer.capacity()) {
 @@ -155,6 +_,7 @@
              CompoundTag updateTag = blockEntity.getUpdateTag(blockEntity.getLevel().registryAccess());
              BlockPos blockPos = blockEntity.getBlockPos();

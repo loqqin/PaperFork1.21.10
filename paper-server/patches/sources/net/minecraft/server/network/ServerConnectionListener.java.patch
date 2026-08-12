@@ -13,19 +13,17 @@
      );
      final MinecraftServer server;
      public volatile boolean running;
-@@ -65,12 +_,37 @@
+@@ -65,12 +_,35 @@
          this.running = true;
      }
  
 +    // Paper start - prevent blocking on adding a new connection while the server is ticking
 +    private final java.util.Queue<Connection> pending = new java.util.concurrent.ConcurrentLinkedQueue<>();
-+    private static final boolean disableFlushConsolidation = Boolean.getBoolean("Paper.disableFlushConsolidate"); // Paper - Optimize network
 +
 +    private final void addPending() {
 +        Connection connection;
 +        while ((connection = this.pending.poll()) != null) {
 +            this.connections.add(connection);
-+            connection.isPending = false; // Paper - Optimize network
 +        }
 +    }
 +    // Paper end - prevent blocking on adding a new connection while the server is ticking
@@ -52,7 +50,7 @@
                  eventLoopGroup = SERVER_EPOLL_EVENT_GROUP.get();
                  LOGGER.info("Using epoll channel type");
              } else {
-@@ -79,6 +_,16 @@
+@@ -79,6 +_,12 @@
                  LOGGER.info("Using default channel type");
              }
  
@@ -61,22 +59,10 @@
 +                LOGGER.warn("Using HAProxy, please ensure the server port is adequately firewalled.");
 +            }
 +            // Paper end - Warn people with console access that HAProxy is in use.
-+            // Paper start - Use Velocity cipher
-+            ServerConnectionListener.LOGGER.info("Paper: Using " + com.velocitypowered.natives.util.Natives.compress.getLoadedVariant() + " compression from Velocity.");
-+            ServerConnectionListener.LOGGER.info("Paper: Using " + com.velocitypowered.natives.util.Natives.cipher.getLoadedVariant() + " cipher from Velocity.");
-+            // Paper end - Use Velocity cipher
 +
              this.channels
                  .add(
                      new ServerBootstrap()
-@@ -92,6 +_,7 @@
-                                     } catch (ChannelException var5) {
-                                     }
- 
-+                                    if (!disableFlushConsolidation) channel.pipeline().addFirst(new io.netty.handler.flush.FlushConsolidationHandler()); // Paper - Optimize network
-                                     ChannelPipeline channelPipeline = channel.pipeline().addLast("timeout", new ReadTimeoutHandler(30));
-                                     if (ServerConnectionListener.this.server.repliesToStatus()) {
-                                         channelPipeline.addLast("legacy_query", new LegacyQueryHandler(ServerConnectionListener.this.getServer()));
 @@ -102,22 +_,64 @@
                                      Connection connection = (Connection)(rateLimitPacketsPerSecond > 0
                                          ? new RateKickingConnection(rateLimitPacketsPerSecond)

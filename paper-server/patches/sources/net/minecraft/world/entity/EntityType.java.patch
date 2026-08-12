@@ -147,25 +147,6 @@
          );
      }
  
-@@ -1519,7 +_,18 @@
-     }
- 
-     public static Stream<Entity> loadEntitiesRecursive(ValueInput.ValueInputList input, Level level, EntitySpawnReason spawnReason) {
-+        final java.util.Map<EntityType<?>, Integer> loadedEntityCounts = new java.util.HashMap<>(); // Paper - Entity load/save limit per chunk
-         return input.stream().mapMulti((valueInput, consumer) -> loadEntityRecursive(valueInput, level, spawnReason, entity -> {
-+            // Paper start - Entity load/save limit per chunk
-+            final EntityType<?> entityType = entity.getType();
-+            final int saveLimit = level.paperConfig().chunks.entityPerChunkSaveLimit.getOrDefault(entityType, -1);
-+            if (saveLimit > -1) {
-+                if (loadedEntityCounts.getOrDefault(entityType, 0) >= saveLimit) {
-+                    return null;
-+                }
-+                loadedEntityCounts.merge(entityType, 1, Integer::sum);
-+            }
-+            // Paper end - Entity load/save limit per chunk
-             consumer.accept(entity);
-             return entity;
-         }));
 @@ -1588,8 +_,23 @@
          return this.builtInRegistryHolder;
      }

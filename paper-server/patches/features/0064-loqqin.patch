@@ -1,0 +1,20 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Thu, 23 Jul 2026 21:06:12 +0300
+Subject: [PATCH] loqqin
+
+
+diff --git a/net/minecraft/server/network/ServerLoginPacketListenerImpl.java b/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
+index 1496b5797e779d932ff927e4e36d2069ca91662a..72f276292b1868d1413ab134215da6f7ead14558 100755
+--- a/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
++++ b/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
+@@ -365,7 +365,8 @@ public class ServerLoginPacketListenerImpl implements ServerLoginPacketListener,
+     @Override
+     public void handleCustomQueryPacket(ServerboundCustomQueryAnswerPacket packet) {
+         // Paper start - Add Velocity IP Forwarding Support
+-        if (io.papermc.paper.configuration.GlobalConfiguration.get().proxies.velocity.enabled && packet.transactionId() == this.velocityLoginMessageId) {
++        if (io.papermc.paper.configuration.GlobalConfiguration.get().proxies.velocity.enabled && packet.transactionId() == this.velocityLoginMessageId
++        && (allowLoginWithoutVelocity == null || !allowLoginWithoutVelocity.apply(this))) {
+             ServerboundCustomQueryAnswerPacket.QueryAnswerPayload payload = (ServerboundCustomQueryAnswerPacket.QueryAnswerPayload)packet.payload();
+             if (payload == null) {
+                 this.disconnect("This server requires you to connect with Velocity.");

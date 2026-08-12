@@ -1,22 +1,5 @@
 --- a/net/minecraft/world/entity/AreaEffectCloud.java
 +++ b/net/minecraft/world/entity/AreaEffectCloud.java
-@@ -142,6 +_,16 @@
-         this.duration = duration;
-     }
- 
-+    // Paper start - EAR 2
-+    @Override
-+    public void inactiveTick() {
-+        super.inactiveTick();
-+        if (this.tickCount >= this.waitTime + this.duration) {
-+            this.discard(org.bukkit.event.entity.EntityRemoveEvent.Cause.DESPAWN); // CraftBukkit - add Bukkit remove cause
-+        }
-+    }
-+    // Paper end - EAR 2
-+
-     @Override
-     public void tick() {
-         super.tick();
 @@ -191,7 +_,7 @@
  
      private void serverTick(ServerLevel level) {

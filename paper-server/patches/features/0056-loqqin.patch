@@ -1,0 +1,21 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Wed, 17 Jun 2026 03:06:42 +0300
+Subject: [PATCH] loqqin
+
+
+diff --git a/net/minecraft/server/level/ChunkMap.java b/net/minecraft/server/level/ChunkMap.java
+index 94f5522b000087ad1ade07c726d550f2dd3b3188..9fcf28aa1bbac2d5e59ef6cd3c196b959d23b6c9 100644
+--- a/net/minecraft/server/level/ChunkMap.java
++++ b/net/minecraft/server/level/ChunkMap.java
+@@ -418,8 +418,9 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
+         this.poiManager.tick(hasMoreTime);
+         profilerFiller.popPush("chunk_unload");
+         if (!this.level.noSave()) {
++            this.level.noSave = true;
+             System.out.println("process unloads " + this.level.serverLevelData.getLevelName());
+-            this.processUnloads(hasMoreTime);
++//            this.processUnloads(hasMoreTime);
+         }
+ 
+         profilerFiller.pop();

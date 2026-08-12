@@ -1,0 +1,70 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: loqqin <soubmatic@gmail.com>
+Date: Sun, 8 Mar 2026 16:35:26 +0200
+Subject: [PATCH] sdf
+
+
+diff --git a/net/minecraft/world/entity/ai/navigation/PathNavigation.java b/net/minecraft/world/entity/ai/navigation/PathNavigation.java
+index 05943450baa0a04ac433c39fdbe80e7abd191363..1e2a5c2ea4b3d70ab356f89557b72c1226cb7c48 100644
+--- a/net/minecraft/world/entity/ai/navigation/PathNavigation.java
++++ b/net/minecraft/world/entity/ai/navigation/PathNavigation.java
+@@ -54,7 +54,7 @@ public abstract class PathNavigation {
+     private BlockPos targetPos;
+     private int reachRange;
+     private float maxVisitedNodesMultiplier = 1.0F;
+-    public final PathFinder pathFinder;
++    public PathFinder pathFinder;
+     private boolean isStuck;
+     private float requiredPathLength = 16.0F;
+ 
+diff --git a/net/minecraft/world/level/pathfinder/Path.java b/net/minecraft/world/level/pathfinder/Path.java
+index 9216edef050ef427b0d03f0d6679e8ad80361b3c..4f7110c3e5e270cfc20e618d5017a2447ccee619 100644
+--- a/net/minecraft/world/level/pathfinder/Path.java
++++ b/net/minecraft/world/level/pathfinder/Path.java
+@@ -13,11 +13,11 @@ import net.minecraft.world.phys.Vec3;
+ 
+ public class Path {
+     public static final StreamCodec<FriendlyByteBuf, Path> STREAM_CODEC = StreamCodec.of((buffer, value) -> value.writeToStream(buffer), Path::createFromStream);
+-    public final List<Node> nodes;
++    public List<Node> nodes;
+     @Nullable
+     private Path.DebugData debugData;
+     private int nextNodeIndex;
+-    private final BlockPos target;
++    public BlockPos target;
+     private final float distToTarget;
+     private final boolean reached;
+ 
+@@ -40,6 +40,10 @@ public class Path {
+         return this.nextNodeIndex >= this.nodes.size();
+     }
+ 
++    public boolean isProcessed() {
++        return true;
++    }
++
+     @Nullable
+     public Node getEndNode() {
+         return !this.nodes.isEmpty() ? this.nodes.get(this.nodes.size() - 1) : null;
+@@ -124,7 +128,7 @@ public class Path {
+     }
+ 
+     @VisibleForDebug
+-    void setDebug(Node[] openSet, Node[] closedSet, Set<Target> targetNodes) {
++    public void setDebug(Node[] openSet, Node[] closedSet, Set<Target> targetNodes) {
+         this.debugData = new Path.DebugData(openSet, closedSet, targetNodes);
+     }
+ 
+diff --git a/net/minecraft/world/level/pathfinder/SwimNodeEvaluator.java b/net/minecraft/world/level/pathfinder/SwimNodeEvaluator.java
+index f18aa938692a1c29228ff5e98ab9d58c4bfff094..b25d3bf3d5c575cd5c9a97a6d5ee7191467fe839 100644
+--- a/net/minecraft/world/level/pathfinder/SwimNodeEvaluator.java
++++ b/net/minecraft/world/level/pathfinder/SwimNodeEvaluator.java
+@@ -15,7 +15,7 @@ import net.minecraft.world.level.block.state.BlockState;
+ import net.minecraft.world.level.material.FluidState;
+ 
+ public class SwimNodeEvaluator extends NodeEvaluator {
+-    private final boolean allowBreaching;
++    public final boolean allowBreaching;
+     private final Long2ObjectMap<PathType> pathTypesByPosCache = new Long2ObjectOpenHashMap<>();
+ 
+     public SwimNodeEvaluator(boolean allowBreaching) {

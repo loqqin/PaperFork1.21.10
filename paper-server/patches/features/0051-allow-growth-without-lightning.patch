@@ -1,0 +1,56 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Sun, 10 May 2026 00:42:24 +0300
+Subject: [PATCH] allow growth without lightning
+
+
+diff --git a/net/minecraft/world/level/block/CropBlock.java b/net/minecraft/world/level/block/CropBlock.java
+index e5faf1ed38a98b7eb79b85a38c072333b0cad060..72cd548025be272f6206c26746bf8e1ecf5fc39f 100644
+--- a/net/minecraft/world/level/block/CropBlock.java
++++ b/net/minecraft/world/level/block/CropBlock.java
+@@ -78,7 +78,7 @@ public class CropBlock extends VegetationBlock implements BonemealableBlock {
+ 
+     @Override
+     protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+-        if (level.getRawBrightness(pos, 0) >= 9) {
++        if (level.getRawBrightness(pos, 0) >= 9 || org.bukkit.Bukkit.worldNamesWithAllowedGrowthWithLowBrightness.contains(level.getWorld().getName())) {
+             int age = this.getAge(state);
+             if (age < this.getMaxAge()) {
+                 float growthSpeed = getGrowthSpeed(this, level, pos);
+@@ -167,7 +167,8 @@ public class CropBlock extends VegetationBlock implements BonemealableBlock {
+     }
+ 
+     protected static boolean hasSufficientLight(LevelReader level, BlockPos pos) {
+-        return level.getRawBrightness(pos, 0) >= 8;
++        return level.getRawBrightness(pos, 0) >= 8 || (level instanceof ServerLevel serverLevel &&
++            org.bukkit.Bukkit.worldNamesWithAllowedGrowthWithLowBrightness.contains(serverLevel.getWorld().getName()));
+     }
+ 
+     @Override
+diff --git a/net/minecraft/world/level/block/MushroomBlock.java b/net/minecraft/world/level/block/MushroomBlock.java
+index aafbda9707db94e01d4f24185ad5b0f311abb22e..55728311917cc56bf5d21cbe9dfdeff71204ad5e 100644
+--- a/net/minecraft/world/level/block/MushroomBlock.java
++++ b/net/minecraft/world/level/block/MushroomBlock.java
+@@ -88,7 +88,8 @@ public class MushroomBlock extends VegetationBlock implements BonemealableBlock
+     protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+         BlockPos blockPos = pos.below();
+         BlockState blockState = level.getBlockState(blockPos);
+-        return blockState.is(BlockTags.MUSHROOM_GROW_BLOCK) || level.getRawBrightness(pos, 0) < 13 && this.mayPlaceOn(blockState, level, blockPos);
++        return (blockState.is(BlockTags.MUSHROOM_GROW_BLOCK) || level.getRawBrightness(pos, 0) < 13 && this.mayPlaceOn(blockState, level, blockPos))
++            || (level instanceof ServerLevel serverLevel && org.bukkit.Bukkit.worldNamesWithAllowedGrowthWithLowBrightness.contains(serverLevel.getWorld().getName()));
+     }
+ 
+     public boolean growMushroom(ServerLevel level, BlockPos pos, BlockState state, RandomSource random) {
+diff --git a/net/minecraft/world/level/block/StemBlock.java b/net/minecraft/world/level/block/StemBlock.java
+index 706dfcb7aeb61012df52390b1773cdd1fbb53cf6..290f29770ef5c8b6cd130138bdd18e82fed430f5 100644
+--- a/net/minecraft/world/level/block/StemBlock.java
++++ b/net/minecraft/world/level/block/StemBlock.java
+@@ -70,7 +70,7 @@ public class StemBlock extends VegetationBlock implements BonemealableBlock {
+ 
+     @Override
+     protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+-        if (level.getRawBrightness(pos, 0) >= 9) {
++        if (level.getRawBrightness(pos, 0) >= 9 || org.bukkit.Bukkit.worldNamesWithAllowedGrowthWithLowBrightness.contains(level.getWorld().getName())) {
+             float growthSpeed = CropBlock.getGrowthSpeed(this, level, pos);
+             double modifier = this == Blocks.PUMPKIN_STEM ? level.spigotConfig.pumpkinModifier : level.spigotConfig.melonModifier;
+             modifier += modifier / 100 * growthPercentIncrease.getDouble(level.serverLevelData.settings.levelName);

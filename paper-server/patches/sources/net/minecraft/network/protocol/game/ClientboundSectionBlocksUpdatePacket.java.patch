@@ -1,18 +1,5 @@
 --- a/net/minecraft/network/protocol/game/ClientboundSectionBlocksUpdatePacket.java
 +++ b/net/minecraft/network/protocol/game/ClientboundSectionBlocksUpdatePacket.java
-@@ -17,9 +_,9 @@
-         ClientboundSectionBlocksUpdatePacket::write, ClientboundSectionBlocksUpdatePacket::new
-     );
-     private static final int POS_IN_SECTION_BITS = 12;
--    private final SectionPos sectionPos;
--    private final short[] positions;
--    private final BlockState[] states;
-+    public final SectionPos sectionPos;
-+    public final short[] positions;
-+    public final BlockState[] states;
- 
-     public ClientboundSectionBlocksUpdatePacket(SectionPos sectionPos, ShortSet positions, LevelChunkSection section) {
-         this.sectionPos = sectionPos;
 @@ -30,10 +_,25 @@
  
          for (short s : positions) {

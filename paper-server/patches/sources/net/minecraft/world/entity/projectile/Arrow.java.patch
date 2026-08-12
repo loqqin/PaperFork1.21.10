@@ -1,22 +1,5 @@
 --- a/net/minecraft/world/entity/projectile/Arrow.java
 +++ b/net/minecraft/world/entity/projectile/Arrow.java
-@@ -70,6 +_,16 @@
-         builder.define(ID_EFFECT_COLOR, -1);
-     }
- 
-+    // Paper start - EAR 2
-+    @Override
-+    public void inactiveTick() {
-+        if (this.isInGround()) {
-+            this.life++;
-+        }
-+        super.inactiveTick();
-+    }
-+    // Paper end
-+
-     @Override
-     public void tick() {
-         super.tick();
 @@ -115,7 +_,7 @@
          Entity effectSource = this.getEffectSource();
          PotionContents potionContents = this.getPotionContents();

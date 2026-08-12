@@ -1,0 +1,24 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: loqqin <soubmatic@gmail.com>
+Date: Sat, 8 Nov 2025 18:24:57 +0200
+Subject: [PATCH] loqqin
+
+
+diff --git a/net/minecraft/world/item/crafting/ShapelessRecipe.java b/net/minecraft/world/item/crafting/ShapelessRecipe.java
+index af2463ef012dc48ffad081c928b28a79ba892e9e..cb620e07ff4c367934758bd22588f0617deda130 100644
+--- a/net/minecraft/world/item/crafting/ShapelessRecipe.java
++++ b/net/minecraft/world/item/crafting/ShapelessRecipe.java
+@@ -17,10 +17,10 @@ import net.minecraft.world.item.crafting.display.SlotDisplay;
+ import net.minecraft.world.level.Level;
+ 
+ public class ShapelessRecipe implements CraftingRecipe {
+-    final String group;
+-    final CraftingBookCategory category;
++    public final String group;
++    public final CraftingBookCategory category;
+     public ItemStack result;
+-    final List<Ingredient> ingredients;
++    public final List<Ingredient> ingredients;
+     @Nullable
+     private PlacementInfo placementInfo;
+ 

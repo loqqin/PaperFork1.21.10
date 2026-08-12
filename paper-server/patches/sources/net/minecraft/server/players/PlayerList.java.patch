@@ -212,7 +212,7 @@
 +                .getOrThrow(net.minecraft.world.level.biome.Biomes.PLAINS);
 +            player.connection.send(new net.minecraft.network.protocol.game.ClientboundLevelChunkWithLightPacket(
 +                new net.minecraft.world.level.chunk.EmptyLevelChunk(serverLevel, player.chunkPosition(), plains),
-+                serverLevel.getLightEngine(), (java.util.BitSet)null, (java.util.BitSet) null, true) // Paper - Anti-Xray
++                serverLevel.getLightEngine(), (java.util.BitSet)null, (java.util.BitSet) null)
 +            );
 +        }
 +        // Paper end - Send empty chunk
@@ -265,12 +265,11 @@
              }
  
              @Override
-@@ -284,57 +_,138 @@
+@@ -284,57 +_,137 @@
      }
  
      protected void save(ServerPlayer player) {
 +        if (!player.getBukkitEntity().isPersistent()) return; // CraftBukkit
-+        player.lastSave = MinecraftServer.currentTick; // Paper - Incremental chunk and player saving
          this.playerIo.save(player);
 -        ServerStatsCounter serverStatsCounter = this.stats.get(player.getUUID());
 +        ServerStatsCounter serverStatsCounter = player.getStats(); // CraftBukkit
@@ -723,28 +722,13 @@
              if (serverPlayer != except && serverPlayer.level().dimension() == dimension) {
                  double d = x - serverPlayer.getX();
                  double d1 = y - serverPlayer.getY();
-@@ -614,9 +_,25 @@
+@@ -614,9 +_,11 @@
      }
  
      public void saveAll() {
-+        // Paper start - Incremental chunk and player saving
-+        this.saveAll(-1);
-+    }
-+
-+    public void saveAll(final int interval) {
 +        io.papermc.paper.util.MCUtil.ensureMain("Save Players" , () -> { // Paper - Ensure main
-+        int numSaved = 0;
-+        final long now = MinecraftServer.currentTick;
          for (int i = 0; i < this.players.size(); i++) {
--            this.save(this.players.get(i));
-+            final ServerPlayer player = this.players.get(i);
-+            if (interval == -1 || now - player.lastSave >= interval) {
-+                this.save(player);
-+                if (interval != -1 && ++numSaved >= io.papermc.paper.configuration.GlobalConfiguration.get().playerAutoSave.maxPerTick()) {
-+                    break;
-+                }
-+            }
-+            // Paper end - Incremental chunk and player saving
+             this.save(this.players.get(i));
          }
 +        return null; }); // Paper - ensure main
      }
@@ -918,24 +902,6 @@
          }
  
          playerAdvancements.setPlayer(player);
-@@ -793,7 +_,7 @@
- 
-     public void setViewDistance(int viewDistance) {
-         this.viewDistance = viewDistance;
--        this.broadcastAll(new ClientboundSetChunkCacheRadiusPacket(viewDistance));
-+        //this.broadcastAll(new ClientboundSetChunkCacheRadiusPacket(viewDistance)); // Paper - rewrite chunk system
- 
-         for (ServerLevel serverLevel : this.server.getAllLevels()) {
-             if (serverLevel != null) {
-@@ -804,7 +_,7 @@
- 
-     public void setSimulationDistance(int simulationDistance) {
-         this.simulationDistance = simulationDistance;
--        this.broadcastAll(new ClientboundSetSimulationDistancePacket(simulationDistance));
-+        //this.broadcastAll(new ClientboundSetSimulationDistancePacket(simulationDistance));  // Paper - rewrite chunk system
- 
-         for (ServerLevel serverLevel : this.server.getAllLevels()) {
-             if (serverLevel != null) {
 @@ -838,11 +_,34 @@
      }
  

@@ -1,18 +1,11 @@
 --- a/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
 +++ b/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
-@@ -13,7 +_,6 @@
- import java.util.Objects;
- import java.util.concurrent.atomic.AtomicInteger;
- import javax.annotation.Nullable;
--import javax.crypto.Cipher;
- import javax.crypto.SecretKey;
- import net.minecraft.CrashReport;
- import net.minecraft.CrashReportCategory;
-@@ -45,9 +_,15 @@
+@@ -45,9 +_,16 @@
  import org.apache.commons.lang3.Validate;
  import org.slf4j.Logger;
  
 +// CraftBukkit start
++import org.bukkit.craftbukkit.entity.CraftPlayer;
 +import org.bukkit.craftbukkit.util.Waitable;
 +import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 +import org.bukkit.event.player.PlayerPreLoginEvent;
@@ -95,17 +88,11 @@
          } catch (Exception var3) {
              LOGGER.error("Error whilst disconnecting player", (Throwable)var3);
          }
-@@ -113,11 +_,20 @@
-         return this.requestedUsername != null ? this.requestedUsername + " (" + loggableAddress + ")" : loggableAddress;
-     }
- 
-+    public static final java.util.HashMap<String, String> disguiseFromTo = new java.util.HashMap<>();
-+
+@@ -116,7 +_,14 @@
      @Override
      public void handleHello(ServerboundHelloPacket packet) {
          Validate.validState(this.state == ServerLoginPacketListenerImpl.State.HELLO, "Unexpected hello packet");
 -        Validate.validState(StringUtil.isValidPlayerName(packet.name()), "Invalid characters in username");
--        this.requestedUsername = packet.name();
 +        // Paper start - Validate usernames
 +        if (io.papermc.paper.configuration.GlobalConfiguration.get().proxies.isProxyOnlineMode()
 +            && io.papermc.paper.configuration.GlobalConfiguration.get().unsupportedSettings.performUsernameValidation
@@ -114,10 +101,9 @@
 +        }
 +        this.requestedUuid = packet.profileId();
 +        // Paper end - Validate usernames
-+        this.requestedUsername = disguiseFromTo.getOrDefault(packet.name().toLowerCase(java.util.Locale.ROOT), packet.name());
+         this.requestedUsername = packet.name();
          GameProfile singleplayerProfile = this.server.getSingleplayerProfile();
          if (singleplayerProfile != null && this.requestedUsername.equalsIgnoreCase(singleplayerProfile.name())) {
-             this.startClientVerification(singleplayerProfile);
 @@ -126,7 +_,32 @@
                  this.state = ServerLoginPacketListenerImpl.State.KEY;
                  this.connection.send(new ClientboundHelloPacket("", this.server.getKeyPair().getPublic().getEncoded(), this.challenge, true));
@@ -178,17 +164,7 @@
      }
  
      @Override
-@@ -176,16 +_,15 @@
-             }
- 
-             SecretKey secretKey = packet.getSecretKey(_private);
--            Cipher cipher = Crypt.getCipher(2, secretKey);
--            Cipher cipher1 = Crypt.getCipher(1, secretKey);
-             string = new BigInteger(Crypt.digestData("", this.server.getKeyPair().getPublic(), secretKey)).toString(16);
-             this.state = ServerLoginPacketListenerImpl.State.AUTHENTICATING;
--            this.connection.setEncryptionKey(cipher, cipher1);
-+            this.connection.setEncryptionKey(secretKey); // Paper - Use Velocity cipher
-         } catch (CryptException var7) {
+@@ -185,7 +_,8 @@
              throw new IllegalStateException("Protocol error", var7);
          }
  
@@ -236,7 +212,7 @@
                  }
              }
  
-@@ -224,18 +_,124 @@
+@@ -224,18 +_,113 @@
                      ? ((InetSocketAddress)remoteAddress).getAddress()
                      : null;
              }
@@ -248,17 +224,12 @@
 +        // Paper end - Cache authenticator threads
 +    }
 +
-+    @Nullable
-+    public static java.util.function.Function<net.minecraft.server.network.ServerLoginPacketListenerImpl, Boolean> allowLoginWithoutVelocity;
-+
 +    // CraftBukkit start
 +    private GameProfile callPlayerPreLoginEvents(GameProfile gameprofile) throws Exception { // Paper - Add more fields to AsyncPlayerPreLoginEvent
 +        // Paper start - Add Velocity IP Forwarding Support
 +        if (ServerLoginPacketListenerImpl.this.velocityLoginMessageId == -1 && io.papermc.paper.configuration.GlobalConfiguration.get().proxies.velocity.enabled) {
-+            if (allowLoginWithoutVelocity == null || !allowLoginWithoutVelocity.apply(this)) {
-+                this.disconnect("This server requires you to connect with Velocity.");
-+                return gameprofile;
-+            }
++            this.disconnect("This server requires you to connect with Velocity.");
++            return gameprofile;
 +        }
 +        // Paper end - Add Velocity IP Forwarding Support
 +        String playerName = gameprofile.name();
@@ -306,44 +277,37 @@
  
      @Override
      public void handleCustomQueryPacket(ServerboundCustomQueryAnswerPacket packet) {
++        // Paper start - Add Velocity IP Forwarding Support
 +        if (io.papermc.paper.configuration.GlobalConfiguration.get().proxies.velocity.enabled && packet.transactionId() == this.velocityLoginMessageId) {
 +            ServerboundCustomQueryAnswerPacket.QueryAnswerPayload payload = (ServerboundCustomQueryAnswerPacket.QueryAnswerPayload)packet.payload();
 +            if (payload == null) {
-+                if (allowLoginWithoutVelocity != null && allowLoginWithoutVelocity.apply(this)) {
-+                    if (this.authenticatedProfile == null && this.requestedUsername != null) {
-+                        this.authenticatedProfile = new com.mojang.authlib.GameProfile(net.minecraft.core.UUIDUtil.createOfflinePlayerUUID(this.requestedUsername), this.requestedUsername);
-+                    }
-+                    authenticatorPool.execute(() -> {
-+                        try {
-+                            final GameProfile gameprofile = this.callPlayerPreLoginEvents(this.authenticatedProfile);
-+                            ServerLoginPacketListenerImpl.LOGGER.info("UUID of player {} is {}", gameprofile.name(), gameprofile.id());
-+                            ServerLoginPacketListenerImpl.this.startClientVerification(gameprofile);
-+                        } catch (Exception ex) {
-+                            disconnect("Failed to verify username!");
-+                            server.server.getLogger().log(java.util.logging.Level.WARNING, "Exception verifying " + (this.authenticatedProfile != null ? this.authenticatedProfile.name() : ""), ex);
-+                        }
-+                    });
-+                    return;
-+                }
 +                this.disconnect("This server requires you to connect with Velocity.");
 +                return;
 +            }
++
 +            net.minecraft.network.FriendlyByteBuf buf = payload.buffer;
 +            if (!com.destroystokyo.paper.proxy.VelocityProxy.checkIntegrity(buf)) {
 +                this.disconnect("Unable to verify player details");
 +                return;
 +            }
++
 +            int version = buf.readVarInt();
 +            if (version > com.destroystokyo.paper.proxy.VelocityProxy.MAX_SUPPORTED_FORWARDING_VERSION) {
 +                throw new IllegalStateException("Unsupported forwarding version " + version + ", wanted upto " + com.destroystokyo.paper.proxy.VelocityProxy.MAX_SUPPORTED_FORWARDING_VERSION);
 +            }
++
 +            java.net.SocketAddress listening = this.connection.getRemoteAddress();
 +            int port = 0;
 +            if (listening instanceof java.net.InetSocketAddress) {
 +                port = ((java.net.InetSocketAddress) listening).getPort();
 +            }
 +            this.connection.address = new java.net.InetSocketAddress(com.destroystokyo.paper.proxy.VelocityProxy.readAddress(buf), port);
++
 +            this.authenticatedProfile = com.destroystokyo.paper.proxy.VelocityProxy.createProfile(buf);
++
++            //TODO Update handling for lazy sessions, might not even have to do anything?
++
++            // Proceed with login
 +            authenticatorPool.execute(() -> {
 +                try {
 +                    final GameProfile gameprofile = this.callPlayerPreLoginEvents(this.authenticatedProfile);
@@ -356,6 +320,7 @@
 +            });
 +            return;
 +        }
++        // Paper end - Add Velocity IP Forwarding Support
          this.disconnect(ServerCommonPacketListenerImpl.DISCONNECT_UNEXPECTED_QUERY);
      }
  

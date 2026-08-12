@@ -39,33 +39,7 @@
      @Override
      public boolean dampensVibrations() {
          return this.getItem().is(ItemTags.DAMPENS_VIBRATIONS);
-@@ -104,10 +_,33 @@
-         return 0.04;
-     }
- 
-+    // Paper start - EAR 2
-+    @Override
-+    public void inactiveTick() {
-+        super.inactiveTick();
-+        if (this.pickupDelay > 0 && this.pickupDelay != 32767) {
-+            this.pickupDelay--;
-+        }
-+        if (this.age != -32768) {
-+            this.age++;
-+        }
-+
-+        if (!this.level().isClientSide() && this.age >= this.despawnRate) {// Paper - Alternative item-despawn-rate
-+            // CraftBukkit start - fire ItemDespawnEvent
-+            if (org.bukkit.craftbukkit.event.CraftEventFactory.callItemDespawnEvent(this).isCancelled()) {
-+                this.age = 0;
-+                return;
-+            }
-+            // CraftBukkit end
-+            this.discard(org.bukkit.event.entity.EntityRemoveEvent.Cause.DESPAWN); // CraftBukkit - add Bukkit remove cause
-+        }
-+    }
-+    // Paper end - EAR 2
-+
+@@ -107,7 +_,7 @@
      @Override
      public void tick() {
          if (this.getItem().isEmpty()) {
@@ -74,18 +48,6 @@
          } else {
              super.tick();
              if (this.pickupDelay > 0 && this.pickupDelay != 32767) {
-@@ -118,7 +_,10 @@
-             this.yo = this.getY();
-             this.zo = this.getZ();
-             Vec3 deltaMovement = this.getDeltaMovement();
--            if (this.isInWater() && this.getFluidHeight(FluidTags.WATER) > 0.1F) {
-+            boolean insideBlock = !this.level().noCollision(this, this.getBoundingBox().deflate(1.0E-7));
-+            if (insideBlock) {
-+                this.setDeltaMovement(Vec3.ZERO);
-+            } else if (this.isInWater() && this.getFluidHeight(FluidTags.WATER) > 0.1F) {
-                 this.setUnderwaterMovement();
-             } else if (this.isInLava() && this.getFluidHeight(FluidTags.LAVA) > 0.1F) {
-                 this.setUnderLavaMovement();
 @@ -135,11 +_,15 @@
                  }
              }

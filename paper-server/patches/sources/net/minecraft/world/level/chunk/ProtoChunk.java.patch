@@ -34,12 +34,3 @@
          }
      }
  
-@@ -141,7 +_,7 @@
-                     }
- 
-                     if (LightEngine.hasDifferentLightProperties(blockState, state)) {
--                        this.skyLightSources.update(this, relativeBlockPosX, y, relativeBlockPosZ);
-+                        // Paper - rewrite chunk system
-                         this.lightEngine.checkBlock(pos);
-                     }
-                 }

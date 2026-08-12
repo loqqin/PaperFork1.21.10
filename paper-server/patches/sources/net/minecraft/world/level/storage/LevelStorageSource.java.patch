@@ -8,15 +8,6 @@
          return new LevelDataAndDimensions(primaryLevelData, complete);
      }
  
-@@ -226,7 +_,7 @@
-         CompoundTag compoundOrEmpty = levelDataTagRaw.getCompoundOrEmpty("Data");
-         int dataVersion = NbtUtils.getDataVersion(compoundOrEmpty, -1);
-         Dynamic<?> dynamic = DataFixTypes.LEVEL.updateToCurrentVersion(dataFixer, new Dynamic<>(NbtOps.INSTANCE, compoundOrEmpty), dataVersion);
--        dynamic = dynamic.update("Player", dynamic1 -> DataFixTypes.PLAYER.updateToCurrentVersion(dataFixer, dynamic1, dataVersion));
-+        dynamic = dynamic.update("Player", dynamic1 -> new Dynamic(dynamic1.getOps(), ca.spottedleaf.dataconverter.minecraft.MCDataConverter.convertTag(ca.spottedleaf.dataconverter.minecraft.datatypes.MCTypeRegistry.PLAYER, (net.minecraft.nbt.CompoundTag)dynamic1.getValue(), dataVersion, ca.spottedleaf.dataconverter.minecraft.util.Version.getCurrentVersion()))); // Paper - replace data conversion system
-         return dynamic.update("WorldGenSettings", dynamic1 -> DataFixTypes.WORLD_GEN_SETTINGS.updateToCurrentVersion(dataFixer, dynamic1, dataVersion));
-     }
- 
 @@ -341,25 +_,39 @@
          return this.backupDir;
      }

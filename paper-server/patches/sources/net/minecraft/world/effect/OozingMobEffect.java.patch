@@ -1,11 +1,8 @@
 --- a/net/minecraft/world/effect/OozingMobEffect.java
 +++ b/net/minecraft/world/effect/OozingMobEffect.java
-@@ -47,9 +_,9 @@
-     private void spawnSlimeOffspring(Level level, double x, double y, double z) {
-         Slime slime = EntityType.SLIME.create(level, EntitySpawnReason.TRIGGERED);
+@@ -49,7 +_,7 @@
          if (slime != null) {
--            slime.setSize(2, true);
-+            slime.setSize(2, true, false);
+             slime.setSize(2, true);
              slime.snapTo(x, y, z, level.getRandom().nextFloat() * 360.0F, 0.0F);
 -            level.addFreshEntity(slime);
 +            level.addFreshEntity(slime, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.POTION_EFFECT); // CraftBukkit

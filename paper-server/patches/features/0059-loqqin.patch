@@ -1,0 +1,23 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Sat, 4 Jul 2026 21:09:45 +0300
+Subject: [PATCH] loqqin
+
+
+diff --git a/net/minecraft/network/protocol/game/ClientboundSectionBlocksUpdatePacket.java b/net/minecraft/network/protocol/game/ClientboundSectionBlocksUpdatePacket.java
+index cb0dd1aa58b8b5972cd8410e1e22fda64f329105..9ffdc58bd73daeffdc5aa7c8888277dd518d7b26 100644
+--- a/net/minecraft/network/protocol/game/ClientboundSectionBlocksUpdatePacket.java
++++ b/net/minecraft/network/protocol/game/ClientboundSectionBlocksUpdatePacket.java
+@@ -17,9 +17,9 @@ public class ClientboundSectionBlocksUpdatePacket implements Packet<ClientGamePa
+         ClientboundSectionBlocksUpdatePacket::write, ClientboundSectionBlocksUpdatePacket::new
+     );
+     private static final int POS_IN_SECTION_BITS = 12;
+-    private final SectionPos sectionPos;
+-    private final short[] positions;
+-    private final BlockState[] states;
++    public final SectionPos sectionPos;
++    public final short[] positions;
++    public final BlockState[] states;
+ 
+     public ClientboundSectionBlocksUpdatePacket(SectionPos sectionPos, ShortSet positions, LevelChunkSection section) {
+         this.sectionPos = sectionPos;

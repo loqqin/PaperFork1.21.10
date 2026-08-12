@@ -1,0 +1,406 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: loqqin <soubmatic@gmail.com>
+Date: Thu, 29 Jan 2026 15:37:16 +0200
+Subject: [PATCH] loqqin
+
+
+diff --git a/net/minecraft/server/Bootstrap.java b/net/minecraft/server/Bootstrap.java
+index 83bc2f6b7774c8753a15dbeb00f0c9103713fd1b..92ace7c10d01f9a1ae446a9d76acb8f5dd506119 100644
+--- a/net/minecraft/server/Bootstrap.java
++++ b/net/minecraft/server/Bootstrap.java
+@@ -47,92 +47,103 @@ public class Bootstrap {
+             if (BuiltInRegistries.REGISTRY.keySet().isEmpty()) {
+                 throw new IllegalStateException("Unable to load registries");
+             } else {
+-                FireBlock.bootStrap();
+-                ComposterBlock.bootStrap();
++                Main.executeAndLog("block bootstrap custom", () -> {
++                    final net.minecraft.world.level.block.Block acaciaButton = net.minecraft.world.level.block.Blocks.ACACIA_BUTTON;
++                });
++                Main.executeAndLog("fireblock.bootstrap", () -> FireBlock.bootStrap());
++                Main.executeAndLog("composterblock.bootstrap", () -> ComposterBlock.bootStrap());
+                 if (EntityType.getKey(EntityType.PLAYER) == null) {
+                     throw new IllegalStateException("Failed loading EntityTypes");
+                 } else {
+-                    EntitySelectorOptions.bootStrap();
+-                    DispenseItemBehavior.bootStrap();
+-                    CauldronInteraction.bootStrap();
++                    Main.executeAndLog("entityselectoroptions bootstrap", () -> EntitySelectorOptions.bootStrap());
++                    Main.executeAndLog("DispenseItemBehavior bootstrap", () -> DispenseItemBehavior.bootStrap());
++                    Main.executeAndLog("CauldronInteraction bootstrap", () -> CauldronInteraction.bootStrap());
+                     // Paper start
+-                    BuiltInRegistries.bootStrap(() -> {
+-                        io.papermc.paper.world.worldgen.OptionallyFlatBedrockConditionSource.bootstrap(); // Paper - Flat bedrock generator settings
++                    Main.executeAndLog("builtinregistries bootstrap", () -> {
++                        BuiltInRegistries.bootStrap(() -> {
++                            io.papermc.paper.world.worldgen.OptionallyFlatBedrockConditionSource.bootstrap(); // Paper - Flat bedrock generator settings
++                        });
+                     });
+                     // Paper end
+-                    CreativeModeTabs.validate();
+-                    wrapStreams();
++                    Main.executeAndLog("creative tabs", () -> CreativeModeTabs.validate());
++                    Main.executeAndLog("wrap streams", () -> wrapStreams());
+                     bootstrapDuration.set(Duration.between(instant, Instant.now()).toMillis());
+                 }
+                 // CraftBukkit start
+                 // TODO Check what of this is needed, maybe report it to Mojira. if deemed relevant, move to the respective classes
+                 //  Used in CraftLegacy
+-                for (int i = 0; i <= 15; i++) {
+-                    net.minecraft.util.datafix.fixes.BlockStateData.register(
+-                        1008 + i,
++                Main.executeAndLog("datafixers 1 ", () -> {
++                    for (int i = 0; i <= 15; i++) {
++                        net.minecraft.util.datafix.fixes.BlockStateData.register(
++                            1008 + i,
++                            new com.mojang.serialization.Dynamic<>(com.mojang.serialization.JavaOps.INSTANCE, java.util.Map.of(
++                                "Name", "minecraft:oak_sign",
++                                "Properties", java.util.Map.of("rotation", String.valueOf(i))
++                            )).convert(net.minecraft.nbt.NbtOps.INSTANCE),
++                            new com.mojang.serialization.Dynamic<>(com.mojang.serialization.JavaOps.INSTANCE, java.util.Map.of(
++                                "Name", "minecraft:standing_sign",
++                                "Properties", java.util.Map.of("rotation", String.valueOf(i))
++                            )).convert(net.minecraft.nbt.NbtOps.INSTANCE)
++                        );
++                    }
++                });
++
++                Main.executeAndLog("datafixers 2", () -> {
++                    net.minecraft.util.datafix.fixes.BlockStateData.register(1440,
+                         new com.mojang.serialization.Dynamic<>(com.mojang.serialization.JavaOps.INSTANCE, java.util.Map.of(
+-                            "Name", "minecraft:oak_sign",
+-                            "Properties", java.util.Map.of("rotation", String.valueOf(i))
++                            "Name", "minecraft:portal",
++                            "Properties", java.util.Map.of("axis", "x")
+                         )).convert(net.minecraft.nbt.NbtOps.INSTANCE),
+                         new com.mojang.serialization.Dynamic<>(com.mojang.serialization.JavaOps.INSTANCE, java.util.Map.of(
+-                            "Name", "minecraft:standing_sign",
+-                            "Properties", java.util.Map.of("rotation", String.valueOf(i))
++                            "Name", "minecraft:portal",
++                            "Properties", java.util.Map.of("axis", "x")
+                         )).convert(net.minecraft.nbt.NbtOps.INSTANCE)
+                     );
+-                }
+-
+-                net.minecraft.util.datafix.fixes.BlockStateData.register(1440,
+-                    new com.mojang.serialization.Dynamic<>(com.mojang.serialization.JavaOps.INSTANCE, java.util.Map.of(
+-                        "Name", "minecraft:portal",
+-                        "Properties", java.util.Map.of("axis", "x")
+-                    )).convert(net.minecraft.nbt.NbtOps.INSTANCE),
+-                    new com.mojang.serialization.Dynamic<>(com.mojang.serialization.JavaOps.INSTANCE, java.util.Map.of(
+-                        "Name", "minecraft:portal",
+-                        "Properties", java.util.Map.of("axis", "x")
+-                    )).convert(net.minecraft.nbt.NbtOps.INSTANCE)
+-                );
+-
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(409, "minecraft:prismarine_shard");
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(410, "minecraft:prismarine_crystals");
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(411, "minecraft:rabbit");
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(412, "minecraft:cooked_rabbit");
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(413, "minecraft:rabbit_stew");
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(414, "minecraft:rabbit_foot");
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(415, "minecraft:rabbit_hide");
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(416, "minecraft:armor_stand");
+-
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(423, "minecraft:mutton");
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(424, "minecraft:cooked_mutton");
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(425, "minecraft:banner");
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(426, "minecraft:end_crystal");
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(427, "minecraft:spruce_door");
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(428, "minecraft:birch_door");
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(429, "minecraft:jungle_door");
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(430, "minecraft:acacia_door");
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(431, "minecraft:dark_oak_door");
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(432, "minecraft:chorus_fruit");
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(433, "minecraft:chorus_fruit_popped");
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(434, "minecraft:beetroot");
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(435, "minecraft:beetroot_seeds");
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(436, "minecraft:beetroot_soup");
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(437, "minecraft:dragon_breath");
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(438, "minecraft:splash_potion");
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(439, "minecraft:spectral_arrow");
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(440, "minecraft:tipped_arrow");
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(441, "minecraft:lingering_potion");
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(442, "minecraft:shield");
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(443, "minecraft:elytra");
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(444, "minecraft:spruce_boat");
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(445, "minecraft:birch_boat");
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(446, "minecraft:jungle_boat");
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(447, "minecraft:acacia_boat");
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(448, "minecraft:dark_oak_boat");
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(449, "minecraft:totem_of_undying");
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(450, "minecraft:shulker_shell");
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(452, "minecraft:iron_nugget");
+-                net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(453, "minecraft:knowledge_book");
+-
+-                net.minecraft.util.datafix.fixes.ItemSpawnEggFix.ID_TO_ENTITY[23] = "Arrow";
++                });
++
++                Main.executeAndLog("datafixers 3", () -> {
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(409, "minecraft:prismarine_shard");
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(410, "minecraft:prismarine_crystals");
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(411, "minecraft:rabbit");
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(412, "minecraft:cooked_rabbit");
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(413, "minecraft:rabbit_stew");
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(414, "minecraft:rabbit_foot");
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(415, "minecraft:rabbit_hide");
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(416, "minecraft:armor_stand");
++
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(423, "minecraft:mutton");
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(424, "minecraft:cooked_mutton");
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(425, "minecraft:banner");
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(426, "minecraft:end_crystal");
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(427, "minecraft:spruce_door");
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(428, "minecraft:birch_door");
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(429, "minecraft:jungle_door");
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(430, "minecraft:acacia_door");
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(431, "minecraft:dark_oak_door");
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(432, "minecraft:chorus_fruit");
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(433, "minecraft:chorus_fruit_popped");
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(434, "minecraft:beetroot");
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(435, "minecraft:beetroot_seeds");
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(436, "minecraft:beetroot_soup");
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(437, "minecraft:dragon_breath");
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(438, "minecraft:splash_potion");
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(439, "minecraft:spectral_arrow");
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(440, "minecraft:tipped_arrow");
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(441, "minecraft:lingering_potion");
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(442, "minecraft:shield");
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(443, "minecraft:elytra");
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(444, "minecraft:spruce_boat");
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(445, "minecraft:birch_boat");
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(446, "minecraft:jungle_boat");
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(447, "minecraft:acacia_boat");
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(448, "minecraft:dark_oak_boat");
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(449, "minecraft:totem_of_undying");
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(450, "minecraft:shulker_shell");
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(452, "minecraft:iron_nugget");
++                    net.minecraft.util.datafix.fixes.ItemIdFix.ITEM_NAMES.put(453, "minecraft:knowledge_book");
++
++                    net.minecraft.util.datafix.fixes.ItemSpawnEggFix.ID_TO_ENTITY[23] = "Arrow";
++                });
+                 // CraftBukkit end
+             }
+         }
+diff --git a/net/minecraft/server/Main.java b/net/minecraft/server/Main.java
+index 2de7072c8ccc005e514673bba494b64d42e95a15..164833fb335cc51c1117c1219672ee67fee42203 100644
+--- a/net/minecraft/server/Main.java
++++ b/net/minecraft/server/Main.java
+@@ -62,6 +62,21 @@ import org.slf4j.Logger;
+ public class Main {
+     private static final Logger LOGGER = LogUtils.getLogger();
+ 
++    public static double executeAndLog(String action, Runnable runnable) {
++        long l = System.nanoTime();
++        runnable.run();
++        double value = (System.nanoTime() - l) / 1_000_000.0;
++        System.out.println(action + " in " + value + "ms");
++        return value;
++    }
++
++    public static <T> T executeAndLogAndReturn(String action, java.util.function.Supplier<T> runnable) {
++        long l = System.nanoTime();
++        T t = runnable.get();
++        System.out.println(action + " in " + (System.nanoTime() - l) / 1_000_000.0);
++        return t;
++    }
++
+     @SuppressForbidden(
+         reason = "System.out needed before bootstrap"
+     )
+@@ -107,19 +122,39 @@ public class Main {
+                 JvmProfiler.INSTANCE.start(Environment.SERVER);
+             }
+ 
+-            io.papermc.paper.plugin.PluginInitializerManager.load(optionSet); // Paper
+-            Bootstrap.bootStrap();
+-            Bootstrap.validate();
++            executeAndLog("plugin initializer manager", () -> {
++                try {
++                    io.papermc.paper.plugin.PluginInitializerManager.load(optionSet);
++                } catch (Exception e) {
++                    e.printStackTrace();
++                }
++            }); // Paper
++            executeAndLog("bootstrap", () -> Bootstrap.bootStrap());
++            executeAndLog("bootstrap validate", () -> Bootstrap.validate());
+             Util.startTimerHackThread();
+             Path path1 = Paths.get("server.properties");
+-            DedicatedServerSettings dedicatedServerSettings = new DedicatedServerSettings(optionSet); // CraftBukkit - CLI argument support
+-            dedicatedServerSettings.forceSave();
++            DedicatedServerSettings dedicatedServerSettings = executeAndLogAndReturn("dedicatred server swettings", () -> new DedicatedServerSettings(optionSet)); // CraftBukkit - CLI argument support
++            executeAndLog("force save", () -> dedicatedServerSettings.forceSave());
+             RegionFileVersion.configure(dedicatedServerSettings.getProperties().regionFileComression);
+             Path path2 = Paths.get("eula.txt");
+             Eula eula = new Eula(path2);
+             // Paper start - load config files early for access below if needed
+-            org.bukkit.configuration.file.YamlConfiguration bukkitConfiguration = io.papermc.paper.configuration.PaperConfigurations.loadLegacyConfigFile((File) optionSet.valueOf("bukkit-settings"));
+-            org.bukkit.configuration.file.YamlConfiguration spigotConfiguration = io.papermc.paper.configuration.PaperConfigurations.loadLegacyConfigFile((File) optionSet.valueOf("spigot-settings"));
++            org.bukkit.configuration.file.YamlConfiguration bukkitConfiguration = executeAndLogAndReturn("yaml config", () -> {
++                try {
++                    return io.papermc.paper.configuration.PaperConfigurations.loadLegacyConfigFile((File) optionSet.valueOf("bukkit-settings"));
++                } catch (Exception e) {
++                    e.printStackTrace();
++                }
++                return null;
++            });
++            org.bukkit.configuration.file.YamlConfiguration spigotConfiguration = executeAndLogAndReturn("yaml config 2 ", () -> {
++                try {
++                    return io.papermc.paper.configuration.PaperConfigurations.loadLegacyConfigFile((File) optionSet.valueOf("spigot-settings"));
++                } catch (Exception e) {
++                    e.printStackTrace();
++                }
++                return null;
++            });
+             // Paper end - load config files early for access below if needed
+             if (optionSet.has("initSettings")) { // CraftBukkit
+                 // CraftBukkit start - SPIGOT-5761: Create bukkit.yml and commands.yml if not present
+@@ -176,7 +211,9 @@ public class Main {
+                 file = new File(bukkitConfiguration.getString("settings.world-container", "."));
+             }
+             // Paper end - fix SPIGOT-5824
++            final long l = System.nanoTime();
+             Services services = Services.create(new com.destroystokyo.paper.profile.PaperAuthenticationService(Proxy.NO_PROXY), file, userCacheFile, optionSet); // Paper - pass OptionSet to load paper config files; override authentication service; fix world-container
++            System.out.println("services init took " + ((System.nanoTime() - l) / 1_000_000.0) + " ms");
+             // CraftBukkit start
+             String string = Optional.ofNullable((String) optionSet.valueOf("world")).orElse(dedicatedServerSettings.getProperties().levelName);
+             LevelStorageSource levelStorageSource = LevelStorageSource.createDefault(file.toPath());
+@@ -256,37 +293,44 @@ public class Main {
+ 
+             WorldStem worldStem;
+             try {
+-                WorldLoader.InitConfig initConfig = loadOrCreateConfig(dedicatedServerSettings.getProperties(), dynamic, hasOptionSpec, packRepository);
+-                worldStem = Util.<WorldStem>blockUntilDone(
+-                        executor -> WorldLoader.load(
+-                            initConfig,
+-                            context -> {
+-                                worldLoader.set(context); // CraftBukkit
+-                                Registry<LevelStem> registry = context.datapackDimensions().lookupOrThrow(Registries.LEVEL_STEM);
+-                                if (dynamic != null) {
+-                                    LevelDataAndDimensions levelDataAndDimensions = LevelStorageSource.getLevelDataAndDimensions(
+-                                        dynamic, context.dataConfiguration(), registry, context.datapackWorldgen()
+-                                    );
+-                                    return new WorldLoader.DataLoadOutput<>(
+-                                        levelDataAndDimensions.worldData(), levelDataAndDimensions.dimensions().dimensionsRegistryAccess()
+-                                    );
+-                                } else {
+-                                    LOGGER.info("No existing world data, creating new world");
+-                                    return createNewWorldData(
+-                                        dedicatedServerSettings, context, registry, optionSet.has("demo"), optionSet.has("bonusChest") // CraftBukkit
+-                                    );
+-                                }
+-                            },
+-                            WorldStem::new,
+-                            Util.backgroundExecutor(),
+-                            executor
+-                        )
+-                    )
+-                    .get();
++                worldStem = executeAndLogAndReturn("world load", () -> {
++                    WorldLoader.InitConfig initConfig = loadOrCreateConfig(dedicatedServerSettings.getProperties(), dynamic, hasOptionSpec, packRepository);
++                    try {
++                        return Util.<WorldStem>blockUntilDone(
++                                executor -> WorldLoader.load(
++                                    initConfig,
++                                    context -> {
++                                        worldLoader.set(context); // CraftBukkit
++                                        Registry<LevelStem> registry = context.datapackDimensions().lookupOrThrow(Registries.LEVEL_STEM);
++                                        if (dynamic != null) {
++                                            LevelDataAndDimensions levelDataAndDimensions = LevelStorageSource.getLevelDataAndDimensions(
++                                                dynamic, context.dataConfiguration(), registry, context.datapackWorldgen()
++                                            );
++                                            return new WorldLoader.DataLoadOutput<>(
++                                                levelDataAndDimensions.worldData(), levelDataAndDimensions.dimensions().dimensionsRegistryAccess()
++                                            );
++                                        } else {
++                                            LOGGER.info("No existing world data, creating new world");
++                                            return createNewWorldData(
++                                                dedicatedServerSettings, context, registry, optionSet.has("demo"), optionSet.has("bonusChest") // CraftBukkit
++                                            );
++                                        }
++                                    },
++                                    WorldStem::new,
++                                    Util.backgroundExecutor(),
++                                    executor
++                                )
++                            )
++                            .get();
++                    } catch (Throwable throwable) {
++                        throwable.printStackTrace();
++                        return null;
++                    }
++                });
+             } catch (Exception var39) {
+                 LOGGER.warn(
+                     "Failed to load datapacks, can't proceed with server load. You can either fix your datapacks or reset to vanilla with --safeMode",
+-                    (Throwable)var39
++                    (Throwable) var39
+                 );
+                 return;
+             }
+@@ -355,12 +399,12 @@ public class Main {
+             Runtime.getRuntime().addShutdownHook(thread);
+             */ // CraftBukkit end
+         } catch (Exception var42) {
+-            LOGGER.error(LogUtils.FATAL_MARKER, "Failed to start the minecraft server", (Throwable)var42);
++            LOGGER.error(LogUtils.FATAL_MARKER, "Failed to start the minecraft server", (Throwable) var42);
+         }
+     }
+ 
+     public static WorldLoader.DataLoadOutput<WorldData> createNewWorldData( // Paper - public
+-        DedicatedServerSettings settings, WorldLoader.DataLoadContext context, Registry<LevelStem> stemRegistry, boolean demo, boolean generateBonusChest
++                                                                            DedicatedServerSettings settings, WorldLoader.DataLoadContext context, Registry<LevelStem> stemRegistry, boolean demo, boolean generateBonusChest
+     ) {
+         LevelSettings levelSettings;
+         WorldOptions worldOptions;
+@@ -442,7 +486,7 @@ public class Main {
+                 int totalChunks = worldUpgrader.getTotalChunks();
+                 if (totalChunks > 0) {
+                     int i = worldUpgrader.getConverted() + worldUpgrader.getSkipped();
+-                    LOGGER.info("{}% completed ({} / {} chunks)...", Mth.floor((float)i / totalChunks * 100.0F), i, totalChunks);
++                    LOGGER.info("{}% completed ({} / {} chunks)...", Mth.floor((float) i / totalChunks * 100.0F), i, totalChunks);
+                 }
+ 
+                 if (!running.getAsBoolean()) {
+diff --git a/net/minecraft/util/parsing/packrat/Scope.java b/net/minecraft/util/parsing/packrat/Scope.java
+index fdeb5f40d6bf8cd4a35d737d2d66c96e1b6a2900..47260ddc155beb5964d69ee68603fc7b2c2e2aab 100644
+--- a/net/minecraft/util/parsing/packrat/Scope.java
++++ b/net/minecraft/util/parsing/packrat/Scope.java
+@@ -286,31 +286,27 @@ public final class Scope {
+     private int depth;
+     @SuppressWarnings({"unchecked","rawtypes"})
+     public static <S> Term<S> increaseDepth() {
+-        class IncreasingDepthTerm<W> implements Term<W> {
+-            public static final IncreasingDepthTerm INSTANCE = new IncreasingDepthTerm();
++        return new Term<S>() {
+             @Override
+-            public boolean parse(final ParseState<W> parseState, final Scope scope, final Control control) {
++            public boolean parse(final ParseState<S> parseState, final Scope scope, final Control control) {
+                 if (++scope.depth > 512) {
+                     parseState.errorCollector().store(parseState.mark(), new IllegalStateException("Too deep"));
+                     return false;
+                 }
+                 return true;
+             }
+-        }
+-        return (Term<S>) IncreasingDepthTerm.INSTANCE;
++        };
+     }
+ 
+     @SuppressWarnings({"unchecked","rawtypes"})
+     public static <S> Term<S> decreaseDepth() {
+-        class DecreasingDepthTerm<W> implements Term<W> {
+-            public static final DecreasingDepthTerm INSTANCE = new DecreasingDepthTerm();
++        return new net.minecraft.util.parsing.packrat.Term<S>() {
+             @Override
+-            public boolean parse(final ParseState<W> parseState, final Scope scope, final Control control) {
++            public boolean parse(final ParseState<S> parseState, final Scope scope, final Control control) {
+                 scope.depth--;
+                 return true;
+             }
+-        }
+-        return (Term<S>) DecreasingDepthTerm.INSTANCE;
++        };
+     }
+     // Paper end - track depth
+ }

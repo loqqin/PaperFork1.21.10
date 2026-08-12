@@ -1,14 +1,5 @@
 --- a/net/minecraft/server/level/ServerPlayerGameMode.java
 +++ b/net/minecraft/server/level/ServerPlayerGameMode.java
-@@ -4,6 +_,8 @@
- import java.util.List;
- import java.util.Objects;
- import javax.annotation.Nullable;
-+
-+import net.FakeBlocks;
- import net.minecraft.SharedConstants;
- import net.minecraft.advancements.CriteriaTriggers;
- import net.minecraft.core.BlockPos;
 @@ -47,16 +_,38 @@
      private BlockPos delayedDestroyPos = BlockPos.ZERO;
      private int delayedTickStart;
@@ -141,13 +132,11 @@
                  if (this.player.blockActionRestricted(this.level, pos, this.gameModeForPlayer)) {
                      this.player.connection.send(new ClientboundBlockUpdatePacket(pos, this.level.getBlockState(pos)));
                      this.debugLogging(pos, false, sequence, "block action restricted");
-@@ -176,8 +_,8 @@
- 
+@@ -177,7 +_,7 @@
                  this.destroyProgressStart = this.gameTicks;
                  float f = 1.0F;
--                BlockState blockState = this.level.getBlockState(pos);
+                 BlockState blockState = this.level.getBlockState(pos);
 -                if (!blockState.isAir()) {
-+                BlockState blockState = FakeBlocks.function.apply(player, pos, level);
 +                if (event.useInteractedBlock() != org.bukkit.event.Event.Result.DENY && !blockState.isAir()) { // Paper
                      EnchantmentHelper.onHitBlock(
                          this.level,
@@ -176,16 +165,7 @@
                  if (!blockState.isAir() && f >= 1.0F) {
                      this.destroyAndAck(pos, sequence, "insta mine");
                  } else {
-@@ -210,7 +_,7 @@
-             } else if (action == ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK) {
-                 if (pos.equals(this.destroyPos)) {
-                     int i1 = this.gameTicks - this.destroyProgressStart;
--                    BlockState blockStatex = this.level.getBlockState(pos);
-+                    BlockState blockStatex = FakeBlocks.function.apply(this.player, pos, this.level);
-                     if (!blockStatex.isAir()) {
-                         float f1 = blockStatex.getDestroyProgress(this.player, this.player.level(), pos) * (i1 + 1);
-                         if (f1 >= 0.7F) {
-@@ -232,16 +_,25 @@
+@@ -232,14 +_,22 @@
                  this.debugLogging(pos, true, sequence, "stopped destroying");
              } else if (action == ServerboundPlayerActionPacket.Action.ABORT_DESTROY_BLOCK) {
                  this.isDestroyingBlock = false;
@@ -209,10 +189,7 @@
 +                org.bukkit.craftbukkit.event.CraftEventFactory.callBlockDamageAbortEvent(this.player, pos, this.player.getInventory().getSelectedItem()); // CraftBukkit
              }
          }
-+        this.level.chunkPacketBlockController.onPlayerLeftClickBlock(this, pos, action, face, maxBuildHeight, sequence); // Paper - Anti-Xray
      }
- 
-     public void destroyAndAck(BlockPos pos, int sequence, String message) {
 @@ -255,17 +_,64 @@
  
      public boolean destroyBlock(BlockPos pos) {

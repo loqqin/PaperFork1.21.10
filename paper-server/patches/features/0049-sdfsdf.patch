@@ -1,0 +1,29 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Sun, 3 May 2026 19:47:24 +0300
+Subject: [PATCH] sdfsdf
+
+
+diff --git a/net/minecraft/world/entity/projectile/ProjectileUtil.java b/net/minecraft/world/entity/projectile/ProjectileUtil.java
+index 7ef510b8d124a1909d770dcdf7fd1039271a46d2..bfa0c1ca770b8a48b1eb78cf518488948c09b873 100644
+--- a/net/minecraft/world/entity/projectile/ProjectileUtil.java
++++ b/net/minecraft/world/entity/projectile/ProjectileUtil.java
+@@ -117,9 +117,16 @@ public final class ProjectileUtil {
+         Optional<Vec3> optional = Optional.empty();
+         Entity entity = null;
+ 
++        final double v = boundingBoxInflateMapForProjectileClip.get(source.getId());
++        if (v != 0) {
++            boundingBox = boundingBox.inflate(v);
++        }
++
+         for (Entity entity1 : level.getEntities(source, boundingBox, filter)) {
+-            AABB aabb = entity1.getBoundingBox().inflate(margin + boundingBoxInflateMapForProjectileClip.getOrDefault(source.getId(), 0));
+-            Optional<Vec3> optional1 = aabb.clip(startVec, endVec);
++            final double v1 = boundingBoxInflateMapForProjectileClip.get(entity1.getId());
++            AABB aabb = entity1.getBoundingBox().inflate(margin + v + v1);
++            // без проверки на contains большой хитбокс не срабатывал
++            Optional<Vec3> optional1 = aabb.contains(startVec) ? Optional.of(startVec) : aabb.clip(startVec, endVec);
+             if (optional1.isPresent()) {
+                 double d1 = startVec.distanceToSqr(optional1.get());
+                 if (d1 < d) {

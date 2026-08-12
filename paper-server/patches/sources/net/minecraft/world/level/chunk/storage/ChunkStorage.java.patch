@@ -1,37 +1,7 @@
 --- a/net/minecraft/world/level/chunk/storage/ChunkStorage.java
 +++ b/net/minecraft/world/level/chunk/storage/ChunkStorage.java
-@@ -22,43 +_,82 @@
- import net.minecraft.world.level.levelgen.structure.LegacyStructureDataHandler;
- import net.minecraft.world.level.storage.DimensionDataStorage;
- 
--public class ChunkStorage implements AutoCloseable {
-+public class ChunkStorage implements AutoCloseable, ca.spottedleaf.moonrise.patches.chunk_system.storage.ChunkSystemChunkStorage { // Paper - rewrite chunk system
-     public static final int LAST_MONOLYTH_STRUCTURE_DATA_VERSION = 1493;
--    private final IOWorker worker;
-+    // Paper - rewrite chunk system
-     protected final DataFixer fixerUpper;
-     @Nullable
-     private volatile LegacyStructureDataHandler legacyStructureHandler;
- 
-+    // Paper start - rewrite chunk system
-+    private static final org.slf4j.Logger LOGGER = com.mojang.logging.LogUtils.getLogger();
-+    private final RegionFileStorage storage;
-+
-+    @Override
-+    public final RegionFileStorage moonrise$getRegionStorage() {
-+        return this.storage;
-+    }
-+    // Paper end - rewrite chunk system
-+
-     public ChunkStorage(RegionStorageInfo info, Path folder, DataFixer fixerUpper, boolean sync) {
-         this.fixerUpper = fixerUpper;
--        this.worker = new IOWorker(info, folder, sync);
-+        this.storage = new IOWorker(info, folder, sync).storage; // Paper - rewrite chunk system
-     }
- 
-     public boolean isOldChunkAround(ChunkPos pos, int radius) {
--        return this.worker.isOldChunkAround(pos, radius);
-+        return true; // Paper - rewrite chunk system
+@@ -38,17 +_,30 @@
+         return this.worker.isOldChunkAround(pos, radius);
      }
  
 +    // CraftBukkit start
@@ -52,7 +22,7 @@
          } else {
              try {
 +                // CraftBukkit start
-+                if (false && version < 1466) { // Paper - no longer needed, data converter system / DFU handles it now
++                if (version < 1466) {
 +                    CompoundTag level = chunkData.getCompoundOrEmpty("Level");
 +                    if (level.getBooleanOr("TerrainPopulated", false) && !level.getBooleanOr("LightPopulated", false)) {
 +                        // Light is purged updating to 1.14+. We need to set light populated to true so the converter recognizes the chunk as being "full"
@@ -61,16 +31,12 @@
 +                }
 +                // CraftBukkit end
                  if (version < 1493) {
--                    chunkData = DataFixTypes.CHUNK.update(this.fixerUpper, chunkData, version, 1493);
-+                    chunkData = ca.spottedleaf.dataconverter.minecraft.MCDataConverter.convertTag(ca.spottedleaf.dataconverter.minecraft.datatypes.MCTypeRegistry.CHUNK, chunkData, version, 1493); // Paper - replace chunk converter
+                     chunkData = DataFixTypes.CHUNK.update(this.fixerUpper, chunkData, version, 1493);
                      if (chunkData.getCompound("Level").flatMap(compoundTag -> compoundTag.getBoolean("hasLegacyStructureData")).orElse(false)) {
-                         LegacyStructureDataHandler legacyStructureHandler = this.getLegacyStructureHandler(levelKey, storage);
-+                        synchronized (legacyStructureHandler) { // Paper - rewrite chunk system
-                         chunkData = legacyStructureHandler.updateFromLegacy(chunkData);
-+                        }
+@@ -57,8 +_,22 @@
                      }
                  }
-+
+ 
 +                // Spigot start - SPIGOT-6806: Quick and dirty way to prevent below zero generation in old chunks, by setting the status to heightmap instead of empty
 +                boolean stopBelowZero = false;
 +                boolean belowZeroGenerationInExistingChunks = (levelAccessor != null) ? ((net.minecraft.server.level.ServerLevel) levelAccessor).spigotConfig.belowZeroGenerationInExistingChunks : org.spigotmc.SpigotConfig.belowZeroGenerationInExistingChunks;
@@ -79,10 +45,9 @@
 +                    stopBelowZero = "full".equals(chunkData.getCompound("Level").flatMap(l -> l.getString("Status")).orElse(null));
 +                }
 +                // Spigot end
- 
++
                  injectDatafixingContext(chunkData, levelKey, chunkGeneratorKey);
--                chunkData = DataFixTypes.CHUNK.updateToCurrentVersion(this.fixerUpper, chunkData, Math.max(1493, version));
-+                chunkData = ca.spottedleaf.dataconverter.minecraft.MCDataConverter.convertTag(ca.spottedleaf.dataconverter.minecraft.datatypes.MCTypeRegistry.CHUNK, chunkData, Math.max(1493, version), ca.spottedleaf.dataconverter.minecraft.util.Version.getCurrentVersion()); // Paper - replace chunk converter
+                 chunkData = DataFixTypes.CHUNK.updateToCurrentVersion(this.fixerUpper, chunkData, Math.max(1493, version));
 +                // Spigot start
 +                if (stopBelowZero) {
 +                    chunkData.putString("Status", net.minecraft.core.registries.BuiltInRegistries.CHUNK_STATUS.getKey(net.minecraft.world.level.chunk.status.ChunkStatus.SPAWN).toString());
@@ -109,18 +74,7 @@
      ) {
          CompoundTag compoundTag = new CompoundTag();
          compoundTag.putString("dimension", levelKey.location().toString());
-@@ -103,34 +_,76 @@
-     }
- 
-     public CompletableFuture<Optional<CompoundTag>> read(ChunkPos chunkPos) {
--        return this.worker.loadAsync(chunkPos);
-+        // Paper start - rewrite chunk system
-+        try {
-+            return CompletableFuture.completedFuture(Optional.ofNullable(this.storage.read(chunkPos)));
-+        } catch (final Throwable throwable) {
-+            return CompletableFuture.failedFuture(throwable);
-+        }
-+        // Paper end - rewrite chunk system
+@@ -107,8 +_,19 @@
      }
  
      public CompletableFuture<Void> write(ChunkPos pos, Supplier<CompoundTag> tagSupplier) {
@@ -137,59 +91,7 @@
 +        // Paper end - guard against possible chunk pos desync
          this.handleLegacyStructureIndex(pos);
 -        return this.worker.store(pos, tagSupplier);
-+        // Paper start - rewrite chunk system
-+        try {
-+            this.storage.write(pos, guardedPosCheck.get());
-+            return CompletableFuture.completedFuture(null);
-+        } catch (final Throwable throwable) {
-+            return CompletableFuture.failedFuture(throwable);
-+        }
-+        // Paper end - rewrite chunk system
++        return this.worker.store(pos, guardedPosCheck); // Paper - guard against possible chunk pos desync
      }
  
      protected void handleLegacyStructureIndex(ChunkPos chunkPos) {
-         if (this.legacyStructureHandler != null) {
-+            synchronized (this.legacyStructureHandler) { // Paper - rewrite chunk system
-             this.legacyStructureHandler.removeIndex(chunkPos.toLong());
-+            } // Paper - rewrite chunk system
-         }
-     }
- 
-     public void flushWorker() {
--        this.worker.synchronize(true).join();
-+        // Paper start - rewrite chunk system
-+        try {
-+            this.storage.flush();
-+        } catch (final IOException ex) {
-+            LOGGER.error("Failed to flush chunk storage", ex);
-+        }
-+        // Paper end - rewrite chunk system
-     }
- 
-     @Override
-     public void close() throws IOException {
--        this.worker.close();
-+        this.storage.close(); // Paper - rewrite chunk system
-     }
- 
-     public ChunkScanAccess chunkScanner() {
--        return this.worker;
-+        // Paper start - rewrite chunk system
-+        // TODO ChunkMap implementation?
-+        return (chunkPos, streamTagVisitor) -> {
-+            try {
-+                this.storage.scanChunk(chunkPos, streamTagVisitor);
-+                return java.util.concurrent.CompletableFuture.completedFuture(null);
-+            } catch (IOException e) {
-+                throw new RuntimeException(e);
-+            }
-+        };
-+        // Paper end - rewrite chunk system
-     }
- 
--    protected RegionStorageInfo storageInfo() {
--        return this.worker.storageInfo();
-+    public RegionStorageInfo storageInfo() { // Paper - public
-+        return this.storage.info(); // Paper - rewrite chunk system
-     }
- }

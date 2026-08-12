@@ -1,0 +1,618 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: loqqin <soubmatic@gmail.com>
+Date: Fri, 6 Feb 2026 20:52:17 +0200
+Subject: [PATCH] loqqin
+
+
+diff --git a/net/minecraft/world/entity/projectile/FishingHook.java b/net/minecraft/world/entity/projectile/FishingHook.java
+index 207e30f822f286a6358055fcd5bc3af6ee7a553d..9942541b6e83529ad262a5f025cc43773e28386f 100644
+--- a/net/minecraft/world/entity/projectile/FishingHook.java
++++ b/net/minecraft/world/entity/projectile/FishingHook.java
+@@ -50,26 +50,26 @@ import net.minecraft.world.phys.HitResult;
+ import net.minecraft.world.phys.Vec3;
+ import org.slf4j.Logger;
+ 
+-public class FishingHook extends Projectile {
+-    private static final Logger LOGGER = LogUtils.getLogger();
+-    private final RandomSource syncronizedRandom = RandomSource.create();
++public class FishingHook extends net.minecraft.world.entity.projectile.Projectile {
++    private static final org.slf4j.Logger LOGGER = com.mojang.logging.LogUtils.getLogger();
++    private final net.minecraft.util.RandomSource syncronizedRandom = net.minecraft.util.RandomSource.create();
+     private boolean biting;
+     public int outOfWaterTime;
+     private static final int MAX_OUT_OF_WATER_TIME = 10;
+-    public static final EntityDataAccessor<Integer> DATA_HOOKED_ENTITY = SynchedEntityData.defineId(FishingHook.class, EntityDataSerializers.INT);
+-    private static final EntityDataAccessor<Boolean> DATA_BITING = SynchedEntityData.defineId(FishingHook.class, EntityDataSerializers.BOOLEAN);
++    public static final net.minecraft.network.syncher.EntityDataAccessor<Integer> DATA_HOOKED_ENTITY = net.minecraft.network.syncher.SynchedEntityData.defineId(net.minecraft.world.entity.projectile.FishingHook.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
++    private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> DATA_BITING = net.minecraft.network.syncher.SynchedEntityData.defineId(net.minecraft.world.entity.projectile.FishingHook.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+     private int life;
+     private int nibble;
+     public int timeUntilLured;
+     public int timeUntilHooked;
+     public float fishAngle;
+     private boolean openWater = true;
+-    @Nullable
+-    public Entity hookedIn;
+-    public FishingHook.FishHookState currentState = FishingHook.FishHookState.FLYING;
++    @javax.annotation.Nullable
++    public net.minecraft.world.entity.Entity hookedIn;
++    public net.minecraft.world.entity.projectile.FishingHook.FishHookState currentState = net.minecraft.world.entity.projectile.FishingHook.FishHookState.FLYING;
+     private final int luck;
+     private final int lureSpeed;
+-    private final InterpolationHandler interpolationHandler = new InterpolationHandler(this);
++    private final net.minecraft.world.entity.InterpolationHandler interpolationHandler = new net.minecraft.world.entity.InterpolationHandler(this);
+ 
+     // CraftBukkit start - Extra variables to enable modification of fishing wait time, values are minecraft defaults
+     public int minWaitTime = 100;
+@@ -83,7 +83,7 @@ public class FishingHook extends Projectile {
+     public boolean skyInfluenced = true;
+     // CraftBukkit end
+ 
+-    private FishingHook(EntityType<? extends FishingHook> type, Level level, int luck, int lureSpeed) {
++    private FishingHook(net.minecraft.world.entity.EntityType<? extends net.minecraft.world.entity.projectile.FishingHook> type, net.minecraft.world.level.Level level, int luck, int lureSpeed) {
+         super(type, level);
+         this.luck = Math.max(0, luck);
+         this.lureSpeed = Math.max(0, lureSpeed);
+@@ -93,24 +93,24 @@ public class FishingHook extends Projectile {
+         // Paper end - Configurable fishing time ranges
+     }
+ 
+-    public FishingHook(EntityType<? extends FishingHook> type, Level level) {
++    public FishingHook(net.minecraft.world.entity.EntityType<? extends net.minecraft.world.entity.projectile.FishingHook> type, net.minecraft.world.level.Level level) {
+         this(type, level, 0, 0);
+     }
+ 
+-    public FishingHook(Player owner, Level level, int luck, int lureSpeed) {
+-        this(EntityType.FISHING_BOBBER, level, luck, lureSpeed);
++    public FishingHook(net.minecraft.world.entity.player.Player owner, net.minecraft.world.level.Level level, int luck, int lureSpeed) {
++        this(net.minecraft.world.entity.EntityType.FISHING_BOBBER, level, luck, lureSpeed);
+         this.setOwner(owner);
+         float xRot = owner.getXRot();
+         float yRot = owner.getYRot();
+-        float cos = Mth.cos(-yRot * (float) (Math.PI / 180.0) - (float) Math.PI);
+-        float sin = Mth.sin(-yRot * (float) (Math.PI / 180.0) - (float) Math.PI);
+-        float f = -Mth.cos(-xRot * (float) (Math.PI / 180.0));
+-        float sin1 = Mth.sin(-xRot * (float) (Math.PI / 180.0));
++        float cos = net.minecraft.util.Mth.cos(-yRot * (float) (Math.PI / 180.0) - (float) Math.PI);
++        float sin = net.minecraft.util.Mth.sin(-yRot * (float) (Math.PI / 180.0) - (float) Math.PI);
++        float f = -net.minecraft.util.Mth.cos(-xRot * (float) (Math.PI / 180.0));
++        float sin1 = net.minecraft.util.Mth.sin(-xRot * (float) (Math.PI / 180.0));
+         double d = owner.getX() - sin * 0.3;
+         double eyeY = owner.getEyeY();
+         double d1 = owner.getZ() - cos * 0.3;
+         this.snapTo(d, eyeY, d1, yRot, xRot);
+-        Vec3 vec3 = new Vec3(-sin, Mth.clamp(-(sin1 / f), -5.0F, 5.0F), -cos);
++        net.minecraft.world.phys.Vec3 vec3 = new net.minecraft.world.phys.Vec3(-sin, net.minecraft.util.Mth.clamp(-(sin1 / f), -5.0F, 5.0F), -cos);
+         double len = vec3.length();
+         vec3 = vec3.multiply(
+             0.6 / len + this.random.triangle(0.5, 0.0103365),
+@@ -118,20 +118,20 @@ public class FishingHook extends Projectile {
+             0.6 / len + this.random.triangle(0.5, 0.0103365)
+         );
+         this.setDeltaMovement(vec3);
+-        this.setYRot((float)(Mth.atan2(vec3.x, vec3.z) * 180.0F / (float)Math.PI));
+-        this.setXRot((float)(Mth.atan2(vec3.y, vec3.horizontalDistance()) * 180.0F / (float)Math.PI));
++        this.setYRot((float)(net.minecraft.util.Mth.atan2(vec3.x, vec3.z) * 180.0F / (float)Math.PI));
++        this.setXRot((float)(net.minecraft.util.Mth.atan2(vec3.y, vec3.horizontalDistance()) * 180.0F / (float)Math.PI));
+         this.yRotO = this.getYRot();
+         this.xRotO = this.getXRot();
+     }
+ 
+-    @Nonnull
++    @javax.annotation.Nonnull
+     @Override
+-    public InterpolationHandler getInterpolation() {
++    public net.minecraft.world.entity.InterpolationHandler getInterpolation() {
+         return this.interpolationHandler;
+     }
+ 
+     @Override
+-    protected void defineSynchedData(SynchedEntityData.Builder builder) {
++    protected void defineSynchedData(net.minecraft.network.syncher.SynchedEntityData.Builder builder) {
+         builder.define(DATA_HOOKED_ENTITY, 0);
+         builder.define(DATA_BITING, false);
+     }
+@@ -142,7 +142,7 @@ public class FishingHook extends Projectile {
+     }
+ 
+     @Override
+-    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
++    public void onSyncedDataUpdated(net.minecraft.network.syncher.EntityDataAccessor<?> key) {
+         if (DATA_HOOKED_ENTITY.equals(key)) {
+             int i = this.getEntityData().get(DATA_HOOKED_ENTITY);
+             this.hookedIn = i > 0 ? this.level().getEntity(i - 1) : null;
+@@ -151,7 +151,7 @@ public class FishingHook extends Projectile {
+         if (DATA_BITING.equals(key)) {
+             this.biting = this.getEntityData().get(DATA_BITING);
+             if (this.biting) {
+-                this.setDeltaMovement(this.getDeltaMovement().x, -0.4F * Mth.nextFloat(this.syncronizedRandom, 0.6F, 1.0F), this.getDeltaMovement().z);
++                this.setDeltaMovement(this.getDeltaMovement().x, -0.4F * net.minecraft.util.Mth.nextFloat(this.syncronizedRandom, 0.6F, 1.0F), this.getDeltaMovement().z);
+             }
+         }
+ 
+@@ -169,7 +169,7 @@ public class FishingHook extends Projectile {
+         this.syncronizedRandom.setSeed(this.getUUID().getLeastSignificantBits() ^ this.level().getGameTime());
+         this.getInterpolation().interpolate();
+         super.tick();
+-        Player playerOwner = this.getPlayerOwner();
++        net.minecraft.world.entity.player.Player playerOwner = this.getPlayerOwner();
+         if (playerOwner == null) {
+             this.discard(org.bukkit.event.entity.EntityRemoveEvent.Cause.DESPAWN); // CraftBukkit - add Bukkit remove cause
+         } else if (this.level().isClientSide() || !this.shouldStopFishing(playerOwner)) {
+@@ -184,31 +184,31 @@ public class FishingHook extends Projectile {
+             }
+ 
+             float f = 0.0F;
+-            BlockPos blockPos = this.blockPosition();
+-            FluidState fluidState = this.level().getFluidState(blockPos);
+-            if (fluidState.is(FluidTags.WATER)) {
++            net.minecraft.core.BlockPos blockPos = this.blockPosition();
++            net.minecraft.world.level.material.FluidState fluidState = this.level().getFluidState(blockPos);
++            if (fluidState.is(net.minecraft.tags.FluidTags.WATER)) {
+                 f = fluidState.getHeight(this.level(), blockPos);
+             }
+ 
+             boolean flag = f > 0.0F;
+-            if (this.currentState == FishingHook.FishHookState.FLYING) {
++            if (this.currentState == net.minecraft.world.entity.projectile.FishingHook.FishHookState.FLYING) {
+                 if (this.hookedIn != null) {
+-                    this.setDeltaMovement(Vec3.ZERO);
++                    this.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+                     new io.papermc.paper.event.entity.FishHookStateChangeEvent((org.bukkit.entity.FishHook) getBukkitEntity(), org.bukkit.entity.FishHook.HookState.HOOKED_ENTITY).callEvent(); // Paper - Add FishHookStateChangeEvent. #HOOKED_ENTITY
+-                    this.currentState = FishingHook.FishHookState.HOOKED_IN_ENTITY;
++                    this.currentState = net.minecraft.world.entity.projectile.FishingHook.FishHookState.HOOKED_IN_ENTITY;
+                     return;
+                 }
+ 
+                 if (flag) {
+                     this.setDeltaMovement(this.getDeltaMovement().multiply(0.3, 0.2, 0.3));
+                     new io.papermc.paper.event.entity.FishHookStateChangeEvent((org.bukkit.entity.FishHook) getBukkitEntity(), org.bukkit.entity.FishHook.HookState.BOBBING).callEvent(); // Paper - Add FishHookStateChangeEvent. #BOBBING
+-                    this.currentState = FishingHook.FishHookState.BOBBING;
++                    this.currentState = net.minecraft.world.entity.projectile.FishingHook.FishHookState.BOBBING;
+                     return;
+                 }
+ 
+                 this.checkCollision();
+             } else {
+-                if (this.currentState == FishingHook.FishHookState.HOOKED_IN_ENTITY) {
++                if (this.currentState == net.minecraft.world.entity.projectile.FishingHook.FishHookState.HOOKED_IN_ENTITY) {
+                     if (this.hookedIn != null) {
+                         if (!this.hookedIn.isRemoved() && this.hookedIn.canInteractWithLevel() && this.hookedIn.level().dimension() == this.level().dimension()
+                             )
+@@ -217,15 +217,15 @@ public class FishingHook extends Projectile {
+                         } else {
+                             this.setHookedEntity(null);
+                             new io.papermc.paper.event.entity.FishHookStateChangeEvent((org.bukkit.entity.FishHook) getBukkitEntity(), org.bukkit.entity.FishHook.HookState.UNHOOKED).callEvent(); // Paper - Add FishHookStateChangeEvent. #UNHOOKED
+-                            this.currentState = FishingHook.FishHookState.FLYING;
++                            this.currentState = net.minecraft.world.entity.projectile.FishingHook.FishHookState.FLYING;
+                         }
+                     }
+ 
+                     return;
+                 }
+ 
+-                if (this.currentState == FishingHook.FishHookState.BOBBING) {
+-                    Vec3 deltaMovement = this.getDeltaMovement();
++                if (this.currentState == net.minecraft.world.entity.projectile.FishingHook.FishHookState.BOBBING) {
++                    net.minecraft.world.phys.Vec3 deltaMovement = this.getDeltaMovement();
+                     double d = this.getY() + deltaMovement.y - blockPos.getY() - f;
+                     if (Math.abs(d) < 0.01) {
+                         d += Math.signum(d) * 0.1;
+@@ -255,15 +255,15 @@ public class FishingHook extends Projectile {
+                 }
+             }
+ 
+-            if (!fluidState.is(FluidTags.WATER) && !this.onGround() && this.hookedIn == null) {
++            if (!fluidState.is(net.minecraft.tags.FluidTags.WATER) && !this.onGround() && this.hookedIn == null) {
+                 this.setDeltaMovement(this.getDeltaMovement().add(0.0, -0.03, 0.0));
+             }
+ 
+-            this.move(MoverType.SELF, this.getDeltaMovement());
++            this.move(net.minecraft.world.entity.MoverType.SELF, this.getDeltaMovement());
+             this.applyEffectsFromBlocks();
+             this.updateRotation();
+-            if (this.currentState == FishingHook.FishHookState.FLYING && (this.onGround() || this.horizontalCollision)) {
+-                this.setDeltaMovement(Vec3.ZERO);
++            if (this.currentState == net.minecraft.world.entity.projectile.FishingHook.FishHookState.FLYING && (this.onGround() || this.horizontalCollision)) {
++                this.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+             }
+ 
+             double d1 = 0.92;
+@@ -272,12 +272,12 @@ public class FishingHook extends Projectile {
+         }
+     }
+ 
+-    private boolean shouldStopFishing(Player player) {
++    private boolean shouldStopFishing(net.minecraft.world.entity.player.Player player) {
+         if (player.canInteractWithLevel()) {
+-            ItemStack mainHandItem = player.getMainHandItem();
+-            ItemStack offhandItem = player.getOffhandItem();
+-            boolean isFishingRod = mainHandItem.is(Items.FISHING_ROD);
+-            boolean isFishingRod1 = offhandItem.is(Items.FISHING_ROD);
++            net.minecraft.world.item.ItemStack mainHandItem = player.getMainHandItem();
++            net.minecraft.world.item.ItemStack offhandItem = player.getOffhandItem();
++            boolean isFishingRod = mainHandItem.is(net.minecraft.world.item.Items.FISHING_ROD);
++            boolean isFishingRod1 = offhandItem.is(net.minecraft.world.item.Items.FISHING_ROD);
+             if ((isFishingRod || isFishingRod1) && this.distanceToSqr(player) <= 1024.0) {
+                 return false;
+             }
+@@ -288,17 +288,17 @@ public class FishingHook extends Projectile {
+     }
+ 
+     private void checkCollision() {
+-        HitResult hitResultOnMoveVector = ProjectileUtil.getHitResultOnMoveVector(this, this::canHitEntity);
++        net.minecraft.world.phys.HitResult hitResultOnMoveVector = net.minecraft.world.entity.projectile.ProjectileUtil.getHitResultOnMoveVector(this, this::canHitEntity);
+         this.preHitTargetOrDeflectSelf(hitResultOnMoveVector);
+     }
+ 
+     @Override
+-    protected boolean canHitEntity(Entity target) {
+-        return super.canHitEntity(target) || target.isAlive() && target instanceof ItemEntity;
++    protected boolean canHitEntity(net.minecraft.world.entity.Entity target) {
++        return super.canHitEntity(target) || target.isAlive() && target instanceof net.minecraft.world.entity.item.ItemEntity;
+     }
+ 
+     @Override
+-    protected void onHitEntity(EntityHitResult result) {
++    protected void onHitEntity(net.minecraft.world.phys.EntityHitResult result) {
+         super.onHitEntity(result);
+         if (!this.level().isClientSide()) {
+             this.setHookedEntity(result.getEntity());
+@@ -306,20 +306,20 @@ public class FishingHook extends Projectile {
+     }
+ 
+     @Override
+-    protected void onHitBlock(BlockHitResult result) {
++    protected void onHitBlock(net.minecraft.world.phys.BlockHitResult result) {
+         super.onHitBlock(result);
+         this.setDeltaMovement(this.getDeltaMovement().normalize().scale(result.distanceTo(this)));
+     }
+ 
+-    public void setHookedEntity(@Nullable Entity hookedEntity) {
++    public void setHookedEntity(@javax.annotation.Nullable net.minecraft.world.entity.Entity hookedEntity) {
+         this.hookedIn = hookedEntity;
+         this.getEntityData().set(DATA_HOOKED_ENTITY, hookedEntity == null ? 0 : hookedEntity.getId() + 1);
+     }
+ 
+-    private void catchingFish(BlockPos pos) {
+-        ServerLevel serverLevel = (ServerLevel)this.level();
++    private void catchingFish(net.minecraft.core.BlockPos pos) {
++        net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel)this.level();
+         int i = 1;
+-        BlockPos blockPos = pos.above();
++        net.minecraft.core.BlockPos blockPos = pos.above();
+         if (this.rainInfluenced && this.random.nextFloat() < 0.25F && this.level().isRainingAt(blockPos)) { // CraftBukkit
+             i++;
+         }
+@@ -344,21 +344,23 @@ public class FishingHook extends Projectile {
+             if (this.timeUntilHooked > 0) {
+                 this.fishAngle = this.fishAngle + (float)this.random.triangle(0.0, 9.188);
+                 float f = this.fishAngle * (float) (Math.PI / 180.0);
+-                float sin = Mth.sin(f);
+-                float cos = Mth.cos(f);
++                float sin = net.minecraft.util.Mth.sin(f);
++                float cos = net.minecraft.util.Mth.cos(f);
+                 double d = this.getX() + sin * this.timeUntilHooked * 0.1F;
+-                double d1 = Mth.floor(this.getY()) + 1.0F;
++                double d1 = net.minecraft.util.Mth.floor(this.getY()) + 1.0F;
+                 double d2 = this.getZ() + cos * this.timeUntilHooked * 0.1F;
+-                BlockState blockState = serverLevel.getBlockState(BlockPos.containing(d, d1 - 1.0, d2));
+-                if (blockState.is(Blocks.WATER)) {
++                net.minecraft.world.level.block.state.BlockState blockState = serverLevel.getBlockState(net.minecraft.core.BlockPos.containing(d, d1 - 1.0, d2));
++                if (blockState.is(net.minecraft.world.level.block.Blocks.WATER)) {
+                     if (this.random.nextFloat() < 0.15F) {
+-                        serverLevel.sendParticles(ParticleTypes.BUBBLE, d, d1 - 0.1F, d2, 1, sin, 0.1, cos, 0.0);
++                        serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.BUBBLE, d, d1 - 0.1F, d2, 1, sin, 0.1, cos, 0.0);
+                     }
+ 
+                     float f1 = sin * 0.04F;
+                     float f2 = cos * 0.04F;
+-                    serverLevel.sendParticles(ParticleTypes.FISHING, d, d1, d2, 0, f2, 0.01, -f1, 1.0);
+-                    serverLevel.sendParticles(ParticleTypes.FISHING, d, d1, d2, 0, -f2, 0.01, f1, 1.0);
++                    serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.FISHING, d, d1, d2, 0, f2, 0.01, -f1, 1.0);
++                    serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.FISHING, d, d1, d2, 0, -f2, 0.01, f1, 1.0);
++                    org.bukkit.Bukkit.getPluginManager().callEvent(new org.bukkit.event.entity.FishingParticleEvent(((org.bukkit.entity.FishHook) this.getBukkitEntity()),
++                        new org.bukkit.Location(null, d, d1, d2)));
+                 }
+             } else {
+                 // CraftBukkit start
+@@ -367,10 +369,10 @@ public class FishingHook extends Projectile {
+                     return;
+                 }
+                 // CraftBukkit end
+-                this.playSound(SoundEvents.FISHING_BOBBER_SPLASH, 0.25F, 1.0F + (this.random.nextFloat() - this.random.nextFloat()) * 0.4F);
++                this.playSound(net.minecraft.sounds.SoundEvents.FISHING_BOBBER_SPLASH, 0.25F, 1.0F + (this.random.nextFloat() - this.random.nextFloat()) * 0.4F);
+                 double d3 = this.getY() + 0.5;
+                 serverLevel.sendParticles(
+-                    ParticleTypes.BUBBLE,
++                    net.minecraft.core.particles.ParticleTypes.BUBBLE,
+                     this.getX(),
+                     d3,
+                     this.getZ(),
+@@ -381,7 +383,7 @@ public class FishingHook extends Projectile {
+                     0.2F
+                 );
+                 serverLevel.sendParticles(
+-                    ParticleTypes.FISHING,
++                    net.minecraft.core.particles.ParticleTypes.FISHING,
+                     this.getX(),
+                     d3,
+                     this.getZ(),
+@@ -391,7 +393,7 @@ public class FishingHook extends Projectile {
+                     this.getBbWidth(),
+                     0.2F
+                 );
+-                this.nibble = Mth.nextInt(this.random, 20, 40);
++                this.nibble = net.minecraft.util.Mth.nextInt(this.random, 20, 40);
+                 this.getEntityData().set(DATA_BITING, true);
+             }
+         } else if (this.timeUntilLured > 0) {
+@@ -406,21 +408,21 @@ public class FishingHook extends Projectile {
+             }
+ 
+             if (this.random.nextFloat() < f) {
+-                float sin = Mth.nextFloat(this.random, 0.0F, 360.0F) * (float) (Math.PI / 180.0);
+-                float cos = Mth.nextFloat(this.random, 25.0F, 60.0F);
+-                double d = this.getX() + Mth.sin(sin) * cos * 0.1;
+-                double d1 = Mth.floor(this.getY()) + 1.0F;
+-                double d2 = this.getZ() + Mth.cos(sin) * cos * 0.1;
+-                BlockState blockState = serverLevel.getBlockState(BlockPos.containing(d, d1 - 1.0, d2));
+-                if (blockState.is(Blocks.WATER)) {
+-                    serverLevel.sendParticles(ParticleTypes.SPLASH, d, d1, d2, 2 + this.random.nextInt(2), 0.1F, 0.0, 0.1F, 0.0);
++                float sin = net.minecraft.util.Mth.nextFloat(this.random, 0.0F, 360.0F) * (float) (Math.PI / 180.0);
++                float cos = net.minecraft.util.Mth.nextFloat(this.random, 25.0F, 60.0F);
++                double d = this.getX() + net.minecraft.util.Mth.sin(sin) * cos * 0.1;
++                double d1 = net.minecraft.util.Mth.floor(this.getY()) + 1.0F;
++                double d2 = this.getZ() + net.minecraft.util.Mth.cos(sin) * cos * 0.1;
++                net.minecraft.world.level.block.state.BlockState blockState = serverLevel.getBlockState(net.minecraft.core.BlockPos.containing(d, d1 - 1.0, d2));
++                if (blockState.is(net.minecraft.world.level.block.Blocks.WATER)) {
++                    serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.SPLASH, d, d1, d2, 2 + this.random.nextInt(2), 0.1F, 0.0, 0.1F, 0.0);
+                 }
+             }
+ 
+             if (this.timeUntilLured <= 0) {
+                 // CraftBukkit start - logic to modify fishing wait time, lure time, and lure angle
+-                this.fishAngle = Mth.nextFloat(this.random, this.minLureAngle, this.maxLureAngle);
+-                this.timeUntilHooked = Mth.nextInt(this.random, this.minLureTime, this.maxLureTime);
++                this.fishAngle = net.minecraft.util.Mth.nextFloat(this.random, this.minLureAngle, this.maxLureAngle);
++                this.timeUntilHooked = net.minecraft.util.Mth.nextInt(this.random, this.minLureTime, this.maxLureTime);
+                 // CraftBukkit end
+                 // Paper start - Add missing fishing event state
+                 if (this.getPlayerOwner() != null) {
+@@ -439,24 +441,24 @@ public class FishingHook extends Projectile {
+ 
+     // Paper start - more projectile api - extract time until lured reset logic
+     public void resetTimeUntilLured() {
+-        this.timeUntilLured = Mth.nextInt(this.random, this.minWaitTime, this.maxWaitTime);
++        this.timeUntilLured = net.minecraft.util.Mth.nextInt(this.random, this.minWaitTime, this.maxWaitTime);
+         this.timeUntilLured -= (this.applyLure) ? (this.lureSpeed >= this.maxWaitTime ? this.timeUntilLured - 1 : this.lureSpeed ) : 0; // Paper - Fix Lure infinite loop
+     }
+     // Paper end - more projectile api - extract time until lured reset logic
+ 
+-    public boolean calculateOpenWater(BlockPos pos) {
+-        FishingHook.OpenWaterType openWaterType = FishingHook.OpenWaterType.INVALID;
++    public boolean calculateOpenWater(net.minecraft.core.BlockPos pos) {
++        net.minecraft.world.entity.projectile.FishingHook.OpenWaterType openWaterType = net.minecraft.world.entity.projectile.FishingHook.OpenWaterType.INVALID;
+ 
+         for (int i = -1; i <= 2; i++) {
+-            FishingHook.OpenWaterType openWaterTypeForArea = this.getOpenWaterTypeForArea(pos.offset(-2, i, -2), pos.offset(2, i, 2));
++            net.minecraft.world.entity.projectile.FishingHook.OpenWaterType openWaterTypeForArea = this.getOpenWaterTypeForArea(pos.offset(-2, i, -2), pos.offset(2, i, 2));
+             switch (openWaterTypeForArea) {
+                 case ABOVE_WATER:
+-                    if (openWaterType == FishingHook.OpenWaterType.INVALID) {
++                    if (openWaterType == net.minecraft.world.entity.projectile.FishingHook.OpenWaterType.INVALID) {
+                         return false;
+                     }
+                     break;
+                 case INSIDE_WATER:
+-                    if (openWaterType == FishingHook.OpenWaterType.ABOVE_WATER) {
++                    if (openWaterType == net.minecraft.world.entity.projectile.FishingHook.OpenWaterType.ABOVE_WATER) {
+                         return false;
+                     }
+                     break;
+@@ -470,22 +472,22 @@ public class FishingHook extends Projectile {
+         return true;
+     }
+ 
+-    private FishingHook.OpenWaterType getOpenWaterTypeForArea(BlockPos pos1, BlockPos pos2) {
+-        return BlockPos.betweenClosedStream(pos1, pos2)
++    private net.minecraft.world.entity.projectile.FishingHook.OpenWaterType getOpenWaterTypeForArea(net.minecraft.core.BlockPos pos1, net.minecraft.core.BlockPos pos2) {
++        return net.minecraft.core.BlockPos.betweenClosedStream(pos1, pos2)
+             .map(this::getOpenWaterTypeForBlock)
+-            .reduce((type1, type2) -> type1 == type2 ? type1 : FishingHook.OpenWaterType.INVALID)
+-            .orElse(FishingHook.OpenWaterType.INVALID);
++            .reduce((type1, type2) -> type1 == type2 ? type1 : net.minecraft.world.entity.projectile.FishingHook.OpenWaterType.INVALID)
++            .orElse(net.minecraft.world.entity.projectile.FishingHook.OpenWaterType.INVALID);
+     }
+ 
+-    private FishingHook.OpenWaterType getOpenWaterTypeForBlock(BlockPos pos) {
+-        BlockState blockState = this.level().getBlockState(pos);
+-        if (!blockState.isAir() && !blockState.is(Blocks.LILY_PAD)) {
+-            FluidState fluidState = blockState.getFluidState();
+-            return fluidState.is(FluidTags.WATER) && fluidState.isSource() && blockState.getCollisionShape(this.level(), pos).isEmpty()
+-                ? FishingHook.OpenWaterType.INSIDE_WATER
+-                : FishingHook.OpenWaterType.INVALID;
++    private net.minecraft.world.entity.projectile.FishingHook.OpenWaterType getOpenWaterTypeForBlock(net.minecraft.core.BlockPos pos) {
++        net.minecraft.world.level.block.state.BlockState blockState = this.level().getBlockState(pos);
++        if (!blockState.isAir() && !blockState.is(net.minecraft.world.level.block.Blocks.LILY_PAD)) {
++            net.minecraft.world.level.material.FluidState fluidState = blockState.getFluidState();
++            return fluidState.is(net.minecraft.tags.FluidTags.WATER) && fluidState.isSource() && blockState.getCollisionShape(this.level(), pos).isEmpty()
++                ? net.minecraft.world.entity.projectile.FishingHook.OpenWaterType.INSIDE_WATER
++                : net.minecraft.world.entity.projectile.FishingHook.OpenWaterType.INVALID;
+         } else {
+-            return FishingHook.OpenWaterType.ABOVE_WATER;
++            return net.minecraft.world.entity.projectile.FishingHook.OpenWaterType.ABOVE_WATER;
+         }
+     }
+ 
+@@ -494,23 +496,23 @@ public class FishingHook extends Projectile {
+     }
+ 
+     @Override
+-    protected void addAdditionalSaveData(ValueOutput output) {
++    protected void addAdditionalSaveData(net.minecraft.world.level.storage.ValueOutput output) {
+     }
+ 
+     @Override
+-    protected void readAdditionalSaveData(ValueInput input) {
++    protected void readAdditionalSaveData(net.minecraft.world.level.storage.ValueInput input) {
+     }
+ 
+ 
+     // Paper start - Add hand parameter to PlayerFishEvent
+     @Deprecated @io.papermc.paper.annotation.DoNotUse
+-    public int retrieve(ItemStack stack) {
++    public int retrieve(net.minecraft.world.item.ItemStack stack) {
+         return this.retrieve(stack, net.minecraft.world.InteractionHand.MAIN_HAND);
+     }
+ 
+-    public int retrieve(ItemStack stack, net.minecraft.world.InteractionHand hand) {
++    public int retrieve(net.minecraft.world.item.ItemStack stack, net.minecraft.world.InteractionHand hand) {
+         // Paper end - Add hand parameter to PlayerFishEvent
+-        Player playerOwner = this.getPlayerOwner();
++        net.minecraft.world.entity.player.Player playerOwner = this.getPlayerOwner();
+         if (!this.level().isClientSide() && playerOwner != null && !this.shouldStopFishing(playerOwner)) {
+             int i = 0;
+             if (this.hookedIn != null) {
+@@ -522,23 +524,23 @@ public class FishingHook extends Projectile {
+                 if (this.hookedIn != null) { // Paper - re-check to see if there is a hooked entity
+                 // CraftBukkit end
+                 this.pullEntity(this.hookedIn);
+-                CriteriaTriggers.FISHING_ROD_HOOKED.trigger((ServerPlayer)playerOwner, stack, this, Collections.emptyList());
+-                this.level().broadcastEntityEvent(this, EntityEvent.FISHING_ROD_REEL_IN);
+-                i = this.hookedIn instanceof ItemEntity ? 3 : 5;
++                net.minecraft.advancements.CriteriaTriggers.FISHING_ROD_HOOKED.trigger((net.minecraft.server.level.ServerPlayer)playerOwner, stack, this, java.util.Collections.emptyList());
++                this.level().broadcastEntityEvent(this, net.minecraft.world.entity.EntityEvent.FISHING_ROD_REEL_IN);
++                i = this.hookedIn instanceof net.minecraft.world.entity.item.ItemEntity ? 3 : 5;
+                 } // Paper - re-check to see if there is a hooked entity
+             } else if (this.nibble > 0) {
+-                LootParams lootParams = new LootParams.Builder((ServerLevel)this.level())
+-                    .withParameter(LootContextParams.ORIGIN, this.position())
+-                    .withParameter(LootContextParams.TOOL, stack)
+-                    .withParameter(LootContextParams.THIS_ENTITY, this)
++                net.minecraft.world.level.storage.loot.LootParams lootParams = new net.minecraft.world.level.storage.loot.LootParams.Builder((net.minecraft.server.level.ServerLevel)this.level())
++                    .withParameter(net.minecraft.world.level.storage.loot.parameters.LootContextParams.ORIGIN, this.position())
++                    .withParameter(net.minecraft.world.level.storage.loot.parameters.LootContextParams.TOOL, stack)
++                    .withParameter(net.minecraft.world.level.storage.loot.parameters.LootContextParams.THIS_ENTITY, this)
+                     .withLuck(this.luck + playerOwner.getLuck())
+-                    .create(LootContextParamSets.FISHING);
+-                LootTable lootTable = this.level().getServer().reloadableRegistries().getLootTable(BuiltInLootTables.FISHING);
+-                List<ItemStack> randomItems = lootTable.getRandomItems(lootParams);
+-                CriteriaTriggers.FISHING_ROD_HOOKED.trigger((ServerPlayer)playerOwner, stack, this, randomItems);
++                    .create(net.minecraft.world.level.storage.loot.parameters.LootContextParamSets.FISHING);
++                net.minecraft.world.level.storage.loot.LootTable lootTable = this.level().getServer().reloadableRegistries().getLootTable(net.minecraft.world.level.storage.loot.BuiltInLootTables.FISHING);
++                java.util.List<net.minecraft.world.item.ItemStack> randomItems = lootTable.getRandomItems(lootParams);
++                net.minecraft.advancements.CriteriaTriggers.FISHING_ROD_HOOKED.trigger((net.minecraft.server.level.ServerPlayer)playerOwner, stack, this, randomItems);
+ 
+-                for (ItemStack itemStack : randomItems) {
+-                    ItemEntity itemEntity = new ItemEntity(this.level(), this.getX(), this.getY(), this.getZ(), itemStack);
++                for (net.minecraft.world.item.ItemStack itemStack : randomItems) {
++                    net.minecraft.world.entity.item.ItemEntity itemEntity = new net.minecraft.world.entity.item.ItemEntity(this.level(), this.getX(), this.getY(), this.getZ(), itemStack);
+                     // CraftBukkit start
+                     org.bukkit.event.player.PlayerFishEvent playerFishEvent = new org.bukkit.event.player.PlayerFishEvent((org.bukkit.entity.Player) playerOwner.getBukkitEntity(), itemEntity.getBukkitEntity(), (org.bukkit.entity.FishHook) this.getBukkitEntity(), org.bukkit.craftbukkit.CraftEquipmentSlot.getHand(hand), org.bukkit.event.player.PlayerFishEvent.State.CAUGHT_FISH); // Paper - itemEntity may be null // Paper - Add hand parameter to PlayerFishEvent
+                     playerFishEvent.setExpToDrop(this.random.nextInt(6) + 1);
+@@ -555,13 +557,13 @@ public class FishingHook extends Projectile {
+                     if (playerFishEvent.getExpToDrop() > 0) { // CraftBukkit - custom exp
+                         playerOwner.level()
+                             .addFreshEntity(
+-                                new ExperienceOrb(
++                                new net.minecraft.world.entity.ExperienceOrb(
+                                     playerOwner.level(), new net.minecraft.world.phys.Vec3(playerOwner.getX(), playerOwner.getY() + 0.5, playerOwner.getZ() + 0.5), net.minecraft.world.phys.Vec3.ZERO, playerFishEvent.getExpToDrop(), org.bukkit.entity.ExperienceOrb.SpawnReason.FISHING, this.getPlayerOwner(), this // Paper
+                                 )
+                             );
+                     }
+-                    if (itemStack.is(ItemTags.FISHES)) {
+-                        playerOwner.awardStat(Stats.FISH_CAUGHT, 1);
++                    if (itemStack.is(net.minecraft.tags.ItemTags.FISHES)) {
++                        playerOwner.awardStat(net.minecraft.stats.Stats.FISH_CAUGHT, 1);
+                     }
+                 }
+ 
+@@ -595,28 +597,28 @@ public class FishingHook extends Projectile {
+ 
+     @Override
+     public void handleEntityEvent(byte id) {
+-        if (id == EntityEvent.FISHING_ROD_REEL_IN && this.level().isClientSide() && this.hookedIn instanceof Player player && player.isLocalPlayer()) {
++        if (id == net.minecraft.world.entity.EntityEvent.FISHING_ROD_REEL_IN && this.level().isClientSide() && this.hookedIn instanceof net.minecraft.world.entity.player.Player player && player.isLocalPlayer()) {
+             this.pullEntity(this.hookedIn);
+         }
+ 
+         super.handleEntityEvent(id);
+     }
+ 
+-    public void pullEntity(Entity entity) {
+-        Entity owner = this.getOwner();
++    public void pullEntity(net.minecraft.world.entity.Entity entity) {
++        net.minecraft.world.entity.Entity owner = this.getOwner();
+         if (owner != null) {
+-            Vec3 vec3 = new Vec3(owner.getX() - this.getX(), owner.getY() - this.getY(), owner.getZ() - this.getZ()).scale(0.1);
++            net.minecraft.world.phys.Vec3 vec3 = new net.minecraft.world.phys.Vec3(owner.getX() - this.getX(), owner.getY() - this.getY(), owner.getZ() - this.getZ()).scale(0.1);
+             entity.setDeltaMovement(entity.getDeltaMovement().add(vec3));
+         }
+     }
+ 
+     @Override
+-    protected Entity.MovementEmission getMovementEmission() {
+-        return Entity.MovementEmission.NONE;
++    protected net.minecraft.world.entity.Entity.MovementEmission getMovementEmission() {
++        return net.minecraft.world.entity.Entity.MovementEmission.NONE;
+     }
+ 
+     @Override
+-    public void remove(Entity.RemovalReason reason, @Nullable org.bukkit.event.entity.EntityRemoveEvent.Cause cause) { // CraftBukkit - add Bukkit remove cause
++    public void remove(net.minecraft.world.entity.Entity.RemovalReason reason, @javax.annotation.Nullable org.bukkit.event.entity.EntityRemoveEvent.Cause cause) { // CraftBukkit - add Bukkit remove cause
+         this.updateOwnerInfo(null);
+         super.remove(reason, cause); // CraftBukkit - add Bukkit remove cause
+     }
+@@ -627,25 +629,25 @@ public class FishingHook extends Projectile {
+     }
+ 
+     @Override
+-    public void setOwner(@Nullable Entity owner) {
++    public void setOwner(@javax.annotation.Nullable net.minecraft.world.entity.Entity owner) {
+         super.setOwner(owner);
+         this.updateOwnerInfo(this);
+     }
+ 
+-    private void updateOwnerInfo(@Nullable FishingHook fishingHook) {
+-        Player playerOwner = this.getPlayerOwner();
++    private void updateOwnerInfo(@javax.annotation.Nullable net.minecraft.world.entity.projectile.FishingHook fishingHook) {
++        net.minecraft.world.entity.player.Player playerOwner = this.getPlayerOwner();
+         if (playerOwner != null) {
+             playerOwner.fishing = fishingHook;
+         }
+     }
+ 
+-    @Nullable
+-    public Player getPlayerOwner() {
+-        return this.getOwner() instanceof Player player ? player : null;
++    @javax.annotation.Nullable
++    public net.minecraft.world.entity.player.Player getPlayerOwner() {
++        return this.getOwner() instanceof net.minecraft.world.entity.player.Player player ? player : null;
+     }
+ 
+-    @Nullable
+-    public Entity getHookedIn() {
++    @javax.annotation.Nullable
++    public net.minecraft.world.entity.Entity getHookedIn() {
+         return this.hookedIn;
+     }
+ 
+@@ -655,13 +657,13 @@ public class FishingHook extends Projectile {
+     }
+ 
+     @Override
+-    public Packet<ClientGamePacketListener> getAddEntityPacket(ServerEntity entity) {
+-        Entity owner = this.getOwner();
+-        return new ClientboundAddEntityPacket(this, entity, owner == null ? this.getId() : owner.getId());
++    public net.minecraft.network.protocol.Packet<net.minecraft.network.protocol.game.ClientGamePacketListener> getAddEntityPacket(net.minecraft.server.level.ServerEntity entity) {
++        net.minecraft.world.entity.Entity owner = this.getOwner();
++        return new net.minecraft.network.protocol.game.ClientboundAddEntityPacket(this, entity, owner == null ? this.getId() : owner.getId());
+     }
+ 
+     @Override
+-    public void recreateFromPacket(ClientboundAddEntityPacket packet) {
++    public void recreateFromPacket(net.minecraft.network.protocol.game.ClientboundAddEntityPacket packet) {
+         super.recreateFromPacket(packet);
+         if (this.getPlayerOwner() == null) {
+             int data = packet.getData();

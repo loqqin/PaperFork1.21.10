@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/level/block/MushroomBlock.java
 +++ b/net/minecraft/world/level/block/MushroomBlock.java
-@@ -44,21 +_,26 @@
+@@ -44,9 +_,13 @@
          return SHAPE;
      }
  
@@ -9,29 +9,14 @@
      @Override
      protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
 -        if (random.nextInt(25) == 0) {
--            int i = 5;
--            int i1 = 4;
--
--            for (BlockPos blockPos : BlockPos.betweenClosed(pos.offset(-4, -1, -4), pos.offset(4, 1, 4))) {
--                if (level.getBlockState(blockPos).is(this)) {
--                    if (--i <= 0) {
--                        return;
--                    }
--                }
--            }
 +        double mushroomModifier = level.spigotConfig.mushroomModifier;
 +        mushroomModifier += mushroomModifier / 100 * growthPercentIncrease.getDouble(level.serverLevelData.settings.levelName);
 +        if (random.nextFloat() < (mushroomModifier / (100.0F * 25))) { // Spigot - SPIGOT-7159: Better modifier resolution
-+            // int i = 5;
-+            // int i1 = 4;
-+            //
-+            // for (BlockPos blockPos : BlockPos.betweenClosed(pos.offset(-4, -1, -4), pos.offset(4, 1, 4))) {
-+            //     if (level.getBlockState(blockPos).is(this)) {
-+            //         if (--i <= 0) {
-+            //             return;
-+            //         }
-+            //     }
-+            // }
+             int i = 5;
+             int i1 = 4;
+ 
+@@ -59,6 +_,7 @@
+             }
  
              BlockPos blockPos1 = pos.offset(random.nextInt(3) - 1, random.nextInt(2) - random.nextInt(2), random.nextInt(3) - 1);
 +            final BlockPos sourcePos = pos; // Paper - Use correct source for mushroom block spread event
@@ -47,19 +32,6 @@
              }
          }
      }
-@@ -83,7 +_,11 @@
-     protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
-         BlockPos blockPos = pos.below();
-         BlockState blockState = level.getBlockState(blockPos);
--        return blockState.is(BlockTags.MUSHROOM_GROW_BLOCK) || level.getRawBrightness(pos, 0) < 13 && this.mayPlaceOn(blockState, level, blockPos);
-+        // убрал проверку на освещение и разрешил разростаться онли на определенных блоках
-+        // хз поч было на всех подряд
-+        // final boolean brightness = level.getRawBrightness(pos, 0) < 13
-+        //     || (level instanceof ServerLevel serverLevel && org.bukkit.Bukkit.worldNamesWithAllowedGrowthWithLowBrightness.contains(serverLevel.getWorld().getName()));
-+        return blockState.is(BlockTags.MUSHROOM_GROW_BLOCK)/* || brightness && this.mayPlaceOn(blockState, level, blockPos)*/;
-     }
- 
-     public boolean growMushroom(ServerLevel level, BlockPos pos, BlockState state, RandomSource random) {
 @@ -92,6 +_,7 @@
              return false;
          } else {

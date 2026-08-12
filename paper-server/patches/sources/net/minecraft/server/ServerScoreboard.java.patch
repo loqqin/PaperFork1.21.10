@@ -157,16 +157,6 @@
              for (Packet<?> packet : stopTrackingPackets) {
                  serverPlayer.connection.send(packet);
              }
-@@ -277,6 +_,9 @@
-     }
- 
-     private void updatePlayerWaypoint(String playerName) {
-+        if (true) { // loqqin fix lag on team set color
-+            return;
-+        }
-         ServerPlayer playerByName = this.server.getPlayerList().getPlayerByName(playerName);
-         if (playerByName != null) {
-             ServerLevel var4 = playerByName.level();
 @@ -295,4 +_,13 @@
                  .forEach(serverPlayer -> serverLevel.getWaypointManager().remakeConnections(serverPlayer));
          }

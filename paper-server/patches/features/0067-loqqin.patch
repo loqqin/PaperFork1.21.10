@@ -1,0 +1,22 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Mon, 27 Jul 2026 18:46:37 +0300
+Subject: [PATCH] loqqin
+
+
+diff --git a/net/minecraft/world/entity/item/ItemEntity.java b/net/minecraft/world/entity/item/ItemEntity.java
+index 6be576368695c902a0d6da74b1d77d3018b4585a..0ef6b85ceaf140390567fa53d0d551ab24c96683 100755
+--- a/net/minecraft/world/entity/item/ItemEntity.java
++++ b/net/minecraft/world/entity/item/ItemEntity.java
+@@ -157,7 +157,10 @@ public class ItemEntity extends Entity implements TraceableEntity {
+             this.yo = this.getY();
+             this.zo = this.getZ();
+             Vec3 deltaMovement = this.getDeltaMovement();
+-            if (this.isInWater() && this.getFluidHeight(FluidTags.WATER) > 0.1F) {
++            boolean insideBlock = !this.level().noCollision(this, this.getBoundingBox().deflate(1.0E-7));
++            if (insideBlock) {
++                this.setDeltaMovement(Vec3.ZERO);
++            } else if (this.isInWater() && this.getFluidHeight(FluidTags.WATER) > 0.1F) {
+                 this.setUnderwaterMovement();
+             } else if (this.isInLava() && this.getFluidHeight(FluidTags.LAVA) > 0.1F) {
+                 this.setUnderLavaMovement();
