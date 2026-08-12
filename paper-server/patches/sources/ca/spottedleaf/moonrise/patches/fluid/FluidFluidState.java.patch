@@ -1,0 +1,8 @@
+--- /dev/null
++++ b/ca/spottedleaf/moonrise/patches/fluid/FluidFluidState.java
+@@ -1,0 +_,5 @@
++package ca.spottedleaf.moonrise.patches.fluid;
++
++public interface FluidFluidState {
++    public void moonrise$initCaches();
++}

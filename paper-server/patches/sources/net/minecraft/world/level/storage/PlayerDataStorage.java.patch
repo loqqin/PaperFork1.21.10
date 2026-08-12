@@ -44,8 +44,12 @@
              } catch (Exception var5) {
                  LOGGER.warn("Failed to load player data for {}", nameAndId.name());
              }
-@@ -86,4 +_,10 @@
-             return DataFixTypes.PLAYER.updateToCurrentVersion(this.fixerUpper, compoundTag, dataVersion);
+@@ -83,7 +_,13 @@
+ 
+         return optional.or(() -> this.load(nameAndId, ".dat_old")).map(compoundTag -> {
+             int dataVersion = NbtUtils.getDataVersion(compoundTag, -1);
+-            return DataFixTypes.PLAYER.updateToCurrentVersion(this.fixerUpper, compoundTag, dataVersion);
++            return ca.spottedleaf.dataconverter.minecraft.MCDataConverter.convertTag(ca.spottedleaf.dataconverter.minecraft.datatypes.MCTypeRegistry.PLAYER, compoundTag, dataVersion, ca.spottedleaf.dataconverter.minecraft.util.Version.getCurrentVersion()); // Paper - rewrite data conversion system
          });
      }
 +

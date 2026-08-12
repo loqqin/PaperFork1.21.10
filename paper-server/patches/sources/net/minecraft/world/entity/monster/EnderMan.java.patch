@@ -56,12 +56,79 @@
                  this.setTarget(null);
                  this.teleport();
              }
+@@ -279,30 +_,33 @@
+     }
+ 
+     private boolean teleport(double x, double y, double z) {
+-        BlockPos.MutableBlockPos mutableBlockPos = new BlockPos.MutableBlockPos(x, y, z);
+-
+-        while (mutableBlockPos.getY() > this.level().getMinY() && !this.level().getBlockState(mutableBlockPos).blocksMotion()) {
+-            mutableBlockPos.move(Direction.DOWN);
+-        }
+-
+-        BlockState blockState = this.level().getBlockState(mutableBlockPos);
+-        boolean flag = blockState.blocksMotion();
+-        boolean isWater = blockState.getFluidState().is(FluidTags.WATER);
+-        if (flag && !isWater) {
+-            Vec3 vec3 = this.position();
+-            boolean flag1 = this.randomTeleport(x, y, z, true);
+-            if (flag1) {
+-                this.level().gameEvent(GameEvent.TELEPORT, vec3, GameEvent.Context.of(this));
+-                if (!this.isSilent()) {
+-                    this.level().playSound(null, this.xo, this.yo, this.zo, SoundEvents.ENDERMAN_TELEPORT, this.getSoundSource(), 1.0F, 1.0F);
+-                    this.playSound(SoundEvents.ENDERMAN_TELEPORT, 1.0F, 1.0F);
+-                }
+-            }
+-
+-            return flag1;
+-        } else {
+-            return false;
+-        }
++        // kenny удалил телепортацию эндермена потому что он 18.05.2026 телепортировался в чанк в котором был initializelight а телепортация происходила синхронно
++        // и произошел дедлок
++        return false;
++        // BlockPos.MutableBlockPos mutableBlockPos = new BlockPos.MutableBlockPos(x, y, z);
++        //
++        // while (mutableBlockPos.getY() > this.level().getMinY() && !this.level().getBlockState(mutableBlockPos).blocksMotion()) {
++        //     mutableBlockPos.move(Direction.DOWN);
++        // }
++        //
++        // BlockState blockState = this.level().getBlockState(mutableBlockPos);
++        // boolean flag = blockState.blocksMotion();
++        // boolean isWater = blockState.getFluidState().is(FluidTags.WATER);
++        // if (flag && !isWater) {
++        //     Vec3 vec3 = this.position();
++        //     boolean flag1 = this.randomTeleport(x, y, z, true);
++        //     if (flag1) {
++        //         this.level().gameEvent(GameEvent.TELEPORT, vec3, GameEvent.Context.of(this));
++        //         if (!this.isSilent()) {
++        //             this.level().playSound(null, this.xo, this.yo, this.zo, SoundEvents.ENDERMAN_TELEPORT, this.getSoundSource(), 1.0F, 1.0F);
++        //             this.playSound(SoundEvents.ENDERMAN_TELEPORT, 1.0F, 1.0F);
++        //         }
++        //     }
++        //
++        //     return flag1;
++        // } else {
++        //     return false;
++        // }
+     }
+ 
+     @Override
+@@ -353,6 +_,8 @@
+         return this.entityData.get(DATA_CARRY_STATE).orElse(null);
+     }
+ 
++    public boolean projectileDamageAllowed = false;
++
+     @Override
+     public boolean hurtServer(ServerLevel level, DamageSource damageSource, float amount) {
+         if (this.isInvulnerableTo(level, damageSource)) {
 @@ -361,21 +_,25 @@
              AbstractThrownPotion abstractThrownPotion1 = damageSource.getDirectEntity() instanceof AbstractThrownPotion abstractThrownPotion
                  ? abstractThrownPotion
                  : null;
 -            if (!damageSource.is(DamageTypeTags.IS_PROJECTILE) && abstractThrownPotion1 == null) {
-+            if (!damageSource.is(DamageTypeTags.IS_PROJECTILE) && abstractThrownPotion1 == null) { // Paper - EndermanEscapeEvent - diff on change - below logic relies on this path covering non-projectile damage.
++            if ((!damageSource.is(DamageTypeTags.IS_PROJECTILE) || projectileDamageAllowed) && abstractThrownPotion1 == null) { // Paper - EndermanEscapeEvent - diff on change - below logic relies on this path covering non-projectile damage.
                  boolean flag = super.hurtServer(level, damageSource, amount);
                  if (!(damageSource.getEntity() instanceof LivingEntity) && this.random.nextInt(10) != 0) {
 +                    if (this.tryEscape(damageSource.is(net.minecraft.tags.DamageTypeTags.IS_DROWNING) ? com.destroystokyo.paper.event.entity.EndermanEscapeEvent.Reason.DROWN : com.destroystokyo.paper.event.entity.EndermanEscapeEvent.Reason.CRITICAL_HIT)) { // Paper - EndermanEscapeEvent

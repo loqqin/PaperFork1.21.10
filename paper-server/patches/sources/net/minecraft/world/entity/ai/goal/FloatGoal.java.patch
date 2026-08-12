@@ -1,6 +1,11 @@
 --- a/net/minecraft/world/entity/ai/goal/FloatGoal.java
 +++ b/net/minecraft/world/entity/ai/goal/FloatGoal.java
-@@ -9,6 +_,7 @@
+@@ -5,10 +_,11 @@
+ import net.minecraft.world.entity.Mob;
+ 
+ public class FloatGoal extends Goal {
+-    private final Mob mob;
++    public final Mob mob;
  
      public FloatGoal(Mob mob) {
          this.mob = mob;

@@ -1,0 +1,39 @@
+--- a/net/minecraft/world/level/pathfinder/Path.java
++++ b/net/minecraft/world/level/pathfinder/Path.java
+@@ -11,13 +_,13 @@
+ import net.minecraft.world.entity.Entity;
+ import net.minecraft.world.phys.Vec3;
+ 
+-public final class Path {
++public class Path {
+     public static final StreamCodec<FriendlyByteBuf, Path> STREAM_CODEC = StreamCodec.of((buffer, value) -> value.writeToStream(buffer), Path::createFromStream);
+-    public final List<Node> nodes;
++    public List<Node> nodes;
+     @Nullable
+     private Path.DebugData debugData;
+     private int nextNodeIndex;
+-    private final BlockPos target;
++    public BlockPos target;
+     private final float distToTarget;
+     private final boolean reached;
+ 
+@@ -40,6 +_,10 @@
+         return this.nextNodeIndex >= this.nodes.size();
+     }
+ 
++    public boolean isProcessed() {
++        return true;
++    }
++
+     @Nullable
+     public Node getEndNode() {
+         return !this.nodes.isEmpty() ? this.nodes.get(this.nodes.size() - 1) : null;
+@@ -124,7 +_,7 @@
+     }
+ 
+     @VisibleForDebug
+-    void setDebug(Node[] openSet, Node[] closedSet, Set<Target> targetNodes) {
++    public void setDebug(Node[] openSet, Node[] closedSet, Set<Target> targetNodes) {
+         this.debugData = new Path.DebugData(openSet, closedSet, targetNodes);
+     }
+ 

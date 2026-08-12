@@ -1,0 +1,19 @@
+--- /dev/null
++++ b/net/FakeBlocks.java
+@@ -1,0 +_,16 @@
++package net;
++
++import net.minecraft.core.BlockPos;
++import net.minecraft.server.level.ServerLevel;
++import net.minecraft.server.level.ServerPlayer;
++import net.minecraft.world.level.Level;
++import net.minecraft.world.level.block.state.BlockState;
++import org.apache.commons.lang3.function.TriFunction;
++
++import java.util.function.BiFunction;
++
++public class FakeBlocks {
++  public static TriFunction<ServerPlayer, BlockPos, ServerLevel, BlockState> function = (serverPlayer, blockPos, serverLevel) -> {
++    return serverLevel.getBlockState(blockPos);
++  };
++}

@@ -1,0 +1,47 @@
+--- a/net/minecraft/world/level/chunk/storage/SimpleRegionStorage.java
++++ b/net/minecraft/world/level/chunk/storage/SimpleRegionStorage.java
+@@ -14,7 +_,7 @@
+ import net.minecraft.world.level.ChunkPos;
+ 
+ public class SimpleRegionStorage implements AutoCloseable {
+-    private final IOWorker worker;
++    public final IOWorker worker; // Paper - public
+     private final DataFixer fixerUpper;
+     private final DataFixTypes dataFixType;
+ 
+@@ -32,16 +_,31 @@
+         return this.worker.store(chunkPos, data);
+     }
+ 
++    // Paper start - rewrite data conversion system
++    private ca.spottedleaf.dataconverter.minecraft.datatypes.MCDataType getDataConverterType() {
++        if (this.dataFixType == DataFixTypes.ENTITY_CHUNK) {
++            return ca.spottedleaf.dataconverter.minecraft.datatypes.MCTypeRegistry.ENTITY_CHUNK;
++        } else if (this.dataFixType == DataFixTypes.POI_CHUNK) {
++            return ca.spottedleaf.dataconverter.minecraft.datatypes.MCTypeRegistry.POI_CHUNK;
++        } else {
++            throw new UnsupportedOperationException("For " + this.dataFixType.name());
++        }
++    }
++    // Paper end - rewrite data conversion system
++
+     public CompoundTag upgradeChunkTag(CompoundTag tag, int version) {
+         int dataVersion = NbtUtils.getDataVersion(tag, version);
+-        CompoundTag compoundTag = this.dataFixType.updateToCurrentVersion(this.fixerUpper, tag, dataVersion);
++        CompoundTag compoundTag = ca.spottedleaf.dataconverter.minecraft.MCDataConverter.convertTag(this.getDataConverterType(), tag, dataVersion, ca.spottedleaf.dataconverter.minecraft.util.Version.getCurrentVersion());; // Paper start - rewrite data conversion system
+         return NbtUtils.addCurrentDataVersion(compoundTag);
+     }
+ 
+     public Dynamic<Tag> upgradeChunkTag(Dynamic<Tag> tag, int version) {
+-        int dataVersion = NbtUtils.getDataVersion(tag, version);
+-        Dynamic<Tag> dynamic = this.dataFixType.updateToCurrentVersion(this.fixerUpper, tag, dataVersion);
+-        return NbtUtils.addCurrentDataVersion(dynamic);
++        // Paper start - rewrite data conversion system
++        final int dataVer = NbtUtils.getDataVersion(tag, version);
++        final CompoundTag converted = ca.spottedleaf.dataconverter.minecraft.MCDataConverter.convertTag(this.getDataConverterType(), (CompoundTag)tag.getValue(), dataVer, ca.spottedleaf.dataconverter.minecraft.util.Version.getCurrentVersion());
++        NbtUtils.addCurrentDataVersion(converted);
++        return new Dynamic<>(tag.getOps(), converted);
++        // Paper end - rewrite data conversion system
+     }
+ 
+     public CompletableFuture<Void> synchronize(boolean flushStorage) {

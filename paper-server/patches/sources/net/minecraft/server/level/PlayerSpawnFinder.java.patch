@@ -9,3 +9,14 @@
              int max = Math.max(0, level.getGameRules().getInt(GameRules.RULE_SPAWN_RADIUS));
              int floor = Mth.floor(level.getWorldBorder().getDistanceToBorder(pos.getX(), pos.getZ()));
              if (floor < max) {
+@@ -122,9 +_,7 @@
+         if (!this.finishedFuture.isDone()) {
+             int sectionPosX = SectionPos.blockToSectionCoord(x);
+             int sectionPosZ = SectionPos.blockToSectionCoord(z);
+-            this.level
+-                .getChunkSource()
+-                .addTicketAndLoadWithRadius(TicketType.SPAWN_SEARCH, new ChunkPos(sectionPosX, sectionPosZ), 0)
++            ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel)this.level).moonrise$getChunkTaskScheduler().chunkHolderManager.addTicketAndLoadWithRadius(TicketType.SPAWN_SEARCH, new ChunkPos(sectionPosX, sectionPosZ), 0, net.minecraft.world.level.chunk.status.ChunkStatus.FULL, ca.spottedleaf.concurrentutil.util.Priority.HIGH) // Paper - rewrite chunk system
+                 .whenCompleteAsync((object, throwable) -> {
+                     if (throwable == null) {
+                         try {

@@ -18,6 +18,26 @@
          this.level = level;
          this.synchronizer = synchronizer;
          this.entity = entity;
+@@ -86,7 +_,19 @@
+         this.trackedDataValues = entity.getEntityData().getNonDefaultValues();
+     }
+ 
++    // Paper start - fix desync when a player is added to the tracker
++    private boolean forceStateResync;
++    public void onPlayerAdd() {
++        this.forceStateResync = true;
++    }
++    // Paper end - fix desync when a player is added to the tracker
++
+     public void sendChanges() {
++        // Paper start - optimise collisions
++        if (((ca.spottedleaf.moonrise.patches.chunk_system.entity.ChunkSystemEntity)this.entity).moonrise$isHardColliding()) {
++            this.teleportDelay = 9999;
++        }
++        // Paper end - optimise collisions
+         List<Entity> passengers = this.entity.getPassengers();
+         if (!passengers.equals(this.lastPassengers)) {
+             this.synchronizer
 @@ -94,16 +_,22 @@
                      new ClientboundSetPassengersPacket(this.entity),
                      serverPlayer1 -> passengers.contains(serverPlayer1) == this.lastPassengers.contains(serverPlayer1)
@@ -45,6 +65,15 @@
                          savedData.tickCarriedBy(serverPlayer, item);
                          Packet<?> updatePacket = savedData.getUpdatePacket(mapId, serverPlayer);
                          if (updatePacket != null) {
+@@ -116,7 +_,7 @@
+             this.sendDirtyEntityData();
+         }
+ 
+-        if (this.tickCount % this.updateInterval == 0 || this.entity.hasImpulse || this.entity.getEntityData().isDirty()) {
++        if (this.forceStateResync || this.tickCount % this.updateInterval == 0 || this.entity.hasImpulse || this.entity.getEntityData().isDirty()) { // Paper - fix desync when a player is added to the tracker
+             byte b = Mth.packDegrees(this.entity.getYRot());
+             byte b1 = Mth.packDegrees(this.entity.getXRot());
+             boolean flag = Math.abs(b - this.lastSentYRot) >= 1 || Math.abs(b1 - this.lastSentXRot) >= 1;
 @@ -136,7 +_,13 @@
              } else {
                  this.teleportDelay++;
@@ -60,7 +89,21 @@
                  Packet<ClientGamePacketListener> packet = null;
                  boolean flag2 = flag1 || this.tickCount % 60 == 0;
                  boolean flag3 = false;
-@@ -218,6 +_,25 @@
+@@ -145,7 +_,7 @@
+                 long l1 = this.positionCodec.encodeY(vec3);
+                 long l2 = this.positionCodec.encodeZ(vec3);
+                 boolean flag5 = l < -32768L || l > 32767L || l1 < -32768L || l1 > 32767L || l2 < -32768L || l2 > 32767L;
+-                if (this.entity.getRequiresPrecisePosition()
++                if (this.forceStateResync || this.entity.getRequiresPrecisePosition() // Paper - fix desync when a player is added to the tracker
+                     || flag5
+                     || this.teleportDelay > 400
+                     || this.wasRiding
+@@ -214,10 +_,30 @@
+             }
+ 
+             this.entity.hasImpulse = false;
++            this.forceStateResync = false; // Paper - fix desync when a player is added to the tracker
+         }
  
          this.tickCount++;
          if (this.entity.hurtMarked) {

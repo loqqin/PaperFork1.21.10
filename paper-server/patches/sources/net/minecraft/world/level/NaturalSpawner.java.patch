@@ -1,5 +1,20 @@
 --- a/net/minecraft/world/level/NaturalSpawner.java
 +++ b/net/minecraft/world/level/NaturalSpawner.java
+@@ -68,6 +_,14 @@
+     public static NaturalSpawner.SpawnState createState(
+         int spawnableChunkCount, Iterable<Entity> entities, NaturalSpawner.ChunkGetter chunkGetter, LocalMobCapCalculator calculator
+     ) {
++        // Paper start - Optional per player mob spawns
++        return createState(spawnableChunkCount, entities, chunkGetter, calculator, false);
++    }
++
++    public static NaturalSpawner.SpawnState createState(
++        int spawnableChunkCount, Iterable<Entity> entities, NaturalSpawner.ChunkGetter chunkGetter, LocalMobCapCalculator calculator, final boolean countMobs
++    ) {
++        // Paper end - Optional per player mob spawns
+         PotentialCalculator potentialCalculator = new PotentialCalculator();
+         Object2IntOpenHashMap<MobCategory> map = new Object2IntOpenHashMap<>();
+ 
 @@ -75,6 +_,13 @@
              if (!(entity instanceof Mob mob && (mob.isPersistenceRequired() || mob.requiresCustomPersistence()))) {
                  MobCategory category = entity.getType().getCategory();
@@ -14,6 +29,24 @@
                      BlockPos blockPos = entity.blockPosition();
                      chunkGetter.query(ChunkPos.asLong(blockPos), chunk -> {
                          MobSpawnSettings.MobSpawnCost mobSpawnCost = getRoughBiome(blockPos, chunk).getMobSettings().getMobSpawnCost(entity.getType());
+@@ -82,11 +_,16 @@
+                             potentialCalculator.addCharge(entity.blockPosition(), mobSpawnCost.charge());
+                         }
+ 
+-                        if (entity instanceof Mob) {
++                        if (calculator != null && entity instanceof Mob) { // Paper - Optional per player mob spawns
+                             calculator.addMob(chunk.getPos(), category);
+                         }
+ 
+                         map.addTo(category, 1);
++                        // Paper start - Optional per player mob spawns
++                        if (countMobs) {
++                            chunk.level.getChunkSource().chunkMap.updatePlayerMobTypeMap(entity);
++                        }
++                        // Paper end - Optional per player mob spawns
+                     });
+                 }
+             }
 @@ -99,17 +_,34 @@
          return chunk.getNoiseBiome(QuartPos.fromBlock(pos.getX()), QuartPos.fromBlock(pos.getY()), QuartPos.fromBlock(pos.getZ())).value();
      }
@@ -45,13 +78,52 @@
                  && (spawnEnemies || mobCategory.isFriendly())
                  && (spawnPassives || !mobCategory.isPersistent())
 -                && spawnState.canSpawnForCategoryGlobal(mobCategory)) {
-+                && spawnState.canSpawnForCategoryGlobal(mobCategory, limit)) { // Paper - Optional per player mob spawns; remove global check, check later during the local one
++                && (level.paperConfig().entities.spawning.perPlayerMobSpawns || spawnState.canSpawnForCategoryGlobal(mobCategory, limit))) { // Paper - Optional per player mob spawns; remove global check, check later during the local one
                  list.add(mobCategory);
 +                // CraftBukkit end
              }
          }
  
-@@ -129,6 +_,16 @@
+@@ -121,20 +_,66 @@
+         profilerFiller.push("spawner");
+ 
+         for (MobCategory mobCategory : categories) {
+-            if (spawnState.canSpawnForCategoryLocal(mobCategory, chunk.getPos())) {
+-                spawnCategoryForChunk(mobCategory, level, chunk, spawnState::canSpawn, spawnState::afterSpawn);
++            // Paper start - Optional per player mob spawns
++            final boolean canSpawn;
++            int maxSpawns = Integer.MAX_VALUE;
++            if (level.paperConfig().entities.spawning.perPlayerMobSpawns) {
++                // Copied from getFilteredSpawningCategories
++                int limit = mobCategory.getMaxInstancesPerChunk();
++                org.bukkit.entity.SpawnCategory spawnCategory = org.bukkit.craftbukkit.util.CraftSpawnCategory.toBukkit(mobCategory);
++                if (org.bukkit.craftbukkit.util.CraftSpawnCategory.isValidForLimits(spawnCategory)) {
++                    limit = level.getWorld().getSpawnLimit(spawnCategory);
++                }
++
++                // Apply per-player limit
++                int minDiff = Integer.MAX_VALUE;
++                final ca.spottedleaf.moonrise.common.list.ReferenceList<net.minecraft.server.level.ServerPlayer> inRange =
++                    level.moonrise$getNearbyPlayers().getPlayers(chunk.getPos(), ca.spottedleaf.moonrise.common.misc.NearbyPlayers.NearbyMapType.TICK_VIEW_DISTANCE);
++                if (inRange != null) {
++                    final net.minecraft.server.level.ServerPlayer[] backingSet = inRange.getRawDataUnchecked();
++                    for (int k = 0, len = inRange.size(); k < len; k++) {
++                        minDiff = Math.min(limit - level.getChunkSource().chunkMap.getMobCountNear(backingSet[k], mobCategory), minDiff);
++                    }
++                }
++
++                maxSpawns = (minDiff == Integer.MAX_VALUE) ? 0 : minDiff;
++                canSpawn = maxSpawns > 0;
++            } else {
++                canSpawn = spawnState.canSpawnForCategoryLocal(mobCategory, chunk.getPos());
++            }
++            if (canSpawn) {
++                spawnCategoryForChunk(mobCategory, level, chunk, spawnState::canSpawn, spawnState::afterSpawn,
++                    maxSpawns, level.paperConfig().entities.spawning.perPlayerMobSpawns ? level.getChunkSource().chunkMap::updatePlayerMobTypeMap : null);
++                // Paper end - Optional per player mob spawns
+             }
+         }
+ 
          profilerFiller.pop();
      }
  
@@ -68,7 +140,30 @@
      public static void spawnCategoryForChunk(
          MobCategory category, ServerLevel level, LevelChunk chunk, NaturalSpawner.SpawnPredicate filter, NaturalSpawner.AfterSpawnCallback callback
      ) {
-@@ -154,8 +_,8 @@
++        // Paper start - Optional per player mob spawns
++        spawnCategoryForChunk(category, level, chunk, filter, callback, Integer.MAX_VALUE, null);
++    }
++    public static void spawnCategoryForChunk(
++        MobCategory category, ServerLevel level, LevelChunk chunk, NaturalSpawner.SpawnPredicate filter, NaturalSpawner.AfterSpawnCallback callback, final int maxSpawns, final Consumer<Entity> trackEntity
++    ) {
++        // Paper end - Optional per player mob spawns
+         BlockPos randomPosWithin = getRandomPosWithin(level, chunk);
+         if (randomPosWithin.getY() >= level.getMinY() + 1) {
+-            spawnCategoryForPosition(category, level, chunk, randomPosWithin, filter, callback);
++            spawnCategoryForPosition(category, level, chunk, randomPosWithin, filter, callback, maxSpawns, trackEntity); // Paper - Optional per player mob spawns
+         }
+     }
+ 
+@@ -151,11 +_,17 @@
+         NaturalSpawner.SpawnPredicate filter,
+         NaturalSpawner.AfterSpawnCallback callback
+     ) {
++        spawnCategoryForPosition(category, level, chunk, pos, filter, callback, Integer.MAX_VALUE, null);
++    }
++    public static void spawnCategoryForPosition(
++        MobCategory category, ServerLevel level, ChunkAccess chunk, BlockPos pos, NaturalSpawner.SpawnPredicate filter, NaturalSpawner.AfterSpawnCallback callback, final int maxSpawns, final @Nullable Consumer<Entity> trackEntity
++    ) {
++        // Paper end - Optional per player mob spawns
          StructureManager structureManager = level.structureManager();
          ChunkGenerator generator = level.getChunkSource().getGenerator();
          int y = pos.getY();
@@ -88,13 +183,18 @@
                              if (spawnerData == null) {
                                  Optional<MobSpawnSettings.SpawnerData> randomSpawnMobAt = getRandomSpawnMobAt(
                                      level, structureManager, generator, category, level.random, mutableBlockPos
-@@ -190,7 +_,13 @@
+@@ -190,7 +_,18 @@
                                  ceil = spawnerData.minCount() + level.random.nextInt(1 + spawnerData.maxCount() - spawnerData.minCount());
                              }
  
 -                            if (isValidSpawnPostitionForType(level, category, structureManager, generator, spawnerData, mutableBlockPos, d2)
 +                            // Paper start - PreCreatureSpawnEvent
 +                            PreSpawnStatus doSpawning = isValidSpawnPostitionForType(level, category, structureManager, generator, spawnerData, mutableBlockPos, d2);
++                            // Paper start - per player mob count backoff
++                            if (doSpawning == PreSpawnStatus.ABORT || doSpawning == PreSpawnStatus.CANCELLED) {
++                                level.getChunkSource().chunkMap.updateFailurePlayerMobTypeMap(mutableBlockPos.getX() >> 4, mutableBlockPos.getZ() >> 4, category);
++                            }
++                            // Paper end - per player mob count backoff
 +                            if (doSpawning == PreSpawnStatus.ABORT) {
 +                                return;
 +                            }
@@ -103,7 +203,7 @@
                                  && filter.test(spawnerData.type(), mutableBlockPos, chunk)) {
                                  Mob mobForSpawn = getMobForSpawn(level, spawnerData.type());
                                  if (mobForSpawn == null) {
-@@ -202,10 +_,15 @@
+@@ -202,11 +_,21 @@
                                      spawnGroupData = mobForSpawn.finalizeSpawn(
                                          level, level.getCurrentDifficultyAt(mobForSpawn.blockPosition()), EntitySpawnReason.NATURAL, spawnGroupData
                                      );
@@ -111,6 +211,7 @@
 -                                    i3++;
 -                                    level.addFreshEntityWithPassengers(mobForSpawn);
 -                                    callback.run(mobForSpawn, chunk);
+-                                    if (i >= mobForSpawn.getMaxSpawnClusterSize()) {
 +                                    // CraftBukkit start
 +                                    // SPIGOT-7045: Give ocelot babies back their special spawn reason. Note: This is the only modification required as ocelots count as monsters which means they only spawn during normal chunk ticking and do not spawn during chunk generation as starter mobs.
 +                                    level.addFreshEntityWithPassengers(mobForSpawn, (mobForSpawn instanceof net.minecraft.world.entity.animal.Ocelot && !((org.bukkit.entity.Ageable) mobForSpawn.getBukkitEntity()).isAdult()) ? org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.OCELOT_BABY : org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.NATURAL);
@@ -118,11 +219,17 @@
 +                                        ++i;
 +                                        ++i3;
 +                                        callback.run(mobForSpawn, chunk);
++                                        // Paper start - Optional per player mob spawns
++                                        if (trackEntity != null) {
++                                            trackEntity.accept(mobForSpawn);
++                                        }
++                                        // Paper end - Optional per player mob spawns
 +                                    }
 +                                    // CraftBukkit end
-                                     if (i >= mobForSpawn.getMaxSpawnClusterSize()) {
++                                    if (i >= mobForSpawn.getMaxSpawnClusterSize() || i >= maxSpawns) { // Paper - Optional per player mob spawns
                                          return;
                                      }
+ 
 @@ -237,7 +_,15 @@
          }
      }
@@ -194,6 +301,15 @@
                                      flag = true;
                                  }
                              }
+@@ -498,7 +_,7 @@
+             this.spawnPotential.addCharge(blockPos, d);
+             MobCategory category = type.getCategory();
+             this.mobCategoryCounts.addTo(category, 1);
+-            this.localMobCapCalculator.addMob(new ChunkPos(blockPos), category);
++            if (this.localMobCapCalculator != null) this.localMobCapCalculator.addMob(new ChunkPos(blockPos), category); // Paper - Optional per player mob spawns
+         }
+ 
+         public int getSpawnableChunkCount() {
 @@ -509,8 +_,10 @@
              return this.unmodifiableMobCategoryCounts;
          }

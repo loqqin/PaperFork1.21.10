@@ -8,7 +8,28 @@
  
      public Slime(EntityType<? extends Slime> type, Level level) {
          super(type, level);
-@@ -112,6 +_,7 @@
+@@ -88,14 +_,16 @@
+     }
+ 
+     @VisibleForTesting
+-    public void setSize(int size, boolean resetHealth) {
++    public void setSize(int size, boolean resetHealth, boolean ignoreAttributes) {
+         int i = Mth.clamp(size, 1, 127);
+         this.entityData.set(ID_SIZE, i);
+         this.reapplyPosition();
+         this.refreshDimensions();
+-        this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(i * i);
+-        this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.2F + 0.1F * i);
+-        this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(i);
++        if (!ignoreAttributes) {
++            this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(i * i);
++            this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.2F + 0.1F * i);
++            this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(i);
++        }
+         if (resetHealth) {
+             this.setHealth(this.getMaxHealth());
+         }
+@@ -112,13 +_,15 @@
          super.addAdditionalSaveData(output);
          output.putInt("Size", this.getSize() - 1);
          output.putBoolean("wasOnGround", this.wasOnGround);
@@ -16,8 +37,9 @@
      }
  
      @Override
-@@ -119,6 +_,7 @@
-         this.setSize(input.getIntOr("Size", 0) + 1, false);
+     protected void readAdditionalSaveData(ValueInput input) {
+-        this.setSize(input.getIntOr("Size", 0) + 1, false);
++        this.setSize(input.getIntOr("Size", 0) + 1, false, false);
          super.readAdditionalSaveData(input);
          this.wasOnGround = input.getBooleanOr("wasOnGround", false);
 +        this.canWander = input.getBooleanOr("Paper.canWander", true); // Paper
@@ -53,8 +75,9 @@
                  float f1 = (i2 % 2 - 0.5F) * f;
                  float f2 = (i2 / 2 - 0.5F) * f;
 -                this.convertTo(this.getType(), new ConversionParams(ConversionType.SPLIT_ON_DEATH, false, false, team), EntitySpawnReason.TRIGGERED, mob -> {
+-                    mob.setSize(i, true);
 +                Slime converted = this.convertTo(this.getType(), new ConversionParams(ConversionType.SPLIT_ON_DEATH, false, false, team), EntitySpawnReason.TRIGGERED, (mob) -> { // CraftBukkit
-                     mob.setSize(i, true);
++                    mob.setSize(i, true, false);
                      mob.snapTo(this.getX() + f1, this.getY() + 0.5, this.getZ() + f2, this.random.nextFloat() * 360.0F, 0.0F);
 -                });
 -            }
@@ -111,6 +134,15 @@
                  return checkMobSpawnRules(entityType, level, spawnReason, pos, random);
              }
          }
+@@ -334,7 +_,7 @@
+         }
+ 
+         int i = 1 << randomInt;
+-        this.setSize(i, true);
++        this.setSize(i, true, false);
+         return super.finalizeSpawn(level, difficulty, spawnReason, spawnGroupData);
+     }
+ 
 @@ -352,6 +_,16 @@
          return super.getDefaultDimensions(pose).scale(this.getSize());
      }

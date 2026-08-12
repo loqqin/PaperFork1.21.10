@@ -1,0 +1,10 @@
+--- /dev/null
++++ b/ca/spottedleaf/moonrise/patches/collisions/shape/CollisionDiscreteVoxelShape.java
+@@ -1,0 +_,7 @@
++package ca.spottedleaf.moonrise.patches.collisions.shape;
++
++public interface CollisionDiscreteVoxelShape {
++
++    public CachedShapeData moonrise$getOrCreateCachedShapeData();
++
++}

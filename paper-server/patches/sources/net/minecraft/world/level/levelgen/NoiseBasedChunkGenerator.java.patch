@@ -1,5 +1,14 @@
 --- a/net/minecraft/world/level/levelgen/NoiseBasedChunkGenerator.java
 +++ b/net/minecraft/world/level/levelgen/NoiseBasedChunkGenerator.java
+@@ -83,7 +_,7 @@
+         return CompletableFuture.supplyAsync(() -> {
+             this.doCreateBiomes(blender, randomState, structureManager, chunk);
+             return chunk;
+-        }, Util.backgroundExecutor().forName("init_biomes"));
++        }, Runnable::run); // Paper - rewrite chunk system
+     }
+ 
+     private void doCreateBiomes(Blender blender, RandomState random, StructureManager structureManager, ChunkAccess chunk) {
 @@ -224,7 +_,7 @@
      @Override
      public void buildSurface(WorldGenRegion region, StructureManager structureManager, RandomState random, ChunkAccess chunk) {
@@ -18,3 +27,12 @@
              );
              CarvingMask carvingMask = ((ProtoChunk)chunk).getOrCreateCarvingMask();
  
+@@ -325,7 +_,7 @@
+             }
+ 
+             return var20;
+-        }, Util.backgroundExecutor().forName("wgen_fill_noise"));
++        }, Runnable::run); // Paper - rewrite chunk system
+     }
+ 
+     private ChunkAccess doFill(Blender blender, StructureManager structureManager, RandomState random, ChunkAccess chunk, int minCellY, int cellCountY) {

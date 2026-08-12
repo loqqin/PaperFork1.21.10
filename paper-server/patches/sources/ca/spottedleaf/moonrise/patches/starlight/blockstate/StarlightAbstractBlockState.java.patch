@@ -1,0 +1,10 @@
+--- /dev/null
++++ b/ca/spottedleaf/moonrise/patches/starlight/blockstate/StarlightAbstractBlockState.java
+@@ -1,0 +_,7 @@
++package ca.spottedleaf.moonrise.patches.starlight.blockstate;
++
++public interface StarlightAbstractBlockState {
++
++    public boolean starlight$isConditionallyFullOpaque();
++
++}

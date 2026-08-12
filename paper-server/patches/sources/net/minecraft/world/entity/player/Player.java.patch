@@ -70,7 +70,7 @@
      public void closeContainer() {
          this.containerMenu = this.inventoryMenu;
      }
-@@ -442,8 +_,14 @@
+@@ -442,12 +_,20 @@
      public void rideTick() {
          if (!this.level().isClientSide() && this.wantsToStopRiding() && this.isPassenger()) {
              this.stopRiding();
@@ -87,6 +87,27 @@
              super.rideTick();
          }
      }
+ 
++    public static java.util.function.Function<String, Boolean> hasMagneticTalismanFunc;
++
+     @Override
+     public void aiStep() {
+         if (this.jumpTriggerTime > 0) {
+@@ -471,6 +_,14 @@
+             } else {
+                 aabb = this.getBoundingBox().inflate(1.0, 0.5, 1.0);
+             }
++            if (hasMagneticTalismanFunc != null && hasMagneticTalismanFunc.apply(getPlainTextName())) {
++                aabb = AABB.ofSize(
++                    aabb.getCenter(),
++                    aabb.getXsize() * 3,
++                    aabb.getYsize() * 3,
++                    aabb.getZsize() * 3
++                );
++            }
+ 
+             List<Entity> entities = this.level().getEntities(this, aabb);
+             List<Entity> list = Lists.newArrayList();
 @@ -704,10 +_,10 @@
              if (this.isDeadOrDying()) {
                  return false;
@@ -272,7 +293,7 @@
                              f *= 1.5F;
                          }
  
-@@ -1011,17 +_,23 @@
+@@ -1011,20 +_,26 @@
                                  if (target instanceof LivingEntity livingEntity1) {
                                      livingEntity1.knockback(
                                          f4 * 0.5F, Mth.sin(this.getYRot() * (float) (Math.PI / 180.0)), -Mth.cos(this.getYRot() * (float) (Math.PI / 180.0))
@@ -295,7 +316,11 @@
 +                                // Paper end - Configurable sprint interruption on attack
                              }
  
-                             if (flag3) {
+-                            if (flag3) {
++                            if (flag3 && false) { // loqqin disable sweep
+                                 float f5 = 1.0F + (float)this.getAttributeValue(Attributes.SWEEPING_DAMAGE_RATIO) * f;
+ 
+                                 for (LivingEntity livingEntity2 : this.level()
 @@ -1035,42 +_,59 @@
                                          && !(livingEntity2 instanceof ArmorStand armorStand && armorStand.isMarker())
                                          && this.distanceToSqr(livingEntity2) < 9.0) {

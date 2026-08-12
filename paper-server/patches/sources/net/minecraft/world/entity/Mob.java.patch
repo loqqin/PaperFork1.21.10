@@ -15,9 +15,12 @@
  public abstract class Mob extends LivingEntity implements EquipmentUser, Leashable, Targeting {
      private static final EntityDataAccessor<Byte> DATA_MOB_FLAGS_ID = SynchedEntityData.defineId(Mob.class, EntityDataSerializers.BYTE);
      private static final int MOB_FLAG_NO_AI = 1;
-@@ -125,6 +_,7 @@
+@@ -123,8 +_,9 @@
+     protected MoveControl moveControl;
+     protected JumpControl jumpControl;
      private final BodyRotationControl bodyRotationControl;
-     protected PathNavigation navigation;
+-    protected PathNavigation navigation;
++    public PathNavigation navigation;
      public GoalSelector goalSelector;
 +    public @Nullable net.minecraft.world.entity.ai.goal.FloatGoal goalFloat; // Paper - Allow nerfed mobs to jump and float
      public GoalSelector targetSelector;
@@ -45,6 +48,26 @@
      protected void registerGoals() {
      }
  
+@@ -200,6 +_,19 @@
+         return this.lookControl;
+     }
+ 
++    // Paper start
++    @Override
++    public void inactiveTick() {
++        super.inactiveTick();
++        if (this.goalSelector.inactiveTick()) {
++            this.goalSelector.tick();
++        }
++        if (this.targetSelector.inactiveTick()) {
++            this.targetSelector.tick();
++        }
++    }
++    // Paper end
++
+     public MoveControl getMoveControl() {
+         return this.getControlledVehicle() instanceof Mob mob ? mob.getMoveControl() : this.moveControl;
+     }
 @@ -235,7 +_,39 @@
      }
  
