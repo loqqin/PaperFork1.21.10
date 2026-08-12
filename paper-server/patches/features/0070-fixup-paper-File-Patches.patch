@@ -1,0 +1,20 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Wed, 12 Aug 2026 17:06:53 +0300
+Subject: [PATCH] fixup! paper File Patches
+
+
+diff --git a/net/minecraft/network/chat/MutableComponent.java b/net/minecraft/network/chat/MutableComponent.java
+index 71eca0df9970a1cf3cb2673f373a145ab99fbb50..b15cbbbd994d95f35e08a76ec4f9dae990375127 100755
+--- a/net/minecraft/network/chat/MutableComponent.java
++++ b/net/minecraft/network/chat/MutableComponent.java
+@@ -52,6 +52,9 @@ public class MutableComponent implements Component {
+     }
+ 
+     public MutableComponent append(Component sibling) {
++        if (sibling == this) {
++            throw new RuntimeException("sibling == this");
++        }
+         this.siblings.add(sibling);
+         return this;
+     }
