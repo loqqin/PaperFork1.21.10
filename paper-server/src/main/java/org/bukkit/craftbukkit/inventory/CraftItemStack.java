@@ -759,7 +759,7 @@ public final class CraftItemStack extends ItemStack {
     }
 
     public String name() { // мб на pdc view
-        final net.minecraft.network.chat.Component component = getCraft().handle.get(DataComponents.CUSTOM_NAME);
+        final net.minecraft.network.chat.Component component = handle.get(DataComponents.CUSTOM_NAME);
         return component == null ? "" : CraftChatMessage.fromComponent(component);
         // return LegacyComponentSerializer.legacySection().serialize(getDataOrDefault(DataComponentTypes.CUSTOM_NAME, Component.empty()));
     }
