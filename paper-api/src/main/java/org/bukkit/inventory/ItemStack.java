@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -58,6 +59,7 @@ import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.craftbukkit.persistence.CraftPersistentDataContainer;
 import org.bukkit.craftbukkit.persistence.CraftPersistentDataTypeRegistry;
+import org.bukkit.craftbukkit.util.CraftChatMessage;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -1486,18 +1488,15 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
         return getCraft();
     }
 
+    public String fastName(){
+        final net.minecraft.network.chat.Component component = getCraft().handle.get(DataComponents.CUSTOM_NAME);
+        return component == null ? "" : component.getString();
+    }
+
     public String name() { // мб на pdc view
-        // final ItemMeta itemMeta = getItemMeta();
-        // if (itemMeta == null) {
-        //     return "null";
-        // }
-        final Component aNull = getDataOrDefault(DataComponentTypes.CUSTOM_NAME, Component.text(""));
-        String serialize = LegacyComponentSerializer.legacySection().serialize(aNull);
-        // if (serialize.contains("[") && serialize.contains("]")) {
-        //     return new StringBuilder(serialize).deleteCharAt(serialize.indexOf('[')).deleteCharAt(serialize.lastIndexOf(']') - 1).toString();
-        // }
-        return serialize;
-        // return itemMeta.getDisplayName();
+        final net.minecraft.network.chat.Component component = getCraft().handle.get(DataComponents.CUSTOM_NAME);
+        return component == null ? "" : CraftChatMessage.fromComponent(component);
+        // return LegacyComponentSerializer.legacySection().serialize(getDataOrDefault(DataComponentTypes.CUSTOM_NAME, Component.empty()));
     }
 
     public boolean nameEquals(ItemStack itemStack) {
