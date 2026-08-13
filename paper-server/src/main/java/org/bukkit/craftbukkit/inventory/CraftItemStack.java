@@ -29,6 +29,7 @@ import org.bukkit.Material;
 import org.bukkit.configuration.serialization.DelegateDeserialization;
 import org.bukkit.craftbukkit.enchantments.CraftEnchantment;
 import org.bukkit.craftbukkit.persistence.CraftPersistentDataContainer;
+import org.bukkit.craftbukkit.util.CraftChatMessage;
 import org.bukkit.craftbukkit.util.CraftMagicNumbers;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
@@ -758,7 +759,8 @@ public final class CraftItemStack extends ItemStack {
     }
 
     public String name() { // мб на pdc view
-        return getCraft().name();
+        final net.minecraft.network.chat.Component component = getCraft().handle.get(DataComponents.CUSTOM_NAME);
+        return component == null ? "" : CraftChatMessage.fromComponent(component);
         // return LegacyComponentSerializer.legacySection().serialize(getDataOrDefault(DataComponentTypes.CUSTOM_NAME, Component.empty()));
     }
 }
