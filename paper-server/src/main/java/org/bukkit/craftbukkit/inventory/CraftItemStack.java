@@ -751,4 +751,14 @@ public final class CraftItemStack extends ItemStack {
     //     // System.out.println("tag1.tags = " + (tag1.tags));
     //     return pdcTag;
     // }
+
+    public String fastName(){
+        final net.minecraft.network.chat.Component component = handle.get(DataComponents.CUSTOM_NAME);
+        return component == null ? "" : component.getString();
+    }
+
+    public String name() { // мб на pdc view
+        return getCraft().name();
+        // return LegacyComponentSerializer.legacySection().serialize(getDataOrDefault(DataComponentTypes.CUSTOM_NAME, Component.empty()));
+    }
 }

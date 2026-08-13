@@ -1489,14 +1489,11 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
     }
 
     public String fastName(){
-        final net.minecraft.network.chat.Component component = getCraft().handle.get(DataComponents.CUSTOM_NAME);
-        return component == null ? "" : component.getString();
+        return getCraft().fastName();
     }
 
     public String name() { // мб на pdc view
-        final net.minecraft.network.chat.Component component = getCraft().handle.get(DataComponents.CUSTOM_NAME);
-        return component == null ? "" : CraftChatMessage.fromComponent(component);
-        // return LegacyComponentSerializer.legacySection().serialize(getDataOrDefault(DataComponentTypes.CUSTOM_NAME, Component.empty()));
+        return getCraft().name();
     }
 
     public boolean nameEquals(ItemStack itemStack) {
