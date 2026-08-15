@@ -1,0 +1,26 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Sat, 15 Aug 2026 17:16:29 +0300
+Subject: [PATCH] lore test
+
+
+diff --git a/net/minecraft/world/item/component/ItemLore.java b/net/minecraft/world/item/component/ItemLore.java
+index 040334f903c0abd96fc8e6bbc748861e923b1c9e..8897ae91c2a5fd0cf1ede3b8993ac3da769868fd 100755
+--- a/net/minecraft/world/item/component/ItemLore.java
++++ b/net/minecraft/world/item/component/ItemLore.java
+@@ -27,15 +27,11 @@ public record ItemLore(List<Component> lines, List<Component> styledLines) imple
+         .map(ItemLore::new, ItemLore::lines);
+ 
+     public ItemLore(List<? extends Component> lines) {
+-        System.out.println(123 + " 123");
+-        System.out.println("666");
+         this((java.util.List<net.minecraft.network.chat.Component>) lines, (java.util.List<net.minecraft.network.chat.Component>) lines);
+     }
+ 
+     public ItemLore(List<Component> lines, List<Component> styledLines) {
+         if (lines.size() > 256) {
+-
+-
+             throw new IllegalArgumentException("Got " + lines.size() + " lines, but maximum is 256");
+         } else {
+             this.lines = lines;
