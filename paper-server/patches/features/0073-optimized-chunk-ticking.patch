@@ -1,0 +1,74 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Sun, 16 Aug 2026 18:22:06 +0300
+Subject: [PATCH] optimized chunk ticking
+
+
+diff --git a/net/minecraft/server/level/ServerChunkCache.java b/net/minecraft/server/level/ServerChunkCache.java
+index 488fc6088d69148f60a913b42ffb964c48eb0324..673e1ca3a8d766f92d5b5d7474c32bdfd43631d1 100755
+--- a/net/minecraft/server/level/ServerChunkCache.java
++++ b/net/minecraft/server/level/ServerChunkCache.java
+@@ -580,17 +580,21 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+         List<LevelChunk> list = this.spawningChunks;
+ 
+         try {
+-            profiler.popPush("filteringSpawningChunks");
+-            this.chunkMap.collectSpawningChunks(list);
+-            profiler.popPush("shuffleSpawningChunks");
+-            // Paper start - chunk tick iteration optimisation
+-            this.shuffleRandom.setSeed(this.level.random.nextLong());
+-            if (!this.level.paperConfig().entities.spawning.perPlayerMobSpawns) Util.shuffle(list, this.shuffleRandom); // Paper - Optional per player mob spawns; do not need this when per-player is enabled
+-            // Paper end - chunk tick iteration optimisation
+-            profiler.popPush("tickSpawningChunks");
+-
+-            for (LevelChunk levelChunk : list) {
+-                this.tickSpawningChunk(levelChunk, timeInhabited, filteredSpawningCategories, spawnState);
++            if (!filteredSpawningCategories.isEmpty()) {
++                profiler.popPush("filteringSpawningChunks");
++                this.chunkMap.collectSpawningChunks(list);
++                profiler.popPush("shuffleSpawningChunks");
++                // Paper start - chunk tick iteration optimisation
++                this.shuffleRandom.setSeed(this.level.random.nextLong());
++                if (!this.level.paperConfig().entities.spawning.perPlayerMobSpawns) Util.shuffle(list, this.shuffleRandom); // Paper - Optional per player mob spawns; do not need this when per-player is enabled
++                // Paper end - chunk tick iteration optimisation
++                profiler.popPush("tickSpawningChunks");
++
++                for (LevelChunk levelChunk : list) {
++                    this.tickSpawningChunk(levelChunk, timeInhabited, filteredSpawningCategories, spawnState);
++                }
++            } else {
++                tickInhabitedTimeOnly(timeInhabited);
+             }
+         } finally {
+             list.clear();
+@@ -606,6 +610,30 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+         profiler.pop();
+     }
+ 
++    private void tickInhabitedTimeOnly(long timeInhabited) {
++        if (this.level.getGameTime() % 20L != 0L) {
++            return;
++        }
++
++        long delta = 20L * timeInhabited;
++        int radius = 8;
++
++        it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<LevelChunk> visited = new it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<>();
++
++        for (ServerPlayer player : this.level.players()) {
++            ChunkPos pos = player.chunkPosition();
++
++            for (int dx = -radius; dx <= radius; dx++) {
++                for (int dz = -radius; dz <= radius; dz++) {
++                    LevelChunk chunk = this.getChunkAtIfLoadedImmediately(pos.x + dx, pos.z + dz);
++                    if (chunk != null && visited.add(chunk)) {
++                        chunk.incrementInhabitedTime(delta);
++                    }
++                }
++            }
++        }
++    }
++
+     private void tickSpawningChunk(LevelChunk chunk, long timeInhabited, List<MobCategory> spawnCategories, NaturalSpawner.SpawnState spawnState) {
+         ChunkPos pos = chunk.getPos();
+         chunk.incrementInhabitedTime(timeInhabited);
