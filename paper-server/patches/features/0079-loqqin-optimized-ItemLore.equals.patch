@@ -1,0 +1,42 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Mon, 17 Aug 2026 16:13:07 +0300
+Subject: [PATCH] loqqin optimized ItemLore.equals
+
+
+diff --git a/net/minecraft/world/item/component/ItemLore.java b/net/minecraft/world/item/component/ItemLore.java
+index 8897ae91c2a5fd0cf1ede3b8993ac3da769868fd..1a6da007dab94d71ace4c0aec34d0c2884c94aa5 100755
+--- a/net/minecraft/world/item/component/ItemLore.java
++++ b/net/minecraft/world/item/component/ItemLore.java
+@@ -47,4 +47,31 @@ public record ItemLore(List<Component> lines, List<Component> styledLines) imple
+     public void addToTooltip(Item.TooltipContext context, Consumer<Component> tooltipAdder, TooltipFlag flag, DataComponentGetter componentGetter) {
+         this.styledLines.forEach(tooltipAdder);
+     }
++
++    @Override
++    public boolean equals(Object o) {
++        if (this == o) return true;
++        if (!(o instanceof ItemLore other)) return false;
++
++
++        if (this.lines.size() != other.lines.size()) return false;
++
++
++        if (!this.lines.equals(other.lines)) return false;
++
++
++        if (this.lines == this.styledLines && other.lines == other.styledLines) {
++            return true;
++        }
++
++        return this.styledLines.equals(other.styledLines);
++    }
++
++    @Override
++    public int hashCode() {
++        if (this.lines == this.styledLines) {
++            return this.lines.hashCode();
++        }
++        return 31 * this.lines.hashCode() + this.styledLines.hashCode();
++    }
+ }
