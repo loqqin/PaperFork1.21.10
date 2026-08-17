@@ -1,0 +1,29 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Mon, 17 Aug 2026 15:58:08 +0300
+Subject: [PATCH] loqqin LiteralContents optimization
+
+
+diff --git a/net/minecraft/network/chat/contents/PlainTextContents.java b/net/minecraft/network/chat/contents/PlainTextContents.java
+index 97d0992382569e0c52c4f73a688a5705a8a12c4d..99527f1b4b85eb442e347b9a57b005f616b9a876 100755
+--- a/net/minecraft/network/chat/contents/PlainTextContents.java
++++ b/net/minecraft/network/chat/contents/PlainTextContents.java
+@@ -36,6 +36,18 @@ public interface PlainTextContents extends ComponentContents {
+     }
+ 
+     public record LiteralContents(@Override String text) implements PlainTextContents {
++        @Override
++        public boolean equals(Object o) {
++            if (this == o) return true;
++            if (!(o instanceof net.minecraft.network.chat.contents.PlainTextContents.LiteralContents(String text1))) return false;
++            return this.text.equals(text1);
++        }
++
++        @Override
++        public int hashCode() {
++            return text.hashCode();
++        }
++
+         @Override
+         public <T> Optional<T> visit(FormattedText.ContentConsumer<T> contentConsumer) {
+             return contentConsumer.accept(this.text);
