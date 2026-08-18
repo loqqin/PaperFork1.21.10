@@ -1,5 +1,14 @@
 package org.bukkit.craftbukkit.inventory;
 
+import net.minecraft.util.ARGB;
+import net.minecraft.util.Unit;
+import net.minecraft.world.item.component.DyedItemColor;
+import net.minecraft.world.item.component.TooltipDisplay;
+import net.minecraft.nbt.DoubleTag;
+import net.minecraft.nbt.IntTag;
+import net.minecraft.nbt.StringTag;
+import org.bukkit.persistence.PersistentDataContainer;
+
 import com.google.common.base.Preconditions;
 import io.papermc.paper.adventure.PaperAdventure;
 import io.papermc.paper.datacomponent.DataComponentTypes;
@@ -875,5 +884,113 @@ public final class CraftItemStack extends ItemStack {
         final net.minecraft.network.chat.Component component = handle.get(DataComponents.CUSTOM_NAME);
         return component == null ? "" : CraftChatMessage.fromComponent(component);
         // return LegacyComponentSerializer.legacySection().serialize(getDataOrDefault(DataComponentTypes.CUSTOM_NAME, Component.empty()));
+    }
+
+    private static final String SPACE_ID_KEY = "space:id";
+
+    @Override
+    public String getID() {
+        final CompoundTag pdcCustomData = getPDCNmsViewReadOnly();
+        if (pdcCustomData == null) return "";
+        final Tag tag = pdcCustomData.get(SPACE_ID_KEY);
+        if (tag instanceof StringTag stringTag) return stringTag.value();
+        return "";
+    }
+
+    @Override
+    public CraftItemStack setUnbreakable() {
+        this.handle.set(DataComponents.UNBREAKABLE, Unit.INSTANCE);
+        this.handle.update(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT, tooltipDisplay -> tooltipDisplay.withHidden(DataComponents.UNBREAKABLE, true));
+        return this;
+    }
+
+    @Override
+    public CraftItemStack setColor(int red, int green, int blue) {
+        this.handle.set(DataComponents.DYED_COLOR, new DyedItemColor(ARGB.color(0, red, green, blue)));
+        this.handle.update(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT, tooltipDisplay -> tooltipDisplay.withHidden(DataComponents.DYED_COLOR, true));
+        return this;
+    }
+
+    public static final CraftPersistentDataTypeRegistry registry = new CraftPersistentDataTypeRegistry();
+
+    @Override
+    public CraftItemStack setGlinting() {
+        this.handle.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, Boolean.TRUE);
+        return this;
+    }
+
+    @Override
+    public CraftItemStack hideTooltip() {
+        this.handle.set(DataComponents.TOOLTIP_DISPLAY, new TooltipDisplay(true, new java.util.LinkedHashSet<>()));
+        return this;
+    }
+
+    public CraftItemStack setCompound(String key, PersistentDataContainer container) {
+        final CompoundTag compoundTag = new CompoundTag();
+        for (final Map.Entry<String, Tag> entry : ((CraftPersistentDataContainer) container).getRaw().entrySet()) {
+            compoundTag.put(entry.getKey(), entry.getValue());
+        }
+        editPDCNms(compoundTag1 -> compoundTag1.put("space:" + key.toLowerCase(), compoundTag));
+        return this;
+    }
+
+    @Override
+    public CraftItemStack setDouble(String key, double value) {
+        editPDCNms(compoundTag -> compoundTag.putDouble("space:" + key.toLowerCase(), value));
+        return this;
+    }
+
+    @Override
+    public CraftItemStack setString(String key, String value) {
+        editPDCNms(compoundTag -> compoundTag.putString("space:" + key.toLowerCase(), value));
+        return this;
+    }
+
+    @Override
+    public CraftItemStack setInt(String key, int value) {
+        editPDCNms(compoundTag -> compoundTag.putInt("space:" + key.toLowerCase(), value));
+        return this;
+    }
+
+    @Override
+    public String getString(String key) {
+        final CompoundTag pdcCustomData = getPDCNmsViewReadOnly();
+        if (pdcCustomData == null) return "";
+        final Tag tag1 = pdcCustomData.get("space:" + key.toLowerCase());
+        if (tag1 == null) return "";
+        if (tag1 instanceof StringTag stringTag) return stringTag.value();
+        return tag1.asString().orElse("");
+    }
+
+    @Override
+    public int getInt(String key) {
+        final CompoundTag pdcCustomData = getPDCNmsViewReadOnly();
+        if (pdcCustomData == null) return 0;
+        final Tag tag = pdcCustomData.get("space:" + key.toLowerCase());
+        if (tag == null) return 0;
+        if (tag instanceof IntTag intTag) return intTag.value();
+        return tag.asInt().orElse(0);
+    }
+
+    @Override
+    public double getDouble(String key) {
+        final CompoundTag pdcCustomData = getPDCNmsViewReadOnly();
+        if (pdcCustomData == null) return 0.0;
+        final Tag tag = pdcCustomData.get("space:" + key.toLowerCase());
+        if (tag == null) return 0.0;
+        if (tag instanceof DoubleTag doubleTag) return doubleTag.value();
+        return tag.asDouble().orElse(0.0);
+    }
+
+    public CraftPersistentDataContainer getCompound(String key) {
+        final CompoundTag pdcCustomData = getPDCNmsViewReadOnly();
+        if (pdcCustomData == null) return null;
+        final CompoundTag compoundTag = pdcCustomData.getCompound("space:" + key.toLowerCase()).orElse(null);
+        if (compoundTag == null) return null;
+        final CraftPersistentDataContainer craftPersistentDataContainer = new CraftPersistentDataContainer(Map.of(), registry);
+        for (final String tagKey : compoundTag.keySet()) {
+            craftPersistentDataContainer.put(tagKey, compoundTag.get(tagKey));
+        }
+        return craftPersistentDataContainer;
     }
 }
