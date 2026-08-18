@@ -51,7 +51,7 @@ public class PaperClasspathBuilder implements PluginClasspathBuilder {
 
         try {
             final URLClassLoader libraryLoader = new URLClassLoader(urls, this.getClass().getClassLoader());
-            return new PaperPluginClassLoader(logger, source, jarFile, configuration, this.getClass().getClassLoader(), libraryLoader);
+            return new PaperPluginClassLoader(logger, source, jarFile, configuration, this.getClass().getClassLoader(), libraryLoader, urls);
         } catch (IOException exception) {
             throw new RuntimeException(exception);
         }
