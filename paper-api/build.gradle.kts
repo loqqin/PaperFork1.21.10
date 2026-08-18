@@ -84,6 +84,7 @@ dependencies {
     implementation("org.apache.maven.resolver:maven-resolver-transport-http:1.9.18")
 
     // Annotations - Slowly migrate to jspecify
+    compileOnly("com.mojang:datafixerupper:8.0.16")
     val annotations = "org.jetbrains:annotations:$annotationsVersion"
     compileOnly(annotations)
     testCompileOnly(annotations)
@@ -94,6 +95,8 @@ dependencies {
     testCompileOnly(checkerQual)
 
     apiAndDocs("org.jspecify:jspecify:1.0.0")
+    compileOnly(files("${rootProject.projectDir}/paper-server/build/libs/paper-server-26.2.local-SNAPSHOT.jar"))
+    compileOnly(files("${rootProject.projectDir}/paper-server/build/tmp/macheRemapJar/remapped.jar"))
 
     // Test dependencies
     testImplementation("org.apache.commons:commons-lang3:3.20.0")
