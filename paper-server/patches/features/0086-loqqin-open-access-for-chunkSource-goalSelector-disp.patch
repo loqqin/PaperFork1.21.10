@@ -1,0 +1,85 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Tue, 18 Aug 2026 18:01:44 +0300
+Subject: [PATCH] loqqin open access for chunkSource, goalSelector,
+ displayName, and recipe results
+
+
+diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
+index 98f8ef3f52f2607a97c7bf66d910ba3b29c679d4..e8367ee7ea867da5df2928b6039664e92e18f588 100644
+--- a/net/minecraft/server/level/ServerLevel.java
++++ b/net/minecraft/server/level/ServerLevel.java
+@@ -193,7 +193,7 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
+     private static final int MAX_SCHEDULED_TICKS_PER_TICK = 65536;
+     private static final AtomicInteger ENTITY_COUNTER = new AtomicInteger();
+     private final List<ServerPlayer> players = Lists.newArrayList();
+-    private final ServerChunkCache chunkSource;
++    public final ServerChunkCache chunkSource;
+     private final MinecraftServer server;
+     public final io.papermc.paper.world.saveddata.PaperLevelOverrides serverLevelData; // Paper - type
+     private final EntityTickList entityTickList = new EntityTickList();
+diff --git a/net/minecraft/world/entity/Mob.java b/net/minecraft/world/entity/Mob.java
+index 65428811d1f3d30afb2c00444ad18c5685930fa1..f578e7afcc7f5c4c294c02d224ccd91c14e9a581 100644
+--- a/net/minecraft/world/entity/Mob.java
++++ b/net/minecraft/world/entity/Mob.java
+@@ -139,7 +139,7 @@ public abstract class Mob extends LivingEntity implements Targeting, EquipmentUs
+     protected JumpControl jumpControl;
+     private final BodyRotationControl bodyRotationControl;
+     public PathNavigation navigation;
+-    protected final GoalSelector goalSelector;
++    public final GoalSelector goalSelector;
+     public net.minecraft.world.entity.ai.goal.@Nullable FloatGoal goalFloat; // Paper - Allow nerfed mobs to jump and float
+     public GoalSelector targetSelector;
+     private @Nullable LivingEntity target;
+diff --git a/net/minecraft/world/item/crafting/ShapedRecipe.java b/net/minecraft/world/item/crafting/ShapedRecipe.java
+index 7ebac76135580738e7d115f925ca9a1556b9ba13..c06a2b8ba2904edadd076f5f38fe3932f6bbb526 100644
+--- a/net/minecraft/world/item/crafting/ShapedRecipe.java
++++ b/net/minecraft/world/item/crafting/ShapedRecipe.java
+@@ -38,7 +38,7 @@ public class ShapedRecipe extends NormalCraftingRecipe {
+     );
+     public static final RecipeSerializer<ShapedRecipe> SERIALIZER = new RecipeSerializer<>(MAP_CODEC, STREAM_CODEC);
+     public final ShapedRecipePattern pattern;
+-    public final ItemStackTemplate result;
++    public ItemStackTemplate result;
+ 
+     public ShapedRecipe(
+         final Recipe.CommonInfo commonInfo, final CraftingRecipe.CraftingBookInfo bookInfo, final ShapedRecipePattern pattern, final ItemStackTemplate result
+diff --git a/net/minecraft/world/item/crafting/ShapelessRecipe.java b/net/minecraft/world/item/crafting/ShapelessRecipe.java
+index fb7eaa2a9c4b49b494e33ec7066b7850aa581842..6e5770268d489a9ca2f235feae154f2f541bf273 100644
+--- a/net/minecraft/world/item/crafting/ShapelessRecipe.java
++++ b/net/minecraft/world/item/crafting/ShapelessRecipe.java
+@@ -36,7 +36,7 @@ public class ShapelessRecipe extends NormalCraftingRecipe {
+         ShapelessRecipe::new
+     );
+     public static final RecipeSerializer<ShapelessRecipe> SERIALIZER = new RecipeSerializer<>(MAP_CODEC, STREAM_CODEC);
+-    public final ItemStackTemplate result;
++    public ItemStackTemplate result;
+     public final List<Ingredient> ingredients;
+ 
+     public ShapelessRecipe(
+diff --git a/net/minecraft/world/item/crafting/SingleItemRecipe.java b/net/minecraft/world/item/crafting/SingleItemRecipe.java
+index 443ab1e86cb8f551d224f36cd766dd59a8133201..24eebdf8f7575e7a4c5aefa303e3d8afd5348a1e 100644
+--- a/net/minecraft/world/item/crafting/SingleItemRecipe.java
++++ b/net/minecraft/world/item/crafting/SingleItemRecipe.java
+@@ -12,7 +12,7 @@ import org.jspecify.annotations.Nullable;
+ public abstract class SingleItemRecipe implements Recipe<SingleRecipeInput> {
+     protected final Recipe.CommonInfo commonInfo;
+     private final Ingredient input;
+-    public final ItemStackTemplate result;
++    public ItemStackTemplate result;
+     private @Nullable PlacementInfo placementInfo;
+ 
+     public SingleItemRecipe(final Recipe.CommonInfo commonInfo, final Ingredient input, final ItemStackTemplate result) {
+diff --git a/net/minecraft/world/scores/Objective.java b/net/minecraft/world/scores/Objective.java
+index 64ea4741b7ed58fe7914b9431353abd1f658a935..277f9cd3c7d4005dd0c86d941e2acc7b331904d2 100644
+--- a/net/minecraft/world/scores/Objective.java
++++ b/net/minecraft/world/scores/Objective.java
+@@ -17,7 +17,7 @@ public class Objective {
+     private final Scoreboard scoreboard;
+     private final String name;
+     private final ObjectiveCriteria criteria;
+-    private Component displayName;
++    public Component displayName;
+     private Component formattedDisplayName;
+     private ObjectiveCriteria.RenderType renderType;
+     private boolean displayAutoUpdate;
