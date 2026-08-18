@@ -2,6 +2,7 @@ package org.bukkit.inventory;
 
 import com.google.common.base.Preconditions;
 import io.papermc.paper.datacomponent.DataComponentBuilder;
+import io.papermc.paper.InternalAPIBridge;
 import io.papermc.paper.datacomponent.DataComponentHolder;
 import io.papermc.paper.datacomponent.DataComponentType;
 import io.papermc.paper.datacomponent.DataComponentTypes;
@@ -550,7 +551,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
     @NotNull
     @Utility
     public Map<String, Object> serialize() {
-        return Bukkit.getUnsafe().serializeStack(this);
+        return this.craftDelegate.serialize();
     }
 
     /**
@@ -722,7 +723,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
     @NotNull
     @Deprecated(forRemoval = true) // Paper
     public String getTranslationKey() {
-        return Bukkit.getUnsafe().getTranslationKey(this);
+        return this.craftDelegate.getTranslationKey();
     }
 
     // Paper start
@@ -812,7 +813,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
 
     /**
      * Deserializes this itemstack from raw NBT bytes. NBT is safer for data migrations as it will
-     * use the built in data converter instead of bukkits dangerous serialization system.
+     * use the built-in data converter instead of bukkits dangerous serialization system.
      * <p>
      * This expects that the DataVersion was stored on the root of the Compound, as saved from
      * the {@link #serializeAsBytes()} API returned.
@@ -821,17 +822,20 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * @return ItemStack migrated to this version of Minecraft if needed.
      */
     public static @NotNull ItemStack deserializeBytes(final byte @NotNull [] bytes) {
-        return Bukkit.getUnsafe().deserializeItem(bytes);
+        Preconditions.checkArgument(bytes != null, "null cannot be deserialized");
+        Preconditions.checkArgument(bytes.length > 0, "cannot deserialize nothing");
+
+        return InternalAPIBridge.get().deserializeItem(bytes);
     }
 
     /**
      * Serializes this itemstack to raw bytes in NBT. NBT is safer for data migrations as it will
-     * use the built in data converter instead of bukkits dangerous serialization system.
+     * use the built-in data converter instead of bukkits dangerous serialization system.
      *
      * @return bytes representing this item in NBT.
      */
     public byte @NotNull [] serializeAsBytes() {
-        return Bukkit.getUnsafe().serializeItem(this);
+        return this.craftDelegate.serializeAsBytes();
     }
 
     /**
@@ -941,7 +945,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      */
     @Deprecated(forRemoval = true)
     public int getMaxItemUseDuration() {
-        return getMaxItemUseDuration(null);
+        return this.getMaxItemUseDuration(null);
     }
 
     public int getMaxItemUseDuration(@NotNull final LivingEntity entity) {
@@ -1142,7 +1146,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      */
     @Override
     public @NotNull String translationKey() {
-        return Bukkit.getUnsafe().getTranslationKey(this);
+        return this.craftDelegate.translationKey();
     }
 
     /**
@@ -1165,7 +1169,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * @return true if it is repairable by, false if not
      */
     public boolean isRepairableBy(@NotNull ItemStack repairMaterial) {
-        return Bukkit.getUnsafe().isValidRepairItemStack(this, repairMaterial);
+        return this.craftDelegate.isRepairableBy(repairMaterial);
     }
 
     /**
@@ -1176,7 +1180,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * @return true if it can repair, false if not
      */
     public boolean canRepair(@NotNull ItemStack toBeRepaired) {
-        return Bukkit.getUnsafe().isValidRepairItemStack(toBeRepaired, this);
+        return toBeRepaired.isRepairableBy(this);
     }
 
     /**
@@ -1201,8 +1205,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      */
     @NotNull
     public static ItemStack empty() {
-        //noinspection deprecation
-        return Bukkit.getUnsafe().createEmptyStack(); // Paper - proxy ItemStack
+        return InternalAPIBridge.get().createEmptyStack(); // Paper - proxy ItemStack
     }
 
     /**
@@ -1226,9 +1229,8 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      * @param player         a player for player-specific tooltip lines
      * @return an immutable list of components (can be empty)
      */
-    @SuppressWarnings("deprecation") // abusing unsafe as a bridge
-    public @NotNull @Unmodifiable List<Component> computeTooltipLines(final @NotNull TooltipContext tooltipContext, final @Nullable Player player) {
-        return Bukkit.getUnsafe().computeTooltipLines(this, tooltipContext, player);
+    public java.util.@NotNull @org.jetbrains.annotations.Unmodifiable List<net.kyori.adventure.text.Component> computeTooltipLines(final @NotNull io.papermc.paper.inventory.tooltip.TooltipContext tooltipContext, final org.bukkit.entity.@Nullable Player player) {
+        return this.craftDelegate.computeTooltipLines(tooltipContext, player);
     }
     // Paper end - expose itemstack tooltip lines
 

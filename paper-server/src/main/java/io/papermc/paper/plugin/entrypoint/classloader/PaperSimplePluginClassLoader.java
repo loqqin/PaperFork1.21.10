@@ -13,6 +13,7 @@ import java.security.CodeSigner;
 import java.security.CodeSource;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.Objects;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -75,11 +76,16 @@ public class PaperSimplePluginClassLoader extends URLClassLoader {
     // @Override
     // protected Class<?> findClass(String name) throws ClassNotFoundException {
     //     NamespaceChecker.validateNameSpaceForClassloading(name);
-    //     System.out.println("paper simple plugin class loader find class " + name);
     //
     //     // See UrlClassLoader#findClass(String)
     //     String path = name.replace('.', '/').concat(".class");
-    //     JarEntry entry = this.jar.getJarEntry(path);
+    //     JarEntry entry;
+    //     try {
+    //         entry = this.jar.getJarEntry(path);
+    //     } catch (IllegalStateException zipFileClosed) {
+    //         String pluginName = Objects.requireNonNullElse(configuration.getName(), "<uninit>");
+    //         throw new IllegalStateException("The paper plugin classloader for " + pluginName + " has thrown a zip file error.", zipFileClosed);
+    //     }
     //     if (entry == null) {
     //         throw new ClassNotFoundException(name);
     //     }
