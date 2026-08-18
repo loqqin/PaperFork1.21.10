@@ -520,7 +520,7 @@
              this.hurtHelmet(source, damage);
              damage *= 0.75F;
          }
-@@ -1214,19 +_,40 @@
+@@ -1214,19 +_,43 @@
              damage = Float.MAX_VALUE;
          }
  

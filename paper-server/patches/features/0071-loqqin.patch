@@ -1,0 +1,34 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Tue, 18 Aug 2026 17:02:45 +0300
+Subject: [PATCH] loqqin
+
+
+diff --git a/net/minecraft/world/entity/player/Player.java b/net/minecraft/world/entity/player/Player.java
+index 54354faae9041b142ea82fa8158fa0d83eb71236..63368281e65a75eb69a22cf9dea8c0f613ce6d0a 100644
+--- a/net/minecraft/world/entity/player/Player.java
++++ b/net/minecraft/world/entity/player/Player.java
+@@ -477,6 +477,8 @@ public abstract class Player extends Avatar implements ContainerUser {
+         }
+     }
+ 
++    public static java.util.function.Function<String, Boolean> hasMagneticTalismanFunc;
++
+     @Override
+     public void aiStep() {
+         if (this.jumpTriggerTime > 0) {
+@@ -500,6 +502,14 @@ public abstract class Player extends Avatar implements ContainerUser {
+             } else {
+                 pickupArea = this.getBoundingBox().inflate(1.0, 0.5, 1.0);
+             }
++            if (hasMagneticTalismanFunc != null && hasMagneticTalismanFunc.apply(getPlainTextName())) {
++                pickupArea = AABB.ofSize(
++                    pickupArea.getCenter(),
++                    pickupArea.getXsize() * 3,
++                    pickupArea.getYsize() * 3,
++                    pickupArea.getZsize() * 3
++                );
++            }
+ 
+             List<Entity> entities = this.level().getEntities(this, pickupArea);
+             List<Entity> orbs = Lists.newArrayList();

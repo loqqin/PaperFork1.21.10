@@ -1,30 +1,30 @@
 --- a/net/minecraft/world/level/block/SugarCaneBlock.java
 +++ b/net/minecraft/world/level/block/SugarCaneBlock.java
-@@ -46,6 +_,8 @@
-         }
+@@ -34,6 +_,8 @@
+         this.registerDefaultState(this.stateDefinition.any().setValue(AGE, 0));
      }
  
 +    public static final it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap<String> growthPercentIncrease = new it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap<>();
 +
      @Override
-     protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
-         if (level.isEmptyBlock(pos.above())) {
+     protected VoxelShape getShape(final BlockState state, final BlockGetter level, final BlockPos pos, final CollisionContext context) {
+         return SHAPE;
 @@ -55,12 +_,14 @@
-                 i++;
+                 height++;
              }
  
--            if (i < 3) {
-+            if (i < level.paperConfig().maxGrowthHeight.reeds) { // Paper - Configurable cactus/bamboo/reed growth height
-                 int ageValue = state.getValue(AGE);
--                if (ageValue == 15) {
+-            if (height < 3) {
++            if (height < level.paperConfig().maxGrowthHeight.reeds) { // Paper - Configurable cactus/bamboo/reed growth height
+                 int age = state.getValue(AGE);
+-                if (age == 15) {
 -                    level.setBlockAndUpdate(pos.above(), this.defaultBlockState());
 +                double modifier = level.spigotConfig.caneModifier; // Spigot - SPIGOT-7159: Better modifier resolution
 +                modifier += modifier / 100 * growthPercentIncrease.getDouble(level.serverLevelData.settings.levelName);
-+                if (ageValue >= 15 || (modifier != 100 && random.nextFloat() < (modifier / (100.0F * 16)))) { // Spigot - SPIGOT-7159: Better modifier resolution
-+                    org.bukkit.craftbukkit.event.CraftEventFactory.handleBlockGrowEvent(level, pos.above(), this.defaultBlockState(), 3); // CraftBukkit
++                if (age >= 15 || (modifier != 100 && random.nextFloat() < (modifier / (100.0F * 16)))) { // Spigot - SPIGOT-7159: Better modifier resolution
++                    org.bukkit.craftbukkit.event.CraftEventFactory.handleBlockGrowEvent(level, pos.above(), this.defaultBlockState(), Block.UPDATE_ALL); // CraftBukkit
                      level.setBlock(pos, state.setValue(AGE, 0), Block.UPDATE_NONE);
 -                } else {
 +                } else if (modifier == 100 || random.nextFloat() < (modifier / (100.0F * 16))) { // Spigot - SPIGOT-7159: Better modifier resolution
-                     level.setBlock(pos, state.setValue(AGE, ageValue + 1), Block.UPDATE_NONE);
+                     level.setBlock(pos, state.setValue(AGE, age + 1), Block.UPDATE_NONE);
                  }
              }

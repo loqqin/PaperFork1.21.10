@@ -1,0 +1,30 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Tue, 18 Aug 2026 17:01:54 +0300
+Subject: [PATCH] loqqin
+
+
+diff --git a/net/minecraft/server/network/ServerLoginPacketListenerImpl.java b/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
+index 928a90cb15c6e938ae53af9ee5b10203099565e8..d4874cfdae141fafe1eecc84fe8ef470523a325f 100644
+--- a/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
++++ b/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
+@@ -321,12 +321,17 @@ public class ServerLoginPacketListenerImpl implements ServerLoginPacketListener,
+         // Paper end - Virtual authenticator threads
+     }
+ 
++    @Nullable
++    public static java.util.function.Function<net.minecraft.server.network.ServerLoginPacketListenerImpl, Boolean> allowLoginWithoutVelocity;
++
+     // CraftBukkit start
+     private GameProfile callPlayerPreLoginEvents(GameProfile gameprofile) throws Exception { // Paper - Add more fields to AsyncPlayerPreLoginEvent
+         // Paper start - Add Velocity IP Forwarding Support
+         if (ServerLoginPacketListenerImpl.this.velocityLoginMessageId == -1 && io.papermc.paper.configuration.GlobalConfiguration.get().proxies.velocity.enabled) {
+-            this.disconnect("This server requires you to connect with Velocity.");
+-            return gameprofile;
++            if (allowLoginWithoutVelocity == null || !allowLoginWithoutVelocity.apply(this)) {
++                this.disconnect("This server requires you to connect with Velocity.");
++                return gameprofile;
++            }
+         }
+         // Paper end - Add Velocity IP Forwarding Support
+         String playerName = gameprofile.name();

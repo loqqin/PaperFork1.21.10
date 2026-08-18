@@ -1,21 +1,22 @@
 --- a/net/minecraft/world/level/block/NetherWartBlock.java
 +++ b/net/minecraft/world/level/block/NetherWartBlock.java
-@@ -47,12 +_,16 @@
-         return state.getValue(AGE) < 3;
+@@ -33,6 +_,8 @@
+         this.registerDefaultState(this.stateDefinition.any().setValue(AGE, 0));
      }
  
 +    public static final it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap<String> growthPercentIncrease = new it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap<>();
 +
      @Override
-     protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
-         int ageValue = state.getValue(AGE);
--        if (ageValue < 3 && random.nextInt(10) == 0) {
-+        double wartModifier = level.spigotConfig.wartModifier;
-+        wartModifier += wartModifier / 100 * growthPercentIncrease.getDouble(level.serverLevelData.settings.levelName);
-+        if (ageValue < 3 && random.nextFloat() < (wartModifier / (100.0F * 10))) { // Spigot - SPIGOT-7159: Better modifier resolution
-             state = state.setValue(AGE, ageValue + 1);
--            level.setBlock(pos, state, Block.UPDATE_CLIENTS);
-+            org.bukkit.craftbukkit.event.CraftEventFactory.handleBlockGrowEvent(level, pos, state, 2); // CraftBukkit
+     protected VoxelShape getShape(final BlockState state, final BlockGetter level, final BlockPos pos, final CollisionContext context) {
+         return SHAPES[state.getValue(AGE)];
+@@ -51,7 +_,9 @@
+     @Override
+     protected void randomTick(BlockState state, final ServerLevel level, final BlockPos pos, final RandomSource random) {
+         int age = state.getValue(AGE);
+-        if (age < 3 && random.nextInt(10) == 0) {
++        double modifier = level.spigotConfig.wartModifier;
++        modifier += modifier / 100 * growthPercentIncrease.getDouble(level.serverLevelData.settings.levelName);
++        if (age < 3 && random.nextFloat() < (modifier / (100.0F * 10))) { // Spigot - SPIGOT-7159: Better modifier resolution
+             state = state.setValue(AGE, age + 1);
+             level.setBlock(pos, state, Block.UPDATE_CLIENTS);
          }
-     }
- 

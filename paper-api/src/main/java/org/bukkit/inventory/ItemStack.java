@@ -39,16 +39,6 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.event.HoverEventSource;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.DoubleTag;
-import net.minecraft.nbt.IntTag;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
-import net.minecraft.util.ARGB;
-import net.minecraft.util.Unit;
-import net.minecraft.world.item.component.DyedItemColor;
-import net.minecraft.world.item.component.TooltipDisplay;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -57,10 +47,6 @@ import org.bukkit.UndefinedNullability;
 import org.bukkit.Utility;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
-import org.bukkit.craftbukkit.inventory.CraftItemStack;
-import org.bukkit.craftbukkit.persistence.CraftPersistentDataContainer;
-import org.bukkit.craftbukkit.persistence.CraftPersistentDataTypeRegistry;
-import org.bukkit.craftbukkit.util.CraftChatMessage;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -1431,11 +1417,9 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
 
     // loqqin start
 
-    public CraftItemStack editPersistentDataContainerC(@NotNull Consumer<PersistentDataContainer> consumer) {
-        // this.craftDelegate.editPersistentDataContainer(consumer);
-        final CraftItemStack craft = getCraft();
-        craft.editPersistentDataContainer(consumer);
-        return craft;
+    public ItemStack editPersistentDataContainerC(@NotNull Consumer<PersistentDataContainer> consumer) {
+        editMeta(meta -> consumer.accept(meta.getPersistentDataContainer()));
+        return this;
     }
 
     public @NotNull Component displayName() {
@@ -1447,42 +1431,31 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
         return getDataOrDefault(DataComponentTypes.CUSTOM_NAME, Component.text(""));
     }
 
-    public CraftItemStack getCraft() { // хз насколько кастинг эффективен, мб лучше юзать как раньше return craftitemstack
-        if (this instanceof CraftItemStack craft) {
-            return craft;
-        }
-        if (craftDelegate != null) {
-            return ((CraftItemStack) craftDelegate);
-        }
-        // на всякий случай оставил, почему-то раньше была такая проверка, но хз как может быть тут null
-        // если instanceof craftitemstack ток, но тогда вернул бы себя
-        asCraftCopyCounter++;
-        return CraftItemStack.asCraftCopy(this);
-    }
-
     public static long asCraftCopyCounter = 0;
 
-    public CraftItemStack setAmountC(int amount) {
+    public ItemStack setAmountC(int amount) {
         setAmount(amount);
-        return getCraft();
+        return this;
     }
 
-    public CraftItemStack editMetaC(final @NotNull Consumer<? super ItemMeta> consumer) {
+    public ItemStack editMetaC(final @NotNull Consumer<? super ItemMeta> consumer) {
         editMeta(consumer);
-        return getCraft();
+        return this;
     }
 
-    public CraftItemStack loreC(List<Component> lore) {
+    public ItemStack loreC(List<Component> lore) {
         lore(lore);
-        return getCraft();
+        return this;
     }
 
-    public String fastName(){
-        return getCraft().fastName();
+    public String fastName() {
+        ItemMeta meta = getItemMeta();
+        return meta != null && meta.hasDisplayName() ? meta.getDisplayName() : "";
     }
 
-    public String name() { // мб на pdc view
-        return getCraft().name();
+    public String name() {
+        ItemMeta meta = getItemMeta();
+        return meta != null && meta.hasDisplayName() ? meta.getDisplayName() : "";
     }
 
     public boolean nameEquals(ItemStack itemStack) {
@@ -1508,38 +1481,35 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
     }
 
     public static boolean nullOrAir(ItemStack itemStack) {
-        return itemStack == null || itemStack.isEmpty(); // isempty быстрее получения type
+        return itemStack == null || itemStack.isEmpty();
     }
 
-    public CraftItemStack setName(String name) {
-        return setDataC(DataComponentTypes.CUSTOM_NAME, Component.text(name));
-        // return editMetaC(meta -> meta.displayName(Component.text(name)));
+    public ItemStack setName(String name) {
+        return setDataC(io.papermc.paper.datacomponent.DataComponentTypes.CUSTOM_NAME, Component.text(name));
     }
 
-    public CraftItemStack setUnbreakable() {
-        final CraftItemStack craft = getCraft();
-        craft.handle.set(DataComponents.UNBREAKABLE, Unit.INSTANCE);
-        craft.handle.update(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT, tooltipDisplay -> tooltipDisplay.withHidden(DataComponents.UNBREAKABLE, true));
-        return craft;
+    public ItemStack setUnbreakable() {
+        editMeta(meta -> meta.setUnbreakable(true));
+        return this;
     }
 
     @ApiStatus.Experimental
-    public <T> CraftItemStack setDataC(final DataComponentType.@NotNull Valued<T> type, final @NotNull T value) {
+    public <T> ItemStack setDataC(final io.papermc.paper.datacomponent.DataComponentType.@NotNull Valued<T> type, final @NotNull T value) {
         setData(type, value);
-        return getCraft();
+        return this;
     }
 
-    public CraftItemStack setRandomUUID() {
+    public ItemStack setRandomUUID() {
         return setString("uuid", UUID.randomUUID().toString());
-        // return editMetaC(meta -> meta.getPersistentDataContainer().set(new NamespacedKey("space", "uuid"), PersistentDataType.STRING,
-        //     UUID.randomUUID().toString()));
     }
 
-    public CraftItemStack setColor(int red, int green, int blue) {
-        final CraftItemStack craft = getCraft();
-        craft.handle.set(DataComponents.DYED_COLOR, new DyedItemColor(ARGB.color(0, red, green, blue)));
-        craft.handle.update(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT, tooltipDisplay -> tooltipDisplay.withHidden(DataComponents.DYED_COLOR, true));
-        return craft;
+    public ItemStack setColor(int red, int green, int blue) {
+        editMeta(meta -> {
+            if (meta instanceof org.bukkit.inventory.meta.LeatherArmorMeta leatherMeta) {
+                leatherMeta.setColor(org.bukkit.Color.fromRGB(red, green, blue));
+            }
+        });
+        return this;
     }
 
     public static boolean nameEquals(ItemStack first, ItemStack second) {
@@ -1553,103 +1523,58 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
         return first.name().equals(second.name());
     }
 
-    private static final String SPACE_ID_KEY = "space:id";
-
     public String getID() {
-        final CompoundTag pdcCustomData = getPDCNmsViewReadOnly();
-        if (pdcCustomData == null) return "";
-        final Tag tag = pdcCustomData.tags.get(SPACE_ID_KEY);
-        if (tag instanceof StringTag(String value)) return value;
-        return "";
+        return getString("id");
     }
 
-    public static final CraftPersistentDataTypeRegistry registry = new CraftPersistentDataTypeRegistry();
-
-    public CraftItemStack setGlinting() {
-        final CraftItemStack craft = getCraft();
-        craft.handle.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, Boolean.TRUE);
-        return craft;
+    public ItemStack setGlinting() {
+        editMeta(meta -> meta.setEnchantmentGlintOverride(true));
+        return this;
     }
 
-    public CraftItemStack hideTooltip() {
-        final CraftItemStack craft = getCraft();
-        craft.handle.set(DataComponents.TOOLTIP_DISPLAY, new TooltipDisplay(true, new LinkedHashSet<>()));
-        return craft;
+    public ItemStack hideTooltip() {
+        editMeta(meta -> meta.setHideTooltip(true));
+        return this;
     }
 
-    public CraftItemStack setCompound(String key, PersistentDataContainer container) {
-        final CompoundTag compoundTag = new CompoundTag();
-        for (final Map.Entry<String, Tag> entry : ((CraftPersistentDataContainer) container).getRaw().entrySet()) {
-            compoundTag.put(entry.getKey(), entry.getValue());
-        }
-        editPDCNms(compoundTag1 -> compoundTag1.tags.put("space:" + key.toLowerCase(), compoundTag));
-        return getCraft();
+    public ItemStack setDouble(String key, double value) {
+        editMeta(meta -> meta.getPersistentDataContainer().set(new NamespacedKey("space", key.toLowerCase()), org.bukkit.persistence.PersistentDataType.DOUBLE, value));
+        return this;
     }
 
-    public CraftItemStack setDouble(String key, double value) {
-        editPDCNms(compoundTag -> compoundTag.tags.put("space:" + key.toLowerCase(), DoubleTag.valueOf(value)));
-        return getCraft();
+    public ItemStack setString(String key, String value) {
+        editMeta(meta -> meta.getPersistentDataContainer().set(new NamespacedKey("space", key.toLowerCase()), org.bukkit.persistence.PersistentDataType.STRING, value));
+        return this;
     }
 
-    public CraftItemStack setString(String key, String value) {
-        editPDCNms(compoundTag -> compoundTag.tags.put("space:" + key.toLowerCase(), StringTag.valueOf(value)));
-        return getCraft();
+    public ItemStack setInt(String key, int value) {
+        editMeta(meta -> meta.getPersistentDataContainer().set(new NamespacedKey("space", key.toLowerCase()), org.bukkit.persistence.PersistentDataType.INTEGER, value));
+        return this;
     }
 
-    public CraftItemStack setInt(String key, int value) {
-        editPDCNms(compoundTag -> compoundTag.tags.put("space:" + key.toLowerCase(), IntTag.valueOf(value)));
-        return getCraft();
-    }
-
-    // todo кэширование custom data в нмс итемстаке
-    // todo убрать space + убрать pdc и писать в плейн кастом дату
     public String getString(String key) {
-        final CompoundTag pdcCustomData = getPDCNmsViewReadOnly();
-        if (pdcCustomData == null) return "";
-        final Tag tag1 = pdcCustomData.tags.get("space:" + key.toLowerCase());
-        if (tag1 == null) return "";
-        return ((StringTag) tag1).value();
+        ItemMeta meta = getItemMeta();
+        if (meta == null) return "";
+        String val = meta.getPersistentDataContainer().get(new NamespacedKey("space", key.toLowerCase()), org.bukkit.persistence.PersistentDataType.STRING);
+        return val == null ? "" : val;
     }
 
     public int getInt(String key) {
-        final CompoundTag pdcCustomData = getPDCNmsViewReadOnly();
-        if (pdcCustomData == null) return 0;
-        final Tag tag = pdcCustomData.tags.get("space:" + key.toLowerCase());
-        if (tag == null) return 0;
-        return ((IntTag) tag).value();
+        ItemMeta meta = getItemMeta();
+        if (meta == null) return 0;
+        Integer val = meta.getPersistentDataContainer().get(new NamespacedKey("space", key.toLowerCase()), org.bukkit.persistence.PersistentDataType.INTEGER);
+        return val == null ? 0 : val;
     }
 
     public double getDouble(String key) {
-        final CompoundTag pdcCustomData = getPDCNmsViewReadOnly();
-        if (pdcCustomData == null) return 0.0;
-        final Tag tag = pdcCustomData.tags.get("space:" + key.toLowerCase());
-        if (tag == null) return 0.0;
-        return ((DoubleTag) tag).value();
+        ItemMeta meta = getItemMeta();
+        if (meta == null) return 0.0;
+        Double val = meta.getPersistentDataContainer().get(new NamespacedKey("space", key.toLowerCase()), org.bukkit.persistence.PersistentDataType.DOUBLE);
+        return val == null ? 0.0 : val;
     }
 
-    public CraftPersistentDataContainer getCompound(String key) {
-        final CompoundTag pdcCustomData = getPDCNmsViewReadOnly();
-        if (pdcCustomData == null) return null;
-        final CompoundTag compoundTag = (CompoundTag) pdcCustomData.tags.get("space:" + key.toLowerCase());
-        if (compoundTag == null) return null;
-        final CraftPersistentDataContainer craftPersistentDataContainer = new CraftPersistentDataContainer(Map.of(), registry);
-        for (final Map.Entry<String, Tag> stringTagEntry : compoundTag.tags.entrySet()) {
-            craftPersistentDataContainer.put(stringTagEntry.getKey(), stringTagEntry.getValue());
-        }
-        return craftPersistentDataContainer;
-    }
-
-    public CraftItemStack cloneC() {
-        return getCraft().clone();
-        // return ((CraftItemStack) clone());
-    }
-
-    public CompoundTag getPDCNmsViewReadOnly() {
-        return getCraft().getPDCNmsViewReadOnly();
-    }
-
-    public CraftItemStack editPDCNms(Consumer<CompoundTag> consumer) {
-        return getCraft().editPDCNms(consumer);
+    public ItemStack cloneC() {
+        return clone();
     }
 
     // loqqin end

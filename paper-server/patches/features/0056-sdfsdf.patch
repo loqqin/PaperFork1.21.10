@@ -1,0 +1,22 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Tue, 18 Aug 2026 16:59:19 +0300
+Subject: [PATCH] sdfsdf
+
+
+diff --git a/net/minecraft/world/entity/monster/EnderMan.java b/net/minecraft/world/entity/monster/EnderMan.java
+index 5c60261fceec76451622498341aa8481212a7bd8..ef9039e3351f30790fd528577cc92bf33e34c661 100644
+--- a/net/minecraft/world/entity/monster/EnderMan.java
++++ b/net/minecraft/world/entity/monster/EnderMan.java
+@@ -296,7 +296,10 @@ public class EnderMan extends Monster implements NeutralMob {
+     }
+ 
+     private boolean teleport(final double x, final double y, final double z) {
+-        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos(x, y, z);
++        // kenny удалил телепортацию эндермена потому что он 18.05.2026 телепортировался в чанк в котором был initializelight а телепортация происходила синхронно
++        // и произошел дедлок
++        return false;
++        // BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos(x, y, z);
+ 
+         while (pos.getY() > this.level().getMinY() && !this.level().getBlockState(pos).blocksMotion()) {
+             pos.move(Direction.DOWN);

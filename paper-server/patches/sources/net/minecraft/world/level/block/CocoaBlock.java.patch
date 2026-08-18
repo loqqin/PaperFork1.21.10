@@ -1,30 +1,35 @@
 --- a/net/minecraft/world/level/block/CocoaBlock.java
 +++ b/net/minecraft/world/level/block/CocoaBlock.java
-@@ -48,12 +_,16 @@
-         return state.getValue(AGE) < 2;
+@@ -43,6 +_,8 @@
+         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(AGE, 0));
      }
  
 +    public static final it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap<String> growthPercentIncrease = new it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap<>();
 +
      @Override
-     protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
--        if (level.random.nextInt(5) == 0) {
+     protected boolean isRandomlyTicking(final BlockState state) {
+         return state.getValue(AGE) < 2;
+@@ -50,10 +_,12 @@
+ 
+     @Override
+     protected void randomTick(final BlockState state, final ServerLevel level, final BlockPos pos, final RandomSource random) {
+-        if (level.getRandom().nextInt(5) == 0) {
 +        double modifier = level.spigotConfig.cocoaModifier;
 +        modifier += modifier / 100 * growthPercentIncrease.getDouble(level.serverLevelData.settings.levelName);
-+        if (level.random.nextFloat() < (modifier / (100.0F * 5))) { // Spigot - SPIGOT-7159: Better modifier resolution
-             int ageValue = state.getValue(AGE);
-             if (ageValue < 2) {
--                level.setBlock(pos, state.setValue(AGE, ageValue + 1), Block.UPDATE_CLIENTS);
-+                org.bukkit.craftbukkit.event.CraftEventFactory.handleBlockGrowEvent(level, pos, state.setValue(AGE, ageValue + 1), 2); // CraftBukkit
++        if (level.getRandom().nextFloat() < (modifier / (100.0F * 5))) { // Spigot - SPIGOT-7159: Better modifier resolution
+             int age = state.getValue(AGE);
+             if (age < 2) {
+-                level.setBlock(pos, state.setValue(AGE, age + 1), Block.UPDATE_CLIENTS);
++                org.bukkit.craftbukkit.event.CraftEventFactory.handleBlockGrowEvent(level, pos, state.setValue(AGE, age + 1), Block.UPDATE_CLIENTS); // CraftBukkit
              }
          }
      }
-@@ -116,7 +_,7 @@
+@@ -115,7 +_,7 @@
  
      @Override
-     public void performBonemeal(ServerLevel level, RandomSource random, BlockPos pos, BlockState state) {
+     public void performBonemeal(final ServerLevel level, final RandomSource random, final BlockPos pos, final BlockState state) {
 -        level.setBlock(pos, state.setValue(AGE, state.getValue(AGE) + 1), Block.UPDATE_CLIENTS);
-+        org.bukkit.craftbukkit.event.CraftEventFactory.handleBlockGrowEvent(level, pos, state.setValue(AGE, state.getValue(AGE) + 1), 2); // CraftBukkit
++        org.bukkit.craftbukkit.event.CraftEventFactory.handleBlockGrowEvent(level, pos, state.setValue(AGE, state.getValue(AGE) + 1), Block.UPDATE_CLIENTS); // CraftBukkit
      }
  
      @Override

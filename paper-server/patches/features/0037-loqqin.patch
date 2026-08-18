@@ -1,37 +1,128 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
-From: loqqin <soubmatic@gmail.com>
-Date: Thu, 5 Feb 2026 21:52:09 +0200
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Tue, 18 Aug 2026 16:55:07 +0300
 Subject: [PATCH] loqqin
 
 
-diff --git a/net/minecraft/network/protocol/game/ClientboundMoveEntityPacket.java b/net/minecraft/network/protocol/game/ClientboundMoveEntityPacket.java
-index 6d424f55380ac6daa1afc5fcf253048e095bb645..2b059be6cf3a6a2a5f56c883847e66d4cfa98eae 100644
---- a/net/minecraft/network/protocol/game/ClientboundMoveEntityPacket.java
-+++ b/net/minecraft/network/protocol/game/ClientboundMoveEntityPacket.java
-@@ -11,16 +11,16 @@ import net.minecraft.world.level.Level;
+diff --git a/net/minecraft/server/Bootstrap.java b/net/minecraft/server/Bootstrap.java
+index 0de71059cf509091840169bd27ba8fb04b214356..a2dcf13d1f05e983fd792275d444e38849d9dcd3 100644
+--- a/net/minecraft/server/Bootstrap.java
++++ b/net/minecraft/server/Bootstrap.java
+@@ -49,22 +49,27 @@ public class Bootstrap {
+                 throw new IllegalStateException("Unable to load registries");
+             }
  
- public abstract class ClientboundMoveEntityPacket implements Packet<ClientGamePacketListener> {
-     public final int entityId;
--    protected final short xa;
--    protected final short ya;
--    protected final short za;
--    protected final byte yRot;
--    protected final byte xRot;
--    protected final boolean onGround;
--    protected final boolean hasRot;
--    protected final boolean hasPos;
--
--    protected ClientboundMoveEntityPacket(int entityId, short xa, short ya, short za, byte yRot, byte xRot, boolean onGround, boolean hasRot, boolean hasPos) {
-+    public final short xa;
-+    public final short ya;
-+    public final short za;
-+    public final byte yRot;
-+    public final byte xRot;
-+    public final boolean onGround;
-+    public final boolean hasRot;
-+    public final boolean hasPos;
+-            FireBlock.bootStrap();
+-            ComposterBlock.bootStrap();
++            Main.executeAndLog("block bootstrap custom", () -> {
++                final net.minecraft.world.level.block.Block acaciaButton = net.minecraft.world.level.block.Blocks.ACACIA_BUTTON;
++            });
++            Main.executeAndLog("fireblock.bootstrap", () -> FireBlock.bootStrap());
++            Main.executeAndLog("composterblock.bootstrap", () -> ComposterBlock.bootStrap());
+             if (EntityType.getKey(EntityTypes.PLAYER) == null) {
+                 throw new IllegalStateException("Failed loading EntityTypes");
+             }
+ 
+-            EntitySelectorOptions.bootStrap();
+-            DispenseItemBehavior.bootStrap();
+-            CauldronInteractions.bootStrap();
++            Main.executeAndLog("entityselectoroptions bootstrap", () -> EntitySelectorOptions.bootStrap());
++            Main.executeAndLog("DispenseItemBehavior bootstrap", () -> DispenseItemBehavior.bootStrap());
++            Main.executeAndLog("CauldronInteractions bootstrap", () -> CauldronInteractions.bootStrap());
+             // Paper start
+-            BuiltInRegistries.bootStrap(() -> {
+-                io.papermc.paper.world.worldgen.OptionallyFlatBedrockConditionSource.bootstrap(); // Paper - Flat bedrock generator settings
++            Main.executeAndLog("builtinregistries bootstrap", () -> {
++                BuiltInRegistries.bootStrap(() -> {
++                    io.papermc.paper.world.worldgen.OptionallyFlatBedrockConditionSource.bootstrap(); // Paper - Flat bedrock generator settings
++                });
+             });
+             // Paper end
+-            CreativeModeTabs.validate();
+-            wrapStreams();
++            Main.executeAndLog("creative tabs", () -> CreativeModeTabs.validate());
++            Main.executeAndLog("wrap streams", () -> wrapStreams());
+             bootstrapDuration.set(Duration.between(start, Instant.now()).toMillis());
+             // CraftBukkit start
+             // TODO Check what of this is needed, maybe report it to Mojira. if deemed relevant, move to the respective classes
+diff --git a/net/minecraft/server/Main.java b/net/minecraft/server/Main.java
+index 693ce1c23c7be6406eda22da57aa4a1b86a08f5f..da6e1fa4efbdc5dbea137704cc651e588bb55f61 100644
+--- a/net/minecraft/server/Main.java
++++ b/net/minecraft/server/Main.java
+@@ -65,6 +65,21 @@ import org.slf4j.Logger;
+ public class Main {
+     private static final Logger LOGGER = LogUtils.getLogger();
+ 
++    public static double executeAndLog(String action, Runnable runnable) {
++        long l = System.nanoTime();
++        runnable.run();
++        double value = (System.nanoTime() - l) / 1_000_000.0;
++        System.out.println(action + " in " + value + "ms");
++        return value;
++    }
 +
-+    public ClientboundMoveEntityPacket(int entityId, short xa, short ya, short za, byte yRot, byte xRot, boolean onGround, boolean hasRot, boolean hasPos) {
-         this.entityId = entityId;
-         this.xa = xa;
-         this.ya = ya;
++    public static <T> T executeAndLogAndReturn(String action, java.util.function.Supplier<T> runnable) {
++        long l = System.nanoTime();
++        T t = runnable.get();
++        System.out.println(action + " in " + (System.nanoTime() - l) / 1_000_000.0);
++        return t;
++    }
++
+     @SuppressForbidden(reason = "System.out needed before bootstrap")
+     public static void main(final OptionSet options) { // CraftBukkit - replaces main(String[] args)
+         io.papermc.paper.log.LogManagerShutdownThread.hook(); // Paper - Improved watchdog support
+@@ -110,9 +125,15 @@ public class Main {
+                 JvmProfiler.INSTANCE.start(Environment.SERVER);
+             }
+ 
+-            io.papermc.paper.plugin.PluginInitializerManager.load(options); // Paper
+-            Bootstrap.bootStrap();
+-            Bootstrap.validate();
++            executeAndLog("plugin initializer manager", () -> {
++                try {
++                    io.papermc.paper.plugin.PluginInitializerManager.load(options);
++                } catch (Exception e) {
++                    e.printStackTrace();
++                }
++            }); // Paper
++            executeAndLog("bootstrap", () -> Bootstrap.bootStrap());
++            executeAndLog("bootstrap validate", () -> Bootstrap.validate());
+             // Paper start - Perf: Init DataConverter asynchronously
+             // Init for both of these are fairly expensive class-loading wise. Both are called again below/in MinecraftServer.spin,
+             // so failure during class init will become visible there.
+@@ -121,8 +142,8 @@ public class Main {
+             // Paper end - Perf: Init DataConverter asynchronously
+             Util.startTimerHackThread();
+             Path settingsFile = Paths.get("server.properties");
+-            DedicatedServerSettings settings = new DedicatedServerSettings(options); // CraftBukkit - CLI argument support
+-            settings.forceSave();
++            DedicatedServerSettings settings = executeAndLogAndReturn("dedicatred server swettings", () -> new DedicatedServerSettings(options)); // CraftBukkit - CLI argument support
++            executeAndLog("force save", () -> settings.forceSave());
+             // Paper start
+             if (options.has("forceUpgrade") || options.has("recreateRegionFiles")) {
+                 LOGGER.error("World upgrade and region file recreation are not yet implemented in Paper 26.1.");
+@@ -133,8 +154,22 @@ public class Main {
+             Path eulaFile = Paths.get("eula.txt");
+             Eula eula = new Eula(eulaFile);
+             // Paper start - load config files early for access below if needed
+-            org.bukkit.configuration.file.YamlConfiguration bukkitConfiguration = io.papermc.paper.configuration.PaperConfigurations.loadLegacyConfigFile((File) options.valueOf("bukkit-settings"));
+-            org.bukkit.configuration.file.YamlConfiguration spigotConfiguration = io.papermc.paper.configuration.PaperConfigurations.loadLegacyConfigFile((File) options.valueOf("spigot-settings"));
++            org.bukkit.configuration.file.YamlConfiguration bukkitConfiguration = executeAndLogAndReturn("yaml config", () -> {
++                try {
++                    return io.papermc.paper.configuration.PaperConfigurations.loadLegacyConfigFile((File) options.valueOf("bukkit-settings"));
++                } catch (Exception e) {
++                    e.printStackTrace();
++                }
++                return null;
++            });
++            org.bukkit.configuration.file.YamlConfiguration spigotConfiguration = executeAndLogAndReturn("yaml config 2 ", () -> {
++                try {
++                    return io.papermc.paper.configuration.PaperConfigurations.loadLegacyConfigFile((File) options.valueOf("spigot-settings"));
++                } catch (Exception e) {
++                    e.printStackTrace();
++                }
++                return null;
++            });
+             // Paper end - load config files early for access below if needed
+             if (options.has("initSettings")) { // CraftBukkit
+                 // CraftBukkit start - SPIGOT-5761: Create bukkit.yml and commands.yml if not present

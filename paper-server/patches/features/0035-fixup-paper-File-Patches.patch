@@ -1,11 +1,11 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
-From: loqqin <soubmatic@gmail.com>
-Date: Mon, 27 Oct 2025 14:18:58 +0200
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Tue, 18 Aug 2026 16:54:08 +0300
 Subject: [PATCH] fixup! paper File Patches
 
 
 diff --git a/io/papermc/paper/command/subcommands/FixLightCommand.java b/io/papermc/paper/command/subcommands/FixLightCommand.java
-index 85950a1aa732ab8c01ad28bec9e0de140e1a172e..3513ce23dfc9abc40f3c7ebc44b648f69e5bba2a 100644
+index c7303da057111baae585143979e7b1ffba0aad86..45d10a115ac25506b70816605558c7f18eaedfcc 100644
 --- a/io/papermc/paper/command/subcommands/FixLightCommand.java
 +++ b/io/papermc/paper/command/subcommands/FixLightCommand.java
 @@ -35,7 +35,7 @@ public final class FixLightCommand implements PaperSubcommand {
@@ -31,29 +31,28 @@ index 85950a1aa732ab8c01ad28bec9e0de140e1a172e..3513ce23dfc9abc40f3c7ebc44b648f6
          final ServerLevel world,
          final ThreadedLevelLightEngine lightengine,
 diff --git a/net/minecraft/server/ServerScoreboard.java b/net/minecraft/server/ServerScoreboard.java
-index 5886de75a8be3b7134b52520e5bc635812fda659..974086f19093f7c4c0082f2d87b17406a22ad119 100644
+index 7ffd683c42557052d7bfa963d87e68f4e8f62d6c..ffefbc1b7856120ab91659ebaa2337b6227118b8 100644
 --- a/net/minecraft/server/ServerScoreboard.java
 +++ b/net/minecraft/server/ServerScoreboard.java
-@@ -303,6 +303,9 @@ public class ServerScoreboard extends Scoreboard {
+@@ -294,6 +294,9 @@ public class ServerScoreboard extends Scoreboard {
      }
  
-     private void updatePlayerWaypoint(String playerName) {
+     private void updatePlayerWaypoint(final String player) {
 +        if (true) { // loqqin fix lag on team set color
 +            return;
 +        }
-         ServerPlayer playerByName = this.server.getPlayerList().getPlayerByName(playerName);
-         if (playerByName != null) {
-             ServerLevel var4 = playerByName.level();
+         ServerPlayer serverPlayer = this.server.getPlayerList().getPlayerByName(player);
+         if (serverPlayer != null) {
+             serverPlayer.level().getWaypointManager().remakeConnections(serverPlayer);
 diff --git a/net/minecraft/world/entity/player/Player.java b/net/minecraft/world/entity/player/Player.java
-index e95e259e5be5bb14a4ba2473d6ce850ebbedcb6d..c60dd6f8406e078978a474b6099ed47a60eb6062 100644
+index 2a71a2fa949b3a7fb8ff2c44ec3a3d8636237142..54354faae9041b142ea82fa8158fa0d83eb71236 100644
 --- a/net/minecraft/world/entity/player/Player.java
 +++ b/net/minecraft/world/entity/player/Player.java
-@@ -1120,7 +1120,7 @@ public abstract class Player extends Avatar implements ContainerUser {
-                                 // Paper end - Configurable sprint interruption on attack
-                             }
+@@ -1257,6 +1257,7 @@ public abstract class Player extends Avatar implements ContainerUser {
+     }
  
--                            if (flag3) {
-+                            if (flag3 && false) { // loqqin disable sweep
-                                 float f5 = 1.0F + (float)this.getAttributeValue(Attributes.SWEEPING_DAMAGE_RATIO) * f;
- 
-                                 for (LivingEntity livingEntity2 : this.level()
+     private void doSweepAttack(final Entity entity, final float baseDamage, final DamageSource damageSource, final float attackStrengthScale) {
++        if (true) return; // loqqin disable sweep
+         this.playServerSideSound(SoundEvents.PLAYER_ATTACK_SWEEP);
+         if (this.level() instanceof ServerLevel serverLevel) {
+             float var12 = 1.0F + (float)this.getAttributeValue(Attributes.SWEEPING_DAMAGE_RATIO) * baseDamage;

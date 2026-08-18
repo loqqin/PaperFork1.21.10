@@ -1,0 +1,40 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Tue, 18 Aug 2026 17:04:02 +0300
+Subject: [PATCH] loqqin optimized spreadingsnowydirtblock.randomtick
+
+
+diff --git a/net/minecraft/world/level/block/SpreadingSnowyBlock.java b/net/minecraft/world/level/block/SpreadingSnowyBlock.java
+index 513e23b693aa0f47bcf91e9087159a75471efd36..35b8e7351044bc773b69d5a9c882c141423d8439 100644
+--- a/net/minecraft/world/level/block/SpreadingSnowyBlock.java
++++ b/net/minecraft/world/level/block/SpreadingSnowyBlock.java
+@@ -78,10 +78,15 @@ public abstract class SpreadingSnowyBlock extends SnowyBlock {
+                 // CraftBukkit end
+                 level.setBlockAndUpdate(pos, baseBlock.get().defaultBlockState());
+             } else {
+-                if (level.getMaxLocalRawBrightness(pos.above()) >= 9) {
++                BlockPos above = pos.above();
++
++                boolean hasEnoughLight = (level.getSkyDarken() < 4 && level.canSeeSky(above))
++                    || level.getMaxLocalRawBrightness(above) >= 9;
++
++                if (hasEnoughLight) {
+                     BlockState defaultBlockState = this.defaultBlockState();
+ 
+-                    for (int i = 0; i < 4; i++) {
++                    for (int i = 0; i < 1; i++) {
+                         BlockPos testPos = pos.offset(random.nextInt(3) - 1, random.nextInt(5) - 3, random.nextInt(3) - 1);
+                         // Paper start - Perf: optimize dirt and snow spreading
+                         if (pos.getX() == testPos.getX() && pos.getY() == testPos.getY() && pos.getZ() == testPos.getZ()) {
+@@ -92,9 +97,9 @@ public abstract class SpreadingSnowyBlock extends SnowyBlock {
+                         if (cachedChunk.locX == testPos.getX() >> 4 && cachedChunk.locZ == testPos.getZ() >> 4) {
+                             access = cachedChunk;
+                         } else {
+-                            access = level.getChunkAt(testPos);
++                            access = level.getChunkIfLoaded(testPos);
+                         }
+-                        if (access.getBlockState(testPos).is(baseBlock.get()) && SpreadingSnowyBlock.canPropagate(access, defaultBlockState, testPos)) {
++                        if (access != null && access.getBlockState(testPos).is(baseBlock.get()) && SpreadingSnowyBlock.canPropagate(access, defaultBlockState, testPos)) {
+                             org.bukkit.craftbukkit.event.CraftEventFactory.handleBlockSpreadEvent(level, pos, testPos, defaultBlockState.setValue(SNOWY, isSnowySetting(access.getBlockState(testPos.above()))), Block.UPDATE_ALL); // CraftBukkit
+                             // Paper end - Perf: optimize dirt and snow spreading
+                         }

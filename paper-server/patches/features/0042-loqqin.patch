@@ -1,0 +1,101 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Tue, 18 Aug 2026 16:56:30 +0300
+Subject: [PATCH] loqqin
+
+
+diff --git a/net/minecraft/world/effect/OozingMobEffect.java b/net/minecraft/world/effect/OozingMobEffect.java
+index a1bf6f11218b84d82377d8e9c3796b6b320d56c1..8a204e07b391b8de187e73cabca6f6b626baa68f 100644
+--- a/net/minecraft/world/effect/OozingMobEffect.java
++++ b/net/minecraft/world/effect/OozingMobEffect.java
+@@ -47,7 +47,7 @@ class OozingMobEffect extends MobEffect {
+     private void spawnSlimeOffspring(final Level level, final double x, final double y, final double z) {
+         Slime slime = EntityTypes.SLIME.create(level, EntitySpawnReason.TRIGGERED);
+         if (slime != null) {
+-            slime.setSize(2, true);
++            slime.setSize(2, true, false);
+             slime.snapTo(x, y, z, level.getRandom().nextFloat() * 360.0F, 0.0F);
+             level.addFreshEntity(slime, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.POTION_EFFECT); // CraftBukkit
+         }
+diff --git a/net/minecraft/world/entity/monster/cubemob/AbstractCubeMob.java b/net/minecraft/world/entity/monster/cubemob/AbstractCubeMob.java
+index 0b9bf94d6192235d916b8c335cafed3280286afe..1ea302aa42fb6445db41bc41392676758864498e 100644
+--- a/net/minecraft/world/entity/monster/cubemob/AbstractCubeMob.java
++++ b/net/minecraft/world/entity/monster/cubemob/AbstractCubeMob.java
+@@ -78,12 +78,18 @@ public abstract class AbstractCubeMob extends AgeableMob {
+ 
+     @VisibleForTesting
+     public void setSize(final int size, final boolean updateHealth) {
++        this.setSize(size, updateHealth, false);
++    }
++
++    public void setSize(final int size, final boolean updateHealth, final boolean ignoreAttributes) {
+         int actualSize = Mth.clamp(size, 1, 127);
+         this.entityData.set(ID_SIZE, actualSize);
+         this.reapplyPosition();
+         this.refreshDimensions();
+-        this.setcubeMobHealth(actualSize);
+-        this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.2F + 0.1F * actualSize);
++        if (!ignoreAttributes) {
++            this.setcubeMobHealth(actualSize);
++            this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.2F + 0.1F * actualSize);
++        }
+         if (updateHealth) {
+             this.setHealth(this.getMaxHealth());
+         }
+@@ -107,7 +113,7 @@ public abstract class AbstractCubeMob extends AgeableMob {
+ 
+     @Override
+     protected void readAdditionalSaveData(final ValueInput input) {
+-        this.setSize(input.getIntOr("Size", 0) + 1, false);
++        this.setSize(input.getIntOr("Size", 0) + 1, false, false);
+         super.readAdditionalSaveData(input);
+         this.wasOnGround = input.getBooleanOr("wasOnGround", false);
+         this.canWander = input.getBooleanOr("Paper.canWander", true); // Paper
+diff --git a/net/minecraft/world/entity/monster/cubemob/MagmaCube.java b/net/minecraft/world/entity/monster/cubemob/MagmaCube.java
+index 728ba471fdad96d6ceec4ffbd3e8787ee78acf84..66dfae490c3384297947766fbe9a22411b3657f3 100644
+--- a/net/minecraft/world/entity/monster/cubemob/MagmaCube.java
++++ b/net/minecraft/world/entity/monster/cubemob/MagmaCube.java
+@@ -58,10 +58,17 @@ public class MagmaCube extends AbstractCubeMob implements Enemy {
+ 
+     @Override
+     public void setSize(final int size, final boolean updateHealth) {
+-        super.setSize(size, updateHealth);
++        this.setSize(size, updateHealth, false);
++    }
++
++    @Override
++    public void setSize(final int size, final boolean updateHealth, final boolean ignoreAttributes) {
++        super.setSize(size, updateHealth, ignoreAttributes);
+         int actualSize = this.entityData.get(ID_SIZE);
+-        this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(actualSize);
+-        this.getAttribute(Attributes.ARMOR).setBaseValue(size * 3);
++        if (!ignoreAttributes) {
++            this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(actualSize);
++            this.getAttribute(Attributes.ARMOR).setBaseValue(size * 3);
++        }
+         this.xpReward = actualSize;
+     }
+ 
+diff --git a/net/minecraft/world/entity/monster/cubemob/Slime.java b/net/minecraft/world/entity/monster/cubemob/Slime.java
+index 984ec15bdebcb541cd6ee9014a654ea58988f6f1..b61f7eef2640d3d7808829d025674bac194a5adc 100644
+--- a/net/minecraft/world/entity/monster/cubemob/Slime.java
++++ b/net/minecraft/world/entity/monster/cubemob/Slime.java
+@@ -124,9 +124,16 @@ public class Slime extends AbstractCubeMob implements Enemy {
+ 
+     @Override
+     public void setSize(final int size, final boolean updateHealth) {
+-        super.setSize(size, updateHealth);
++        this.setSize(size, updateHealth, false);
++    }
++
++    @Override
++    public void setSize(final int size, final boolean updateHealth, final boolean ignoreAttributes) {
++        super.setSize(size, updateHealth, ignoreAttributes);
+         int actualSize = this.entityData.get(ID_SIZE);
+-        this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(actualSize);
++        if (!ignoreAttributes) {
++            this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(actualSize);
++        }
+         this.xpReward = actualSize;
+     }
+ }

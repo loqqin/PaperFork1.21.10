@@ -1,0 +1,19 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: loqqin <soubmatic@gmail.com>
+Date: Thu, 12 Mar 2026 20:06:09 +0200
+Subject: [PATCH] sdf
+
+
+diff --git a/net/minecraft/server/network/ServerLoginPacketListenerImpl.java b/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
+index 1f5562eb5076f9c56450a997aedc6d778ee7b751..b5d27cac93c6b2dc5640f0f9ffdadc25aa5c43fd 100644
+--- a/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
++++ b/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
+@@ -171,7 +171,7 @@ public class ServerLoginPacketListenerImpl implements ServerLoginPacketListener,
+         this.requestedUuid = packet.profileId();
+         // Paper end - Validate usernames
+         final String disguisedName = disguiseFromTo.get(packet.name());
+-        this.requestedUsername = disguisedName == null ? packet.name() : disguiseFromTo.getOrDefault(packet.name(), packet.name());
++        this.requestedUsername = disguisedName == null ? packet.name() : disguiseFromTo.getOrDefault(packet.name().toLowerCase(java.util.Locale.ROOT), packet.name());
+         GameProfile singleplayerProfile = this.server.getSingleplayerProfile();
+         if (singleplayerProfile != null && this.requestedUsername.equalsIgnoreCase(singleplayerProfile.name())) {
+             this.startClientVerification(singleplayerProfile);

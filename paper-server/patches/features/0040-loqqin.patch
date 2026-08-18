@@ -1,0 +1,37 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Tue, 18 Aug 2026 16:55:46 +0300
+Subject: [PATCH] loqqin
+
+
+diff --git a/net/minecraft/network/protocol/game/ClientboundMoveEntityPacket.java b/net/minecraft/network/protocol/game/ClientboundMoveEntityPacket.java
+index 75d8811ed4be7e88309a12fff80a8151e2eca7e4..7068b5cfa3c189a578ed050b6b20ec6c5d7fb82f 100644
+--- a/net/minecraft/network/protocol/game/ClientboundMoveEntityPacket.java
++++ b/net/minecraft/network/protocol/game/ClientboundMoveEntityPacket.java
+@@ -11,16 +11,16 @@ import org.jspecify.annotations.Nullable;
+ 
+ public abstract class ClientboundMoveEntityPacket implements Packet<ClientGamePacketListener> {
+     public final int entityId;
+-    protected final short xa;
+-    protected final short ya;
+-    protected final short za;
+-    protected final byte yRot;
+-    protected final byte xRot;
+-    protected final boolean onGround;
+-    protected final boolean hasRot;
+-    protected final boolean hasPos;
+-
+-    protected ClientboundMoveEntityPacket(
++    public final short xa;
++    public final short ya;
++    public final short za;
++    public final byte yRot;
++    public final byte xRot;
++    public final boolean onGround;
++    public final boolean hasRot;
++    public final boolean hasPos;
++
++    public ClientboundMoveEntityPacket(
+         final int entityId,
+         final short xa,
+         final short ya,

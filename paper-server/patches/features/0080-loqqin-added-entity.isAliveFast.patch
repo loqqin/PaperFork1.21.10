@@ -1,14 +1,14 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: aaa <121246396+loqqin@users.noreply.github.com>
-Date: Sun, 16 Aug 2026 22:42:09 +0300
+Date: Tue, 18 Aug 2026 17:04:32 +0300
 Subject: [PATCH] loqqin added entity.isAliveFast
 
 
 diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
-index cef564cad6704c07abfd278b08e9b583a0938316..48fdffe9adb4de562215f35ee5eccac3b0b619a3 100755
+index 9dceb53f3d969989d903eaf31675a7ae2567fc93..a42e7aa2221ee087b9be4d54d01994e50408e81f 100644
 --- a/net/minecraft/world/entity/Entity.java
 +++ b/net/minecraft/world/entity/Entity.java
-@@ -2872,6 +2872,10 @@ public abstract class Entity implements SyncedDataHolder, DebugValueSource, Name
+@@ -3002,6 +3002,10 @@ public abstract class Entity
          return !this.isRemoved();
      }
  
@@ -17,13 +17,13 @@ index cef564cad6704c07abfd278b08e9b583a0938316..48fdffe9adb4de562215f35ee5eccac3
 +    }
 +
      public boolean isInWall() {
-         // Paper start - optimise collisions
          if (this.noPhysics) {
+             return false;
 diff --git a/net/minecraft/world/entity/LivingEntity.java b/net/minecraft/world/entity/LivingEntity.java
-index d9ad60c7ade8f6cb72231e32cb3db4a3c27f64fc..44c5aae8aa4ab36bb2b938bae6af50f47b0bdd51 100755
+index 970e19fc6f8e0bccf94022fba90713cbaab06266..053d8f6fa4164ed5324923245d1178f283907bd7 100644
 --- a/net/minecraft/world/entity/LivingEntity.java
 +++ b/net/minecraft/world/entity/LivingEntity.java
-@@ -2193,6 +2193,11 @@ public abstract class LivingEntity extends Entity implements Attackable, Waypoin
+@@ -2190,6 +2190,11 @@ public abstract class LivingEntity extends Entity implements Attackable, Waypoin
          return !this.isRemoved() && this.getHealth() > 0.0F && !this.dead; // Paper - Check this.dead
      }
  
@@ -32,6 +32,6 @@ index d9ad60c7ade8f6cb72231e32cb3db4a3c27f64fc..44c5aae8aa4ab36bb2b938bae6af50f4
 +        return !this.isRemoved() && !this.dead; // Paper - Check this.dead
 +    }
 +
-     public boolean isLookingAtMe(LivingEntity entity, double tolerance, boolean scaleByDistance, boolean visual, double... yValues) {
-         Vec3 vec3 = entity.getViewVector(1.0F).normalize();
- 
+     public boolean isLookingAtMe(
+         final LivingEntity target,
+         final double coneSize,

@@ -1,19 +1,58 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: aaa <121246396+loqqin@users.noreply.github.com>
-Date: Sat, 11 Jul 2026 17:25:13 +0300
+Date: Tue, 18 Aug 2026 17:00:25 +0300
 Subject: [PATCH] loqqin
 
 
-diff --git a/net/minecraft/server/level/ServerPlayerGameMode.java b/net/minecraft/server/level/ServerPlayerGameMode.java
-index 44360b7963e1144396af05665a8ad3ce88251c6e..52c1232a5403deb0877219e8108f004a77bcbbbc 100644
---- a/net/minecraft/server/level/ServerPlayerGameMode.java
-+++ b/net/minecraft/server/level/ServerPlayerGameMode.java
-@@ -227,7 +227,7 @@ public class ServerPlayerGameMode {
+diff --git a/net/minecraft/world/level/block/CropBlock.java b/net/minecraft/world/level/block/CropBlock.java
+index a82055686c95ba22a713f22ecd4e974f267f818b..9ba6d5e31d948a6366581d0fc786ef4abb928ee7 100644
+--- a/net/minecraft/world/level/block/CropBlock.java
++++ b/net/minecraft/world/level/block/CropBlock.java
+@@ -120,19 +120,20 @@ public class CropBlock extends VegetationBlock implements BonemealableBlock {
+     protected static float getGrowthSpeed(final Block type, final BlockGetter level, final BlockPos pos) {
+         float speed = 1.0F;
+         BlockPos below = pos.below();
++        boolean contains = level instanceof ServerLevel serverLevel && growthPercentIncrease.containsKey(serverLevel.serverLevelData.settings.levelName);
  
-                 this.destroyProgressStart = this.gameTicks;
-                 float f = 1.0F;
--                BlockState blockState = this.level.getBlockState(pos);
-+                BlockState blockState = FakeBlocks.function.apply(player, pos, level);
-                 if (event.useInteractedBlock() != org.bukkit.event.Event.Result.DENY && !blockState.isAir()) { // Paper
-                     EnchantmentHelper.onHitBlock(
-                         this.level,
+         for (int xx = -1; xx <= 1; xx++) {
+             for (int zz = -1; zz <= 1; zz++) {
+                 float blockSpeed = 0.0F;
+-                BlockState blockState = level.getBlockState(below.offset(xx, 0, zz));
+-                if (blockState.is(BlockTags.GROWS_CROPS)) {
++                BlockState blockState = null;
++                if (contains || (blockState = level.getBlockState(below.offset(xx, 0, zz))).is(BlockTags.GROWS_CROPS)) {
+                     blockSpeed = 1.0F;
+-                    if (blockState.getValueOrElse(FarmlandBlock.MOISTURE, 0) > 0) {
++                    if (contains || (blockState != null && blockState.getValueOrElse(FarmlandBlock.MOISTURE, 0) > 0)) {
+                         blockSpeed = 3.0F;
+                     }
+                 }
+ 
+-                if (xx != 0 || zz != 0) {
++                if (!contains && (xx != 0 || zz != 0)) {
+                     blockSpeed /= 4.0F;
+                 }
+ 
+@@ -146,9 +147,9 @@ public class CropBlock extends VegetationBlock implements BonemealableBlock {
+         BlockPos east = pos.east();
+         boolean horizontal = level.getBlockState(west).is(type) || level.getBlockState(east).is(type);
+         boolean vertical = level.getBlockState(north).is(type) || level.getBlockState(south).is(type);
+-        if (horizontal && vertical) {
++        if (!contains && horizontal && vertical) {
+             speed /= 2.0F;
+-        } else {
++        } else if (!contains) {
+             boolean diagonal = level.getBlockState(west.north()).is(type)
+                 || level.getBlockState(east.north()).is(type)
+                 || level.getBlockState(east.south()).is(type)
+@@ -158,6 +159,10 @@ public class CropBlock extends VegetationBlock implements BonemealableBlock {
+             }
+         }
+ 
++        if (contains) {
++            return speed / 11;
++        }
++
+         return speed;
+     }
+ 

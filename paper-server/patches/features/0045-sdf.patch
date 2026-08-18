@@ -1,20 +1,69 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
-From: loqqin <soubmatic@gmail.com>
-Date: Sat, 14 Mar 2026 14:09:05 +0200
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Tue, 18 Aug 2026 16:57:03 +0300
 Subject: [PATCH] sdf
 
 
-diff --git a/net/minecraft/server/network/ServerLoginPacketListenerImpl.java b/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
-index c742425615a5969c7499d7f313c90afd784f1b00..f36d4682538277b677cdfebf1aa5ade28d71087b 100644
---- a/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
-+++ b/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
-@@ -161,8 +161,7 @@ public class ServerLoginPacketListenerImpl implements ServerLoginPacketListener,
-         }
-         this.requestedUuid = packet.profileId();
-         // Paper end - Validate usernames
--        final String disguisedName = disguiseFromTo.get(packet.name());
--        this.requestedUsername = disguisedName == null ? packet.name() : disguiseFromTo.getOrDefault(packet.name().toLowerCase(java.util.Locale.ROOT), packet.name());
-+        this.requestedUsername = disguiseFromTo.getOrDefault(packet.name().toLowerCase(java.util.Locale.ROOT), packet.name());
-         GameProfile singleplayerProfile = this.server.getSingleplayerProfile();
-         if (singleplayerProfile != null && this.requestedUsername.equalsIgnoreCase(singleplayerProfile.name())) {
-             this.startClientVerification(singleplayerProfile);
+diff --git a/net/minecraft/world/entity/ai/navigation/PathNavigation.java b/net/minecraft/world/entity/ai/navigation/PathNavigation.java
+index 862224dfc003bf02ee0d7c1d804549210d6c8ffa..8b417149afa667706fa559358438bb55052aa1a1 100644
+--- a/net/minecraft/world/entity/ai/navigation/PathNavigation.java
++++ b/net/minecraft/world/entity/ai/navigation/PathNavigation.java
+@@ -52,7 +52,7 @@ public abstract class PathNavigation {
+     private @Nullable BlockPos targetPos;
+     private int reachRange;
+     private float maxVisitedNodesMultiplier = 1.0F;
+-    public final PathFinder pathFinder;
++    public PathFinder pathFinder;
+     private boolean isStuck;
+     private float requiredPathLength = 16.0F;
+ 
+diff --git a/net/minecraft/world/level/pathfinder/Path.java b/net/minecraft/world/level/pathfinder/Path.java
+index 7317870b51ca00c55e2754486e914f0e7a1db9d4..f21d11307540dee764caa33c9a35ce56fb7d654a 100644
+--- a/net/minecraft/world/level/pathfinder/Path.java
++++ b/net/minecraft/world/level/pathfinder/Path.java
+@@ -13,10 +13,10 @@ import org.jspecify.annotations.Nullable;
+ 
+ public class Path {
+     public static final StreamCodec<FriendlyByteBuf, Path> STREAM_CODEC = StreamCodec.of((output, value) -> value.writeToStream(output), Path::createFromStream);
+-    public final List<Node> nodes;
++    public List<Node> nodes;
+     private Path.@Nullable DebugData debugData;
+     private int nextNodeIndex;
+-    private final BlockPos target;
++    public BlockPos target;
+     private final float distToTarget;
+     private final boolean reached;
+ 
+@@ -35,6 +35,10 @@ public class Path {
+         return this.nextNodeIndex <= 0;
+     }
+ 
++    public boolean isProcessed() {
++        return true;
++    }
++
+     public boolean isDone() {
+         return this.nextNodeIndex >= this.nodes.size();
+     }
+@@ -121,7 +125,7 @@ public class Path {
+     }
+ 
+     @VisibleForDebug
+-    void setDebug(final Node[] openSet, final Node[] closedSet, final Set<Target> targets) {
++    public void setDebug(final Node[] openSet, final Node[] closedSet, final Set<Target> targets) {
+         this.debugData = new Path.DebugData(openSet, closedSet, targets);
+     }
+ 
+diff --git a/net/minecraft/world/level/pathfinder/SwimNodeEvaluator.java b/net/minecraft/world/level/pathfinder/SwimNodeEvaluator.java
+index e55558448f91410f6174548edc88327191358825..355142be30daaa00809cd77e99857dc812c3d791 100644
+--- a/net/minecraft/world/level/pathfinder/SwimNodeEvaluator.java
++++ b/net/minecraft/world/level/pathfinder/SwimNodeEvaluator.java
+@@ -15,7 +15,7 @@ import net.minecraft.world.level.material.FluidState;
+ import org.jspecify.annotations.Nullable;
+ 
+ public class SwimNodeEvaluator extends NodeEvaluator {
+-    private final boolean allowBreaching;
++    public final boolean allowBreaching;
+     private final Long2ObjectMap<PathType> pathTypesByPosCache = new Long2ObjectOpenHashMap<>();
+ 
+     public SwimNodeEvaluator(final boolean allowBreaching) {

@@ -17,7 +17,7 @@
      public final String regionFileComression = this.get("region-file-compression", "deflate");
      public final boolean enableJmxMonitoring = this.get("enable-jmx-monitoring", false);
      public final Settings<DedicatedServerProperties>.MutableValue<Boolean> enableStatus = this.getMutable("enable-status", true);
-@@ -107,20 +_,23 @@
+@@ -118,20 +_,23 @@
      );
      public final String textFilteringConfig = this.get("text-filtering-config", "");
      public final int textFilteringVersion = this.get("text-filtering-version", 0);

@@ -812,23 +812,13 @@ public final class CraftItemStack extends ItemStack {
         if (customData == null) {
             return null;
         }
-        final Map<String, Tag> tags = customData.getUnsafe().tags;
-        CompoundTag pdcTag = (CompoundTag) tags.get(CraftItemStack.PDC_CUSTOM_DATA_KEY);
-        if (pdcTag == null) {
-            return null;
-        }
-        return pdcTag;
+        return customData.getUnsafe().getCompound(PDC_CUSTOM_DATA_KEY).orElse(null);
     }
 
     public CraftItemStack editPDCNms(Consumer<CompoundTag> consumer) {
         if (this.handle == null || this.handle.isEmpty()) return this;
         CustomData customData = this.handle.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
-        CompoundTag pdcTag = customData.getUnsafe().getCompound(PDC_CUSTOM_DATA_KEY).orElse(null);
-        if (pdcTag == null) {
-            pdcTag = new CompoundTag();
-        } else {
-            pdcTag = pdcTag.copy();
-        }
+        CompoundTag pdcTag = customData.getUnsafe().getCompound(PDC_CUSTOM_DATA_KEY).map(CompoundTag::copy).orElseGet(CompoundTag::new);
         consumer.accept(pdcTag);
         if (!pdcTag.isEmpty()) {
             final CompoundTag finalPdcTag = pdcTag;

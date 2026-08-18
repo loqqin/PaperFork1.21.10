@@ -55,14 +55,14 @@ public final class DumpItemCommand implements PaperSubcommand {
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public String doDumpItem(final CommandSender sender, final boolean includeAllComponents, @Nullable ItemStack item) {
+    public String doDumpItem(final CommandSender sender, final boolean includeAllComponents, @org.jetbrains.annotations.Nullable ItemStack item) {
         if (!(sender instanceof final Player player)) {
             sender.sendMessage("Only players can use this command");
             return null;
         }
         final TextComponent.Builder output = Component.text();
         final StringBuilder itemToCopy = new StringBuilder();
-        final ItemStack item = CraftItemStack.asNMSCopy(player.getInventory().getItemInMainHand());
+        if (item == null) { item = CraftItemStack.asNMSCopy(player.getInventory().getItemInMainHand()); }
         final String itemName = item.typeHolder().unwrapKey().orElseThrow().identifier().toString();
         itemToCopy.append(itemName);
         output.append(text(itemName, YELLOW)); // item type
@@ -115,7 +115,7 @@ public final class DumpItemCommand implements PaperSubcommand {
         }
         player.sendMessage(output.build().compact());
         final Component copyMsg = text("Click to copy item definition to clipboard for use with /give", GRAY, ITALIC);
-        final String string = itemCommandBuilder.toString();
+        final String string = itemToCopy.toString();
         sender.sendMessage(copyMsg.clickEvent(copyToClipboard(string)));
         return string;
     }

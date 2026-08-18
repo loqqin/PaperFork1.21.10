@@ -1,0 +1,42 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Tue, 18 Aug 2026 17:03:48 +0300
+Subject: [PATCH] loqqin optimized chunk ticking
+
+
+diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
+index 59598bfb95c2f8a38efd92685c46a954dc76739d..98f8ef3f52f2607a97c7bf66d910ba3b29c679d4 100644
+--- a/net/minecraft/server/level/ServerLevel.java
++++ b/net/minecraft/server/level/ServerLevel.java
+@@ -1076,12 +1076,21 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
+     public void tickPrecipitation(final BlockPos pos) {
+         BlockPos topPos = this.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, pos);
+         BlockPos belowPos = topPos.below();
++
++        boolean raining = this.isRaining();
++        BlockState belowState = this.getBlockState(belowPos);
++        boolean isWater = belowState.is(Blocks.WATER);
++
++        if (!raining && !isWater) {
++            return;
++        }
++
+         Biome biome = this.getBiome(topPos).value();
+-        if (biome.shouldFreeze(this, belowPos)) {
++        if (isWater && biome.shouldFreeze(this, belowPos)) {
+             org.bukkit.craftbukkit.event.CraftEventFactory.handleBlockFormEvent(this, belowPos, Blocks.ICE.defaultBlockState(), Block.UPDATE_ALL, null); // CraftBukkit
+         }
+ 
+-        if (this.isRaining()) {
++        if (raining) {
+             int maxHeight = this.getGameRules().get(GameRules.MAX_SNOW_ACCUMULATION_HEIGHT);
+             if (maxHeight > 0 && biome.shouldSnow(this, topPos)) {
+                 BlockState state = this.getBlockState(topPos);
+@@ -1099,7 +1108,6 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
+ 
+             Biome.Precipitation precipitation = biome.getPrecipitationAt(belowPos, this.getSeaLevel());
+             if (precipitation != Biome.Precipitation.NONE) {
+-                BlockState belowState = this.getBlockState(belowPos);
+                 belowState.getBlock().handlePrecipitation(belowState, this, belowPos, precipitation);
+             }
+         }

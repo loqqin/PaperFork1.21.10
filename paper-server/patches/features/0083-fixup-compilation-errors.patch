@@ -1,0 +1,188 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Tue, 18 Aug 2026 17:10:23 +0300
+Subject: [PATCH] fixup compilation errors
+
+
+diff --git a/ca/spottedleaf/moonrise/patches/collisions/CollisionUtil.java b/ca/spottedleaf/moonrise/patches/collisions/CollisionUtil.java
+index b9e7a4c4a7028703ad9f512005864e15e496468d..81aaeaa32222ca2a93b7154926ad04d1eb8570df 100644
+--- a/ca/spottedleaf/moonrise/patches/collisions/CollisionUtil.java
++++ b/ca/spottedleaf/moonrise/patches/collisions/CollisionUtil.java
+@@ -1,6 +1,7 @@
++package ca.spottedleaf.moonrise.patches.collisions;
++
+ import net.FakeBlocks;
+ import net.minecraft.server.level.ServerPlayer;
+-package ca.spottedleaf.moonrise.patches.collisions;
+ 
+ import ca.spottedleaf.moonrise.common.util.WorldUtil;
+ import ca.spottedleaf.moonrise.patches.chunk_system.world.ChunkSystemEntityGetter;
+diff --git a/net/minecraft/server/level/ServerChunkCache.java b/net/minecraft/server/level/ServerChunkCache.java
+index c67ddc80db46e60f0d6561003904261613e7a5b7..36ec65d9b73a5524c482d6d11c7eab2344aca8a8 100644
+--- a/net/minecraft/server/level/ServerChunkCache.java
++++ b/net/minecraft/server/level/ServerChunkCache.java
+@@ -626,7 +626,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+ 
+             for (int dx = -radius; dx <= radius; dx++) {
+                 for (int dz = -radius; dz <= radius; dz++) {
+-                    LevelChunk chunk = this.getChunkAtIfLoadedImmediately(pos.x + dx, pos.z + dz);
++                    LevelChunk chunk = this.getChunkAtIfLoadedImmediately(pos.x() + dx, pos.z() + dz);
+                     if (chunk != null && visited.add(chunk)) {
+                         chunk.incrementInhabitedTime(delta);
+                     }
+diff --git a/net/minecraft/server/network/ServerLoginPacketListenerImpl.java b/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
+index 6300ffb7b78793e070f447aab2d52e8bc48d2ee1..2cd9751ce29c980402807cbe53f62a83d8d88cb7 100644
+--- a/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
++++ b/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
+@@ -321,7 +321,6 @@ public class ServerLoginPacketListenerImpl implements ServerLoginPacketListener,
+         // Paper end - Virtual authenticator threads
+     }
+ 
+-    @Nullable
+     public static java.util.function.Function<net.minecraft.server.network.ServerLoginPacketListenerImpl, Boolean> allowLoginWithoutVelocity;
+ 
+     // CraftBukkit start
+diff --git a/net/minecraft/world/entity/monster/EnderMan.java b/net/minecraft/world/entity/monster/EnderMan.java
+index ef9039e3351f30790fd528577cc92bf33e34c661..9dbcbf33ba95536620ac6040eb26ab9955f787ae 100644
+--- a/net/minecraft/world/entity/monster/EnderMan.java
++++ b/net/minecraft/world/entity/monster/EnderMan.java
+@@ -299,30 +299,6 @@ public class EnderMan extends Monster implements NeutralMob {
+         // kenny удалил телепортацию эндермена потому что он 18.05.2026 телепортировался в чанк в котором был initializelight а телепортация происходила синхронно
+         // и произошел дедлок
+         return false;
+-        // BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos(x, y, z);
+-
+-        while (pos.getY() > this.level().getMinY() && !this.level().getBlockState(pos).blocksMotion()) {
+-            pos.move(Direction.DOWN);
+-        }
+-
+-        BlockState blockState = this.level().getBlockState(pos);
+-        boolean couldStandOn = blockState.blocksMotion();
+-        boolean isWet = blockState.getFluidState().is(FluidTags.WATER);
+-        if (couldStandOn && !isWet) {
+-            Vec3 oldPos = this.position();
+-            boolean result = this.randomTeleport(x, y, z, true);
+-            if (result) {
+-                this.level().gameEvent(GameEvent.TELEPORT, oldPos, GameEvent.Context.of(this));
+-                if (!this.isSilent()) {
+-                    this.level().playSound(null, this.xo, this.yo, this.zo, SoundEvents.ENDERMAN_TELEPORT, this.getSoundSource(), 1.0F, 1.0F);
+-                    this.playSound(SoundEvents.ENDERMAN_TELEPORT, 1.0F, 1.0F);
+-                }
+-            }
+-
+-            return result;
+-        } else {
+-            return false;
+-        }
+     }
+ 
+     @Override
+diff --git a/net/minecraft/world/level/block/CactusBlock.java b/net/minecraft/world/level/block/CactusBlock.java
+index 27edd70466f603078c3b35a67bca9f701b8b2c18..421de9dcdb873c9b7418544f737218a2cc1099d5 100644
+--- a/net/minecraft/world/level/block/CactusBlock.java
++++ b/net/minecraft/world/level/block/CactusBlock.java
+@@ -78,7 +78,7 @@ public class CactusBlock extends Block {
+             }
+ 
+             if (age < 15) {
+-                int multiplier = getMultiplier(growthPercentIncrease.getDouble(level.serverLevelData.settings.levelName));
++                int multiplier = getMultiplier(growthPercentIncrease.getDouble(level.serverLevelData.getLevelName()));
+                 int i1 = 1 + multiplier;
+                 level.setBlock(pos, state.setValue(AGE, Math.min(15, age + i1)), Block.UPDATE_NONE);
+             }
+diff --git a/net/minecraft/world/level/block/CocoaBlock.java b/net/minecraft/world/level/block/CocoaBlock.java
+index f1710140e0ade44676672731b44964d51f96e7ee..9de876a532397b03f684f4af3fd25ef3d00b7594 100644
+--- a/net/minecraft/world/level/block/CocoaBlock.java
++++ b/net/minecraft/world/level/block/CocoaBlock.java
+@@ -53,7 +53,7 @@ public class CocoaBlock extends HorizontalDirectionalBlock implements Bonemealab
+     @Override
+     protected void randomTick(final BlockState state, final ServerLevel level, final BlockPos pos, final RandomSource random) {
+         double modifier = level.spigotConfig.cocoaModifier;
+-        modifier += modifier / 100 * growthPercentIncrease.getDouble(level.serverLevelData.settings.levelName);
++        modifier += modifier / 100 * growthPercentIncrease.getDouble(level.serverLevelData.getLevelName());
+         if (level.getRandom().nextFloat() < (modifier / (100.0F * 5))) { // Spigot - SPIGOT-7159: Better modifier resolution
+             int age = state.getValue(AGE);
+             if (age < 2) {
+diff --git a/net/minecraft/world/level/block/CropBlock.java b/net/minecraft/world/level/block/CropBlock.java
+index 9ba6d5e31d948a6366581d0fc786ef4abb928ee7..a8afff3b4684290d670035b92b8634e7d9bb0dff 100644
+--- a/net/minecraft/world/level/block/CropBlock.java
++++ b/net/minecraft/world/level/block/CropBlock.java
+@@ -98,7 +98,7 @@ public class CropBlock extends VegetationBlock implements BonemealableBlock {
+                 } else if (this == Blocks.WHEAT) {
+                     modifier = level.spigotConfig.wheatModifier;
+                 }
+-                modifier += modifier / 100 * growthPercentIncrease.getDouble(level.serverLevelData.settings.levelName);
++                modifier += modifier / 100 * growthPercentIncrease.getDouble(level.serverLevelData.getLevelName());
+ 
+                 if (random.nextFloat() < (modifier / (100.0F * (Math.floor((25.0F / growthSpeed) + 1))))) { // Spigot - SPIGOT-7159: Better modifier resolution
+                     // Spigot end
+@@ -120,7 +120,7 @@ public class CropBlock extends VegetationBlock implements BonemealableBlock {
+     protected static float getGrowthSpeed(final Block type, final BlockGetter level, final BlockPos pos) {
+         float speed = 1.0F;
+         BlockPos below = pos.below();
+-        boolean contains = level instanceof ServerLevel serverLevel && growthPercentIncrease.containsKey(serverLevel.serverLevelData.settings.levelName);
++        boolean contains = level instanceof ServerLevel serverLevel && growthPercentIncrease.containsKey(serverLevel.serverLevelData.getLevelName());
+ 
+         for (int xx = -1; xx <= 1; xx++) {
+             for (int zz = -1; zz <= 1; zz++) {
+diff --git a/net/minecraft/world/level/block/MushroomBlock.java b/net/minecraft/world/level/block/MushroomBlock.java
+index b703906488807cf46f7aba3db1eb82123985a103..9c2b5c49ba661e89b1ac11ece790065d514fe744 100644
+--- a/net/minecraft/world/level/block/MushroomBlock.java
++++ b/net/minecraft/world/level/block/MushroomBlock.java
+@@ -49,7 +49,7 @@ public class MushroomBlock extends VegetationBlock implements BonemealableBlock
+     @Override
+     protected void randomTick(final BlockState state, final ServerLevel level, BlockPos pos, final RandomSource random) {
+         double modifier = level.spigotConfig.mushroomModifier;
+-        modifier += modifier / 100 * growthPercentIncrease.getDouble(level.serverLevelData.settings.levelName);
++        modifier += modifier / 100 * growthPercentIncrease.getDouble(level.serverLevelData.getLevelName());
+         if (random.nextFloat() < (modifier / (100.0F * 25))) { // Spigot - SPIGOT-7159: Better modifier resolution
+             // int max = 5;
+             // int r = 4;
+@@ -88,7 +88,7 @@ public class MushroomBlock extends VegetationBlock implements BonemealableBlock
+     protected boolean canSurvive(final BlockState state, final LevelReader level, final BlockPos pos) {
+         BlockPos belowPos = pos.below();
+         BlockState below = level.getBlockState(belowPos);
+-        return below.is(BlockTags.OVERRIDES_MUSHROOM_LIGHT_REQUIREMENT) || below.is(BlockTags.MUSHROOM_GROW_BLOCK);
++        return below.is(BlockTags.OVERRIDES_MUSHROOM_LIGHT_REQUIREMENT) || this.mayPlaceOn(below, level, belowPos);
+     }
+ 
+     public boolean growMushroom(final ServerLevel level, final BlockPos pos, final BlockState state, final RandomSource random) {
+diff --git a/net/minecraft/world/level/block/NetherWartBlock.java b/net/minecraft/world/level/block/NetherWartBlock.java
+index 88dd257d5b468b3467e355d6aa88acc66e56d4f7..2c805a8cc422a6a6d5452267135c9ffc0fb6170f 100644
+--- a/net/minecraft/world/level/block/NetherWartBlock.java
++++ b/net/minecraft/world/level/block/NetherWartBlock.java
+@@ -54,7 +54,7 @@ public class NetherWartBlock extends VegetationBlock {
+     protected void randomTick(BlockState state, final ServerLevel level, final BlockPos pos, final RandomSource random) {
+         int age = state.getValue(AGE);
+         double modifier = level.spigotConfig.wartModifier;
+-        modifier += modifier / 100 * growthPercentIncrease.getDouble(level.serverLevelData.settings.levelName);
++        modifier += modifier / 100 * growthPercentIncrease.getDouble(level.serverLevelData.getLevelName());
+         if (age < 3 && random.nextFloat() < (modifier / (100.0F * 10))) { // Spigot - SPIGOT-7159: Better modifier resolution
+             state = state.setValue(AGE, age + 1);
+             level.setBlock(pos, state, Block.UPDATE_CLIENTS);
+diff --git a/net/minecraft/world/level/block/StemBlock.java b/net/minecraft/world/level/block/StemBlock.java
+index 9353b50bb55a026bbafb5d39213db184595376e2..62487c8615e1356f30a06f5c8535ea89bce0dee5 100644
+--- a/net/minecraft/world/level/block/StemBlock.java
++++ b/net/minecraft/world/level/block/StemBlock.java
+@@ -86,7 +86,7 @@ public class StemBlock extends VegetationBlock implements BonemealableBlock {
+         if (level.getRawBrightness(pos, 0) >= 9 || org.bukkit.Bukkit.worldNamesWithAllowedGrowthWithLowBrightness.contains(level.getWorld().getName())) {
+             float growthSpeed = CropBlock.getGrowthSpeed(this, level, pos);
+             double modifier = this == Blocks.PUMPKIN_STEM ? level.spigotConfig.pumpkinModifier : level.spigotConfig.melonModifier;
+-            modifier += modifier / 100 * growthPercentIncrease.getDouble(level.serverLevelData.settings.levelName);
++            modifier += modifier / 100 * growthPercentIncrease.getDouble(level.serverLevelData.getLevelName());
+             if (random.nextFloat() < (modifier / (100.0F * (Math.floor((25.0F / growthSpeed) + 1))))) { // Spigot - SPIGOT-7159: Better modifier resolution
+                 int age = state.getValue(AGE);
+                 if (age < 7) {
+diff --git a/net/minecraft/world/level/block/SugarCaneBlock.java b/net/minecraft/world/level/block/SugarCaneBlock.java
+index a29699ab421894586e508ea1900ea212b746ae26..94b7e89535606f8241ee0c4fe49d5abf95cb14bf 100644
+--- a/net/minecraft/world/level/block/SugarCaneBlock.java
++++ b/net/minecraft/world/level/block/SugarCaneBlock.java
+@@ -60,7 +60,7 @@ public class SugarCaneBlock extends Block {
+             if (height < level.paperConfig().maxGrowthHeight.reeds) { // Paper - Configurable cactus/bamboo/reed growth height
+                 int age = state.getValue(AGE);
+                 double modifier = level.spigotConfig.caneModifier; // Spigot - SPIGOT-7159: Better modifier resolution
+-                modifier += modifier / 100 * growthPercentIncrease.getDouble(level.serverLevelData.settings.levelName);
++                modifier += modifier / 100 * growthPercentIncrease.getDouble(level.serverLevelData.getLevelName());
+                 if (age >= 15 || (modifier != 100 && random.nextFloat() < (modifier / (100.0F * 16)))) { // Spigot - SPIGOT-7159: Better modifier resolution
+                     org.bukkit.craftbukkit.event.CraftEventFactory.handleBlockGrowEvent(level, pos.above(), this.defaultBlockState(), Block.UPDATE_ALL); // CraftBukkit
+                     level.setBlock(pos, state.setValue(AGE, 0), Block.UPDATE_NONE);
