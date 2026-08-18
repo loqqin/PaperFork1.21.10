@@ -1,0 +1,47 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Tue, 18 Aug 2026 17:42:27 +0300
+Subject: [PATCH] loqqin make recipe fields public
+
+
+diff --git a/net/minecraft/world/item/crafting/ShapedRecipe.java b/net/minecraft/world/item/crafting/ShapedRecipe.java
+index f6836d6bbdff6c894b31003869d6b5b2b55e163f..7ebac76135580738e7d115f925ca9a1556b9ba13 100644
+--- a/net/minecraft/world/item/crafting/ShapedRecipe.java
++++ b/net/minecraft/world/item/crafting/ShapedRecipe.java
+@@ -37,8 +37,8 @@ public class ShapedRecipe extends NormalCraftingRecipe {
+         ShapedRecipe::new
+     );
+     public static final RecipeSerializer<ShapedRecipe> SERIALIZER = new RecipeSerializer<>(MAP_CODEC, STREAM_CODEC);
+-    private final ShapedRecipePattern pattern;
+-    private final ItemStackTemplate result;
++    public final ShapedRecipePattern pattern;
++    public final ItemStackTemplate result;
+ 
+     public ShapedRecipe(
+         final Recipe.CommonInfo commonInfo, final CraftingRecipe.CraftingBookInfo bookInfo, final ShapedRecipePattern pattern, final ItemStackTemplate result
+diff --git a/net/minecraft/world/item/crafting/ShapedRecipePattern.java b/net/minecraft/world/item/crafting/ShapedRecipePattern.java
+index b2ca30b84a6f498a2b18145eb1efaea7c4c5c943..acfa83a996ac0677b637d0c2454cb4fc482a9e8b 100644
+--- a/net/minecraft/world/item/crafting/ShapedRecipePattern.java
++++ b/net/minecraft/world/item/crafting/ShapedRecipePattern.java
+@@ -39,7 +39,7 @@ public final class ShapedRecipePattern {
+     private final int width;
+     private final int height;
+     private final List<Optional<Ingredient>> ingredients;
+-    private final Optional<ShapedRecipePattern.Data> data;
++    public final Optional<ShapedRecipePattern.Data> data;
+     private final int ingredientCount;
+     private final boolean symmetrical;
+ 
+diff --git a/net/minecraft/world/item/crafting/SingleItemRecipe.java b/net/minecraft/world/item/crafting/SingleItemRecipe.java
+index ac7452bc64bbc85e628cfad9ea638b535c6cc9bb..443ab1e86cb8f551d224f36cd766dd59a8133201 100644
+--- a/net/minecraft/world/item/crafting/SingleItemRecipe.java
++++ b/net/minecraft/world/item/crafting/SingleItemRecipe.java
+@@ -12,7 +12,7 @@ import org.jspecify.annotations.Nullable;
+ public abstract class SingleItemRecipe implements Recipe<SingleRecipeInput> {
+     protected final Recipe.CommonInfo commonInfo;
+     private final Ingredient input;
+-    private final ItemStackTemplate result;
++    public final ItemStackTemplate result;
+     private @Nullable PlacementInfo placementInfo;
+ 
+     public SingleItemRecipe(final Recipe.CommonInfo commonInfo, final Ingredient input, final ItemStackTemplate result) {
