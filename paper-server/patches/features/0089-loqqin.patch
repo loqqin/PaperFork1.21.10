@@ -1,0 +1,19 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Tue, 1 Sep 2026 00:23:05 +0300
+Subject: [PATCH] loqqin
+
+
+diff --git a/net/minecraft/world/level/block/MushroomBlock.java b/net/minecraft/world/level/block/MushroomBlock.java
+index 9c2b5c49ba661e89b1ac11ece790065d514fe744..63ad85db05da6771064961fbe7c5a05bf9abc4d4 100644
+--- a/net/minecraft/world/level/block/MushroomBlock.java
++++ b/net/minecraft/world/level/block/MushroomBlock.java
+@@ -88,7 +88,7 @@ public class MushroomBlock extends VegetationBlock implements BonemealableBlock
+     protected boolean canSurvive(final BlockState state, final LevelReader level, final BlockPos pos) {
+         BlockPos belowPos = pos.below();
+         BlockState below = level.getBlockState(belowPos);
+-        return below.is(BlockTags.OVERRIDES_MUSHROOM_LIGHT_REQUIREMENT) || this.mayPlaceOn(below, level, belowPos);
++        return below.is(BlockTags.OVERRIDES_MUSHROOM_LIGHT_REQUIREMENT) /*|| this.mayPlaceOn(below, level, belowPos)*/;
+     }
+ 
+     public boolean growMushroom(final ServerLevel level, final BlockPos pos, final BlockState state, final RandomSource random) {
