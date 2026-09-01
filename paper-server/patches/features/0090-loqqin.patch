@@ -1,0 +1,97 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Tue, 1 Sep 2026 18:40:03 +0300
+Subject: [PATCH] loqqin
+
+
+diff --git a/net/minecraft/world/level/block/CactusBlock.java b/net/minecraft/world/level/block/CactusBlock.java
+index 421de9dcdb873c9b7418544f737218a2cc1099d5..f9eb16a4f1dd1a30c9400e4a2b086baf1cf8d88a 100644
+--- a/net/minecraft/world/level/block/CactusBlock.java
++++ b/net/minecraft/world/level/block/CactusBlock.java
+@@ -78,7 +78,7 @@ public class CactusBlock extends Block {
+             }
+ 
+             if (age < 15) {
+-                int multiplier = getMultiplier(growthPercentIncrease.getDouble(level.serverLevelData.getLevelName()));
++                int multiplier = getMultiplier(growthPercentIncrease.getDouble(level.getWorld().getName()));
+                 int i1 = 1 + multiplier;
+                 level.setBlock(pos, state.setValue(AGE, Math.min(15, age + i1)), Block.UPDATE_NONE);
+             }
+diff --git a/net/minecraft/world/level/block/CocoaBlock.java b/net/minecraft/world/level/block/CocoaBlock.java
+index 9de876a532397b03f684f4af3fd25ef3d00b7594..2236bc4946c78fd8e00d84de2a1a769ec1682786 100644
+--- a/net/minecraft/world/level/block/CocoaBlock.java
++++ b/net/minecraft/world/level/block/CocoaBlock.java
+@@ -53,7 +53,7 @@ public class CocoaBlock extends HorizontalDirectionalBlock implements Bonemealab
+     @Override
+     protected void randomTick(final BlockState state, final ServerLevel level, final BlockPos pos, final RandomSource random) {
+         double modifier = level.spigotConfig.cocoaModifier;
+-        modifier += modifier / 100 * growthPercentIncrease.getDouble(level.serverLevelData.getLevelName());
++        modifier += modifier / 100 * growthPercentIncrease.getDouble(level.getWorld().getName());
+         if (level.getRandom().nextFloat() < (modifier / (100.0F * 5))) { // Spigot - SPIGOT-7159: Better modifier resolution
+             int age = state.getValue(AGE);
+             if (age < 2) {
+diff --git a/net/minecraft/world/level/block/CropBlock.java b/net/minecraft/world/level/block/CropBlock.java
+index a8afff3b4684290d670035b92b8634e7d9bb0dff..f3c3dc76f8f6b19e28e873b7f72c38939bf692e5 100644
+--- a/net/minecraft/world/level/block/CropBlock.java
++++ b/net/minecraft/world/level/block/CropBlock.java
+@@ -120,7 +120,7 @@ public class CropBlock extends VegetationBlock implements BonemealableBlock {
+     protected static float getGrowthSpeed(final Block type, final BlockGetter level, final BlockPos pos) {
+         float speed = 1.0F;
+         BlockPos below = pos.below();
+-        boolean contains = level instanceof ServerLevel serverLevel && growthPercentIncrease.containsKey(serverLevel.serverLevelData.getLevelName());
++        boolean contains = level instanceof ServerLevel serverLevel && growthPercentIncrease.containsKey(serverLevel.getWorld().getName());
+ 
+         for (int xx = -1; xx <= 1; xx++) {
+             for (int zz = -1; zz <= 1; zz++) {
+diff --git a/net/minecraft/world/level/block/MushroomBlock.java b/net/minecraft/world/level/block/MushroomBlock.java
+index 63ad85db05da6771064961fbe7c5a05bf9abc4d4..f301de84efe8ab8690f547059f5d06fa32120f1f 100644
+--- a/net/minecraft/world/level/block/MushroomBlock.java
++++ b/net/minecraft/world/level/block/MushroomBlock.java
+@@ -49,7 +49,7 @@ public class MushroomBlock extends VegetationBlock implements BonemealableBlock
+     @Override
+     protected void randomTick(final BlockState state, final ServerLevel level, BlockPos pos, final RandomSource random) {
+         double modifier = level.spigotConfig.mushroomModifier;
+-        modifier += modifier / 100 * growthPercentIncrease.getDouble(level.serverLevelData.getLevelName());
++        modifier += modifier / 100 * growthPercentIncrease.getDouble(level.getWorld().getName());
+         if (random.nextFloat() < (modifier / (100.0F * 25))) { // Spigot - SPIGOT-7159: Better modifier resolution
+             // int max = 5;
+             // int r = 4;
+diff --git a/net/minecraft/world/level/block/NetherWartBlock.java b/net/minecraft/world/level/block/NetherWartBlock.java
+index 2c805a8cc422a6a6d5452267135c9ffc0fb6170f..4cde036693ad45cf461da0c5f73aefc6edac8cc0 100644
+--- a/net/minecraft/world/level/block/NetherWartBlock.java
++++ b/net/minecraft/world/level/block/NetherWartBlock.java
+@@ -54,7 +54,7 @@ public class NetherWartBlock extends VegetationBlock {
+     protected void randomTick(BlockState state, final ServerLevel level, final BlockPos pos, final RandomSource random) {
+         int age = state.getValue(AGE);
+         double modifier = level.spigotConfig.wartModifier;
+-        modifier += modifier / 100 * growthPercentIncrease.getDouble(level.serverLevelData.getLevelName());
++        modifier += modifier / 100 * growthPercentIncrease.getDouble(level.getWorld().getName());
+         if (age < 3 && random.nextFloat() < (modifier / (100.0F * 10))) { // Spigot - SPIGOT-7159: Better modifier resolution
+             state = state.setValue(AGE, age + 1);
+             level.setBlock(pos, state, Block.UPDATE_CLIENTS);
+diff --git a/net/minecraft/world/level/block/StemBlock.java b/net/minecraft/world/level/block/StemBlock.java
+index 62487c8615e1356f30a06f5c8535ea89bce0dee5..d117eb0901925b8a5deebd21f99fad54d5126fd5 100644
+--- a/net/minecraft/world/level/block/StemBlock.java
++++ b/net/minecraft/world/level/block/StemBlock.java
+@@ -86,7 +86,7 @@ public class StemBlock extends VegetationBlock implements BonemealableBlock {
+         if (level.getRawBrightness(pos, 0) >= 9 || org.bukkit.Bukkit.worldNamesWithAllowedGrowthWithLowBrightness.contains(level.getWorld().getName())) {
+             float growthSpeed = CropBlock.getGrowthSpeed(this, level, pos);
+             double modifier = this == Blocks.PUMPKIN_STEM ? level.spigotConfig.pumpkinModifier : level.spigotConfig.melonModifier;
+-            modifier += modifier / 100 * growthPercentIncrease.getDouble(level.serverLevelData.getLevelName());
++            modifier += modifier / 100 * growthPercentIncrease.getDouble(level.getWorld().getName());
+             if (random.nextFloat() < (modifier / (100.0F * (Math.floor((25.0F / growthSpeed) + 1))))) { // Spigot - SPIGOT-7159: Better modifier resolution
+                 int age = state.getValue(AGE);
+                 if (age < 7) {
+diff --git a/net/minecraft/world/level/block/SugarCaneBlock.java b/net/minecraft/world/level/block/SugarCaneBlock.java
+index 94b7e89535606f8241ee0c4fe49d5abf95cb14bf..b3710ce0fbb7fcc1ae0e271bdbe8b873605b771a 100644
+--- a/net/minecraft/world/level/block/SugarCaneBlock.java
++++ b/net/minecraft/world/level/block/SugarCaneBlock.java
+@@ -60,7 +60,7 @@ public class SugarCaneBlock extends Block {
+             if (height < level.paperConfig().maxGrowthHeight.reeds) { // Paper - Configurable cactus/bamboo/reed growth height
+                 int age = state.getValue(AGE);
+                 double modifier = level.spigotConfig.caneModifier; // Spigot - SPIGOT-7159: Better modifier resolution
+-                modifier += modifier / 100 * growthPercentIncrease.getDouble(level.serverLevelData.getLevelName());
++                modifier += modifier / 100 * growthPercentIncrease.getDouble(level.getWorld().getName());
+                 if (age >= 15 || (modifier != 100 && random.nextFloat() < (modifier / (100.0F * 16)))) { // Spigot - SPIGOT-7159: Better modifier resolution
+                     org.bukkit.craftbukkit.event.CraftEventFactory.handleBlockGrowEvent(level, pos.above(), this.defaultBlockState(), Block.UPDATE_ALL); // CraftBukkit
+                     level.setBlock(pos, state.setValue(AGE, 0), Block.UPDATE_NONE);
