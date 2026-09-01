@@ -91,7 +91,7 @@ public class ClickCallbackProviderImpl implements ClickCallback.Provider {
 
         private final Predicate<Identifier> locationPredicate;
         protected final Map<I, StoredCallback<C, I>> callbacks = new HashMap<>();
-        private final Queue<StoredCallback<C, I>> queue = new ConcurrentLinkedQueue<>();
+        public final Queue<StoredCallback<C, I>> queue = new ConcurrentLinkedQueue<>();
 
         protected CallbackManager(final Predicate<Identifier> locationPredicate) {
             this.locationPredicate = locationPredicate;
