@@ -1,0 +1,68 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Thu, 3 Sep 2026 17:04:10 +0300
+Subject: [PATCH] Update ProjectileUtil hitbox inflate logic
+
+
+diff --git a/net/minecraft/world/entity/projectile/ProjectileUtil.java b/net/minecraft/world/entity/projectile/ProjectileUtil.java
+index afb8c9f79ce5c2569ee9e88ea4ff4f7e47107c47..6c633124c2020318275d8ac82cdf25f0de795be3 100644
+--- a/net/minecraft/world/entity/projectile/ProjectileUtil.java
++++ b/net/minecraft/world/entity/projectile/ProjectileUtil.java
+@@ -102,7 +102,8 @@ public final class ProjectileUtil {
+             }
+         }
+ 
+-        AABB searchArea = AABB.ofSize(from, entityMargin, entityMargin, entityMargin).expandTowards(to.subtract(from)).inflate(1.0);
++        final double v = boundingBoxInflateMapForProjectileClip.get(source.getId());
++        AABB searchArea = AABB.ofSize(from, entityMargin, entityMargin, entityMargin).expandTowards(to.subtract(from)).inflate(1.0 + v);
+         Collection<EntityHitResult> entityHit = getManyEntityHitResult(level, source, from, to, searchArea, matching, entityMargin, clipType, true);
+         return !entityHit.isEmpty() ? Either.right(entityHit) : Either.left(hitResult);
+     }
+@@ -115,8 +116,15 @@ public final class ProjectileUtil {
+         Entity hovered = null;
+         Vec3 hoveredPos = null;
+ 
+-        for (Entity entity : level.getEntities(except, box, matching)) {
+-            AABB bb = entity.getBoundingBox().inflate(entity.getPickRadius());
++        AABB searchBox = box;
++        final double v = boundingBoxInflateMapForProjectileClip.get(except.getId());
++        if (v != 0) {
++            searchBox = searchBox.inflate(v);
++        }
++
++        for (Entity entity : level.getEntities(except, searchBox, matching)) {
++            final double v1 = boundingBoxInflateMapForProjectileClip.get(entity.getId());
++            AABB bb = entity.getBoundingBox().inflate(entity.getPickRadius() + v + v1);
+             Optional<Vec3> clipPoint = bb.clip(from, to);
+             if (bb.contains(from)) {
+                 if (nearest >= 0.0 && entity.canBePickedFromInside()) {
+@@ -216,17 +224,25 @@ public final class ProjectileUtil {
+         final boolean includeFromEntity
+     ) {
+         List<EntityHitResult> collector = new ArrayList<>();
++        final double v = boundingBoxInflateMapForProjectileClip.get(source.getId());
++        AABB searchArea = targetSearchArea;
++        if (v != 0) {
++            searchArea = searchArea.inflate(v);
++        }
+ 
+-        for (Entity entity : level.getEntities(source, targetSearchArea, matching)) {
++        for (Entity entity : level.getEntities(source, searchArea, matching)) {
++            final double v1 = boundingBoxInflateMapForProjectileClip.get(entity.getId());
++            double totalMargin = entityMargin + v + v1;
+             AABB entityBB = entity.getBoundingBox();
+-            if (includeFromEntity && entityBB.contains(from)) {
++            AABB inflatedBB = totalMargin != 0.0 ? entityBB.inflate(totalMargin) : entityBB;
++            if (includeFromEntity && (inflatedBB.contains(from) || entityBB.contains(from))) {
+                 collector.add(new EntityHitResult(entity, from));
+             } else {
+                 Optional<Vec3> exactHit = entityBB.clip(from, to);
+                 if (exactHit.isPresent()) {
+                     collector.add(new EntityHitResult(entity, exactHit.get()));
+-                } else if (!(entityMargin <= 0.0)) {
+-                    Optional<Vec3> outsideHit = entityBB.inflate(entityMargin).clip(from, to);
++                } else if (totalMargin > 0.0) {
++                    Optional<Vec3> outsideHit = inflatedBB.clip(from, to);
+                     if (!outsideHit.isEmpty()) {
+                         Vec3 outsideHitPosition = outsideHit.get();
+                         Vec3 towardsTarget = entityBB.getCenter();
