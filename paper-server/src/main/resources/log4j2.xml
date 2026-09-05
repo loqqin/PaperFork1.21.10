@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="WARN" shutdownHook="disable">
+<Configuration status="WARN" shutdownHook="disable" packages="io.papermc.paper.console">
     <Appenders>
         <Queue name="ServerGuiConsole">
             <PatternLayout pattern="[%d{HH:mm:ss} %level]: %msg{nolookups}%n" />
@@ -16,11 +16,11 @@
         </TerminalConsole>
         <RollingRandomAccessFile name="File" fileName="logs/latest.log" filePattern="logs/%d{yyyy-MM-dd}-%i.log.gz">
             <PatternLayout>
-                <LoggerNamePatternSelector defaultPattern="[%d{HH:mm:ss}] [%t/%level]: [%logger] %stripAnsi{%msg}%n%xEx{full}">
+                <LoggerNamePatternSelector defaultPattern="[%d{HH:mm:ss} #%tick] [%t/%level]: [%logger] %stripAnsi{%msg}%n%xEx{full}">
                     <!-- Log root, Minecraft, Mojang and Bukkit loggers without prefix -->
                     <!-- Disable prefix for various plugins that bypass the plugin logger -->
                     <PatternMatch key=",net.minecraft.,Minecraft,com.mojang.,com.sk89q.,ru.tehkode.,Minecraft.AWE"
-                                  pattern="[%d{HH:mm:ss}] [%t/%level]: %stripAnsi{%msg}%n%xEx{full}" />
+                                  pattern="[%d{HH:mm:ss} #%tick] [%t/%level]: %stripAnsi{%msg}%n%xEx{full}" />
                 </LoggerNamePatternSelector>
             </PatternLayout>
             <Policies>
