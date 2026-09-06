@@ -71,4 +71,19 @@ public class MaterialTest {
             assertThat(Material.matchMaterial(name), is(material));
         }
     }
+
+    @Test
+    public void fastMatchMaterialByNull() {
+        assertThrows(IllegalArgumentException.class, () -> Material.fastMatchMaterial(null));
+    }
+
+    @Test
+    public void fastMatchMaterialByName() {
+        for (Material material : Material.values()) {
+            if (material.isLegacy()) {
+                continue;
+            }
+            assertThat(Material.fastMatchMaterial(material.name()), is(material));
+        }
+    }
 }

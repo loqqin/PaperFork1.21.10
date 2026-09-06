@@ -3123,6 +3123,33 @@ public enum Material implements Keyed, Translatable, net.kyori.adventure.transla
         return getMaterial(filtered, legacyName);
     }
 
+    /**
+     * Attempts to match the Material with the given name without
+     * namespace check, case conversion, or regex formatting.
+     *
+     * @param name Name of the material to get
+     * @return Material if found, or null
+     */
+    @Nullable
+    public static Material fastMatchMaterial(@NotNull final String name) {
+        return fastMatchMaterial(name, false);
+    }
+
+    /**
+     * Attempts to match the Material with the given name without
+     * namespace check, case conversion, or regex formatting.
+     *
+     * @param name Name of the material to get
+     * @param legacyName whether this is a legacy name (see
+     * {@link #getMaterial(java.lang.String, boolean)})
+     * @return Material if found, or null
+     */
+    @Nullable
+    public static Material fastMatchMaterial(@NotNull final String name, boolean legacyName) {
+        Preconditions.checkArgument(name != null, "Name cannot be null");
+        return getMaterial(name, legacyName);
+    }
+
     static {
         for (Material material : values()) {
             BY_NAME.put(material.name(), material);
