@@ -221,6 +221,10 @@ public class CraftContainer extends AbstractContainerMenu {
             this.dataSlots = this.delegate.dataSlots;
             this.remoteDataSlots = this.delegate.remoteDataSlots;
             // Paper end
+            // Paper start - Optimize container broadcastChanges via modCount
+            this.lastRawSlots = this.delegate.lastRawSlots;
+            this.lastSlotModCounts = this.delegate.lastSlotModCounts;
+            // Paper end
         }
 
         // SPIGOT-4598 - we should still delegate the shift click handler
