@@ -1,0 +1,238 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Mon, 7 Sep 2026 00:59:45 +0300
+Subject: [PATCH] loqqin itemstack modcount
+
+
+diff --git a/net/minecraft/world/inventory/AbstractContainerMenu.java b/net/minecraft/world/inventory/AbstractContainerMenu.java
+index b37618125e85c1c6f284c7287202aae814c1ecfe..a19dde1fc2128cf90b09f9a30015e7eb25c75fe7 100644
+--- a/net/minecraft/world/inventory/AbstractContainerMenu.java
++++ b/net/minecraft/world/inventory/AbstractContainerMenu.java
+@@ -55,6 +55,12 @@ public abstract class AbstractContainerMenu {
+     public NonNullList<RemoteSlot> remoteSlots = NonNullList.create();
+     public IntList remoteDataSlots = new IntArrayList();
+     private RemoteSlot remoteCarried = RemoteSlot.PLACEHOLDER;
++    // Paper start - Optimize container broadcastChanges via modCount
++    private final NonNullList<ItemStack> lastRawSlots = NonNullList.create();
++    private final it.unimi.dsi.fastutil.ints.IntList lastSlotModCounts = new it.unimi.dsi.fastutil.ints.IntArrayList();
++    private ItemStack lastCarried = ItemStack.EMPTY;
++    private int lastCarriedModCount = -1;
++    // Paper end
+     private int stateId;
+     public final @Nullable MenuType<?> menuType;
+     public final int containerId;
+@@ -155,6 +161,10 @@ public abstract class AbstractContainerMenu {
+         this.slots.add(slot);
+         this.lastSlots.add(ItemStack.EMPTY);
+         this.remoteSlots.add(this.synchronizer != null ? this.synchronizer.createSlot() : RemoteSlot.PLACEHOLDER);
++        // Paper start - Optimize container broadcastChanges via modCount
++        this.lastRawSlots.add(ItemStack.EMPTY);
++        this.lastSlotModCounts.add(-1);
++        // Paper end
+         return slot;
+     }
+ 
+@@ -229,6 +239,7 @@ public abstract class AbstractContainerMenu {
+         if (this.synchronizer != null) {
+             this.synchronizer.sendSlotChange(this, slotsIndex, item.copy());
+         }
++        this.lastSlotModCounts.set(slotsIndex, -1); // Paper - Optimize container broadcastChanges via modCount
+     }
+     // Paper end
+ 
+@@ -239,6 +250,10 @@ public abstract class AbstractContainerMenu {
+         if (this.synchronizer != null) {
+             this.synchronizer.sendCarriedChange(this, carried.copy());
+         }
++        // Paper start - Optimize container broadcastChanges via modCount
++        this.lastCarried = carried;
++        this.lastCarriedModCount = carried.modCount;
++        // Paper end
+     }
+     // CraftBukkit end
+ 
+@@ -256,12 +271,28 @@ public abstract class AbstractContainerMenu {
+         return itemStacks;
+     }
+ 
++    // Paper start - Optimize container broadcastChanges via modCount
++    public void broadcastSlot(final int i) {
++        ItemStack current = this.slots.get(i).getItem();
++        int currentModCount = current.modCount;
++        if (current == this.lastRawSlots.get(i) && currentModCount == this.lastSlotModCounts.getInt(i)) {
++            return;
++        }
++
++        Supplier<ItemStack> currentCopy = Suppliers.memoize(current::copy);
++        this.triggerSlotListeners(i, current, currentCopy);
++        this.synchronizeSlotToRemote(i, current, currentCopy);
++
++        if (!this.suppressRemoteUpdates) {
++            this.lastRawSlots.set(i, current);
++            this.lastSlotModCounts.set(i, currentModCount);
++        }
++    }
++    // Paper end
++
+     public void broadcastChanges() {
+         for (int i = 0; i < this.slots.size(); i++) {
+-            ItemStack current = this.slots.get(i).getItem();
+-            Supplier<ItemStack> currentCopy = Suppliers.memoize(current::copy);
+-            this.triggerSlotListeners(i, current, currentCopy);
+-            this.synchronizeSlotToRemote(i, current, currentCopy);
++            this.broadcastSlot(i); // Paper - Optimize container broadcastChanges via modCount
+         }
+ 
+         this.synchronizeCarriedToRemote();
+@@ -281,6 +312,10 @@ public abstract class AbstractContainerMenu {
+         for (int i = 0; i < this.slots.size(); i++) {
+             ItemStack current = this.slots.get(i).getItem();
+             this.triggerSlotListeners(i, current, current::copy);
++            // Paper start - Optimize container broadcastChanges via modCount
++            this.lastRawSlots.set(i, current);
++            this.lastSlotModCounts.set(i, current.modCount);
++            // Paper end
+         }
+ 
+         for (int i = 0; i < this.dataSlots.size(); i++) {
+@@ -338,22 +373,34 @@ public abstract class AbstractContainerMenu {
+     private void synchronizeCarriedToRemote() {
+         if (!this.suppressRemoteUpdates) {
+             ItemStack carriedItem = this.getCarried();
++            // Paper start - Optimize container broadcastChanges via modCount
++            int currentModCount = carriedItem.modCount;
++            if (carriedItem == this.lastCarried && currentModCount == this.lastCarriedModCount) {
++                return;
++            }
++            // Paper end
+             if (!this.remoteCarried.matches(carriedItem)) {
+                 this.remoteCarried.force(carriedItem);
+                 if (this.synchronizer != null) {
+                     this.synchronizer.sendCarriedChange(this, carriedItem.copy());
+                 }
+             }
++            // Paper start - Optimize container broadcastChanges via modCount
++            this.lastCarried = carriedItem;
++            this.lastCarriedModCount = currentModCount;
++            // Paper end
+         }
+     }
+ 
+     public void setRemoteSlot(final int slot, final ItemStack itemStack) {
+         this.remoteSlots.get(slot).force(itemStack);
++        this.lastSlotModCounts.set(slot, -1); // Paper - Optimize container broadcastChanges via modCount
+     }
+ 
+     public void setRemoteSlotUnsafe(final int slot, final HashedStack itemStack) {
+         if (slot >= 0 && slot < this.remoteSlots.size()) {
+             this.remoteSlots.get(slot).receive(itemStack);
++            this.lastSlotModCounts.set(slot, -1); // Paper - Optimize container broadcastChanges via modCount
+         } else {
+             LOGGER.debug("Incorrect slot index: {} available slots: {}", slot, this.remoteSlots.size());
+         }
+@@ -361,6 +408,7 @@ public abstract class AbstractContainerMenu {
+ 
+     public void setRemoteCarried(final HashedStack carriedItem) {
+         this.remoteCarried.receive(carriedItem);
++        this.lastCarriedModCount = -1; // Paper - Optimize container broadcastChanges via modCount
+     }
+ 
+     public boolean clickMenuButton(final Player player, final int buttonId) {
+@@ -944,6 +992,7 @@ public abstract class AbstractContainerMenu {
+                     && targetRemoteSlot instanceof RemoteSlot.Synchronized synchronizedTarget) {
+                     synchronizedTarget.copyFrom(synchronizedSource);
+                 }
++                this.lastSlotModCounts.set(slotIndex, -1); // Paper - Optimize container broadcastChanges via modCount
+             }
+         }
+     }
+diff --git a/net/minecraft/world/inventory/InventoryMenu.java b/net/minecraft/world/inventory/InventoryMenu.java
+index 10aa3b1cd8fe19af1ab88a93bd4e8f104b8e4219..2c6aea9c927c3c2c70d99e9f967b5d072acdad3d 100644
+--- a/net/minecraft/world/inventory/InventoryMenu.java
++++ b/net/minecraft/world/inventory/InventoryMenu.java
+@@ -236,10 +236,7 @@ public class InventoryMenu extends AbstractCraftingMenu {
+     }
+ 
+     private void broadcastSlotChange(int slot) {
+-        ItemStack item = this.slots.get(slot).getItem();
+-        java.util.function.Supplier<net.minecraft.world.item.ItemStack> supplier = com.google.common.base.Suppliers.memoize(item::copy);
+-        this.triggerSlotListeners(slot, item, supplier);
+-        this.synchronizeSlotToRemote(slot, item, supplier);
++        this.broadcastSlot(slot);
+     }
+     // Paper end - utility methods for synchronizing slots usually not synchronized by the container menus
+ }
+diff --git a/net/minecraft/world/item/ItemStack.java b/net/minecraft/world/item/ItemStack.java
+index 44a7590558fa73fb570f76ba7a4e7db1415d08f7..4d8d4fa258fa7a957a1c465939ffc8fefbc5ac3b 100644
+--- a/net/minecraft/world/item/ItemStack.java
++++ b/net/minecraft/world/item/ItemStack.java
+@@ -156,6 +156,7 @@ public final class ItemStack implements DataComponentHolder, ItemInstance {
+     @Deprecated
+     private @Nullable Holder<Item> item;
+     private PatchedDataComponentMap components;
++    public int modCount = 0;
+ 
+     public static DataResult<ItemStack> validateStrict(final ItemStack itemStack) {
+         DataResult<?> result = validateComponents(itemStack.getComponents());
+@@ -791,6 +792,7 @@ public final class ItemStack implements DataComponentHolder, ItemInstance {
+ 
+         ItemStack copy = new ItemStack(originalItem ? this.item : this.typeHolder(), this.count, this.components.copy()); // Paper - Perf: Optimize Hoppers
+         copy.setPopTime(this.getPopTime());
++        copy.modCount = modCount;
+         return copy;
+     }
+ 
+@@ -960,14 +962,17 @@ public final class ItemStack implements DataComponentHolder, ItemInstance {
+     // CraftBukkit start
+     public void restorePatch(DataComponentPatch datacomponentpatch) {
+         this.components.restorePatch(datacomponentpatch);
++        modCount++;
+     }
+     // CraftBukkit end
+ 
+     public <T> @Nullable T set(final DataComponentType<T> type, final @Nullable T value) {
++        modCount++;
+         return this.components.set(type, value);
+     }
+ 
+     public <T> @Nullable T set(final TypedDataComponent<T> value) {
++        modCount++;
+         return this.components.set(value);
+     }
+ 
+@@ -985,6 +990,7 @@ public final class ItemStack implements DataComponentHolder, ItemInstance {
+     }
+ 
+     public <T> @Nullable T remove(final DataComponentType<? extends T> type) {
++        modCount++;
+         return this.components.remove(type);
+     }
+ 
+@@ -995,15 +1001,19 @@ public final class ItemStack implements DataComponentHolder, ItemInstance {
+         if (validationError.isPresent()) {
+             LOGGER.error("Failed to apply component patch '{}' to item: '{}'", patch, validationError.get().message());
+             this.components.restorePatch(oldPatch);
++            return;
+         }
++        modCount++;
+     }
+ 
+     public void applyComponents(final DataComponentPatch patch) {
+         this.components.applyPatch(patch);
++        modCount++;
+     }
+ 
+     public void applyComponents(final DataComponentMap components) {
+         this.components.setAll(components);
++        modCount++;
+     }
+ 
+     // Paper start - (this is just a good no conflict location)
+@@ -1304,6 +1314,7 @@ public final class ItemStack implements DataComponentHolder, ItemInstance {
+ 
+     public void setCount(final int count) {
+         this.count = count;
++        modCount++;
+     }
+ 
+     public void limitSize(final int maxStackSize) {

@@ -1,0 +1,34 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Mon, 7 Sep 2026 01:02:53 +0300
+Subject: [PATCH] loqqin itemstack modcount
+
+
+diff --git a/net/minecraft/world/inventory/AbstractContainerMenu.java b/net/minecraft/world/inventory/AbstractContainerMenu.java
+index a19dde1fc2128cf90b09f9a30015e7eb25c75fe7..6682541d096770d40dcdf60f4580b82a2c7931c3 100644
+--- a/net/minecraft/world/inventory/AbstractContainerMenu.java
++++ b/net/minecraft/world/inventory/AbstractContainerMenu.java
+@@ -284,8 +284,9 @@ public abstract class AbstractContainerMenu {
+         this.synchronizeSlotToRemote(i, current, currentCopy);
+ 
+         if (!this.suppressRemoteUpdates) {
+-            this.lastRawSlots.set(i, current);
+-            this.lastSlotModCounts.set(i, currentModCount);
++            ItemStack finalItem = this.slots.get(i).getItem();
++            this.lastRawSlots.set(i, finalItem);
++            this.lastSlotModCounts.set(i, finalItem.modCount);
+         }
+     }
+     // Paper end
+@@ -386,8 +387,9 @@ public abstract class AbstractContainerMenu {
+                 }
+             }
+             // Paper start - Optimize container broadcastChanges via modCount
+-            this.lastCarried = carriedItem;
+-            this.lastCarriedModCount = currentModCount;
++            ItemStack finalCarried = this.getCarried();
++            this.lastCarried = finalCarried;
++            this.lastCarriedModCount = finalCarried.modCount;
+             // Paper end
+         }
+     }
