@@ -1,0 +1,77 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Mon, 7 Sep 2026 01:31:28 +0300
+Subject: [PATCH] loqqin itemstack modcount
+
+
+diff --git a/net/minecraft/world/inventory/AbstractContainerMenu.java b/net/minecraft/world/inventory/AbstractContainerMenu.java
+index 6682541d096770d40dcdf60f4580b82a2c7931c3..70a23d86ec79879cbbd59790adedad7149ab73b8 100644
+--- a/net/minecraft/world/inventory/AbstractContainerMenu.java
++++ b/net/minecraft/world/inventory/AbstractContainerMenu.java
+@@ -56,8 +56,8 @@ public abstract class AbstractContainerMenu {
+     public IntList remoteDataSlots = new IntArrayList();
+     private RemoteSlot remoteCarried = RemoteSlot.PLACEHOLDER;
+     // Paper start - Optimize container broadcastChanges via modCount
+-    private final NonNullList<ItemStack> lastRawSlots = NonNullList.create();
+-    private final it.unimi.dsi.fastutil.ints.IntList lastSlotModCounts = new it.unimi.dsi.fastutil.ints.IntArrayList();
++    public NonNullList<ItemStack> lastRawSlots = NonNullList.create();
++    public it.unimi.dsi.fastutil.ints.IntList lastSlotModCounts = new it.unimi.dsi.fastutil.ints.IntArrayList();
+     private ItemStack lastCarried = ItemStack.EMPTY;
+     private int lastCarriedModCount = -1;
+     // Paper end
+@@ -239,7 +239,9 @@ public abstract class AbstractContainerMenu {
+         if (this.synchronizer != null) {
+             this.synchronizer.sendSlotChange(this, slotsIndex, item.copy());
+         }
+-        this.lastSlotModCounts.set(slotsIndex, -1); // Paper - Optimize container broadcastChanges via modCount
++        if (slotsIndex >= 0 && slotsIndex < this.lastSlotModCounts.size()) {
++            this.lastSlotModCounts.set(slotsIndex, -1); // Paper - Optimize container broadcastChanges via modCount
++        }
+     }
+     // Paper end
+ 
+@@ -273,6 +275,11 @@ public abstract class AbstractContainerMenu {
+ 
+     // Paper start - Optimize container broadcastChanges via modCount
+     public void broadcastSlot(final int i) {
++        while (i >= this.lastRawSlots.size()) {
++            this.lastRawSlots.add(ItemStack.EMPTY);
++            this.lastSlotModCounts.add(-1);
++        }
++
+         ItemStack current = this.slots.get(i).getItem();
+         int currentModCount = current.modCount;
+         if (current == this.lastRawSlots.get(i) && currentModCount == this.lastSlotModCounts.getInt(i)) {
+@@ -314,6 +321,10 @@ public abstract class AbstractContainerMenu {
+             ItemStack current = this.slots.get(i).getItem();
+             this.triggerSlotListeners(i, current, current::copy);
+             // Paper start - Optimize container broadcastChanges via modCount
++            while (i >= this.lastRawSlots.size()) {
++                this.lastRawSlots.add(ItemStack.EMPTY);
++                this.lastSlotModCounts.add(-1);
++            }
+             this.lastRawSlots.set(i, current);
+             this.lastSlotModCounts.set(i, current.modCount);
+             // Paper end
+@@ -396,7 +407,9 @@ public abstract class AbstractContainerMenu {
+ 
+     public void setRemoteSlot(final int slot, final ItemStack itemStack) {
+         this.remoteSlots.get(slot).force(itemStack);
+-        this.lastSlotModCounts.set(slot, -1); // Paper - Optimize container broadcastChanges via modCount
++        if (slot >= 0 && slot < this.lastSlotModCounts.size()) {
++            this.lastSlotModCounts.set(slot, -1); // Paper - Optimize container broadcastChanges via modCount
++        }
+     }
+ 
+     public void setRemoteSlotUnsafe(final int slot, final HashedStack itemStack) {
+@@ -994,7 +1007,9 @@ public abstract class AbstractContainerMenu {
+                     && targetRemoteSlot instanceof RemoteSlot.Synchronized synchronizedTarget) {
+                     synchronizedTarget.copyFrom(synchronizedSource);
+                 }
+-                this.lastSlotModCounts.set(slotIndex, -1); // Paper - Optimize container broadcastChanges via modCount
++                if (slotIndex >= 0 && slotIndex < this.lastSlotModCounts.size()) {
++                    this.lastSlotModCounts.set(slotIndex, -1); // Paper - Optimize container broadcastChanges via modCount
++                }
+             }
+         }
+     }
