@@ -1,0 +1,58 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Mon, 7 Sep 2026 23:28:02 +0300
+Subject: [PATCH] loqqin configurable read timeout
+
+
+diff --git a/net/minecraft/network/Connection.java b/net/minecraft/network/Connection.java
+index 0d0e670df364d966d4ea4262bc060f11903a9793..6db809a535da4f380ed38b5ec5c05806b9ce85d8 100644
+--- a/net/minecraft/network/Connection.java
++++ b/net/minecraft/network/Connection.java
+@@ -92,6 +92,7 @@ public class Connection extends SimpleChannelInboundHandler<Packet<?>> {
+     public int protocolVersion;
+     public java.net.InetSocketAddress virtualHost;
+     private static boolean enableExplicitFlush = Boolean.getBoolean("paper.explicit-flush"); // Paper - Disable explicit connection flushing
++    public static final int READ_TIMEOUT = Integer.getInteger("paper.readtimeout", Integer.getInteger("paper.readTimeout", Integer.getInteger("paper.playerconnection.keepalive", 30))); // Paper - configurable read timeout
+     // Paper end
+     // Paper start - add utility methods
+     public final net.minecraft.server.level.ServerPlayer getPlayer() {
+@@ -715,7 +716,7 @@ public class Connection extends SimpleChannelInboundHandler<Packet<?>> {
+                 } catch (ChannelException var3) {
+                 }
+ 
+-                ChannelPipeline pipeline = channel.pipeline().addLast(HandlerNames.TIMEOUT, new ReadTimeoutHandler(30));
++                ChannelPipeline pipeline = channel.pipeline().addLast(HandlerNames.TIMEOUT, new ReadTimeoutHandler(READ_TIMEOUT)); // Paper - configurable read timeout
+                 Connection.configureSerialization(pipeline, PacketFlow.CLIENTBOUND, false, connection.bandwidthDebugMonitor);
+                 connection.configurePacketHandler(pipeline);
+             }
+@@ -789,7 +790,7 @@ public class Connection extends SimpleChannelInboundHandler<Packet<?>> {
+             connection.setBandwidthLogger(bandwidthLogger);
+         }
+ 
+-        ChannelPipeline pipeline = channel.pipeline().addLast(HandlerNames.TIMEOUT, new ReadTimeoutHandler(30));
++        ChannelPipeline pipeline = channel.pipeline().addLast(HandlerNames.TIMEOUT, new ReadTimeoutHandler(READ_TIMEOUT)); // Paper - configurable read timeout
+         configureSerialization(pipeline, flow, false, connection.bandwidthDebugMonitor);
+         connection.configurePacketHandler(pipeline);
+         EventLoopGroupHolder.local().eventLoopGroup().register(channel).syncUninterruptibly();
+diff --git a/net/minecraft/server/network/ServerConnectionListener.java b/net/minecraft/server/network/ServerConnectionListener.java
+index 8a2f1ebcf06bb0c1e8b352652de69b6c1d74daf3..0f193ecd97cd092b54e68ef92a0c4181539219dc 100644
+--- a/net/minecraft/server/network/ServerConnectionListener.java
++++ b/net/minecraft/server/network/ServerConnectionListener.java
+@@ -98,7 +98,7 @@ public class ServerConnectionListener {
+                                     }
+ 
+                                     if (!disableFlushConsolidation) channel.pipeline().addFirst(new io.netty.handler.flush.FlushConsolidationHandler()); // Paper - Optimize network
+-                                    ChannelPipeline pipeline = channel.pipeline().addLast(HandlerNames.TIMEOUT, new ReadTimeoutHandler(30));
++                                    ChannelPipeline pipeline = channel.pipeline().addLast(HandlerNames.TIMEOUT, new ReadTimeoutHandler(Connection.READ_TIMEOUT)); // Paper - configurable read timeout
+                                     if (ServerConnectionListener.this.server.repliesToStatus()) {
+                                         pipeline.addLast(HandlerNames.LEGACY_QUERY, new LegacyQueryHandler(ServerConnectionListener.this.getServer()));
+                                     }
+@@ -213,7 +213,7 @@ public class ServerConnectionListener {
+                         Connection connection = rateLimitPacketsPerSecond > 0
+                             ? new RateKickingConnection(rateLimitPacketsPerSecond)
+                             : new Connection(PacketFlow.SERVERBOUND);
+-                        ChannelPipeline pipeline = ch.pipeline().addLast(HandlerNames.TIMEOUT, new ReadTimeoutHandler(30));
++                        ChannelPipeline pipeline = ch.pipeline().addLast(HandlerNames.TIMEOUT, new ReadTimeoutHandler(Connection.READ_TIMEOUT)); // Paper - configurable read timeout
+                         Connection.configureSerialization(pipeline, PacketFlow.SERVERBOUND, false, null);
+                         connection.configurePacketHandler(pipeline);
+                         connection.setListenerForServerboundHandshake(new ServerHandshakePacketListenerImpl(ServerConnectionListener.this.server, connection));
