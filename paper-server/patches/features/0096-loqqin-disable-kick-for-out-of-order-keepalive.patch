@@ -1,0 +1,52 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Mon, 7 Sep 2026 22:42:48 +0300
+Subject: [PATCH] loqqin disable kick for out-of-order keepalive
+
+
+diff --git a/net/minecraft/server/network/ServerCommonPacketListenerImpl.java b/net/minecraft/server/network/ServerCommonPacketListenerImpl.java
+index 5dbb2849f32ac3418f8fdf76c04022d7e9dc165b..fbe69807d6790ed3af9ade882283e4b62db9cde8 100644
+--- a/net/minecraft/server/network/ServerCommonPacketListenerImpl.java
++++ b/net/minecraft/server/network/ServerCommonPacketListenerImpl.java
+@@ -116,20 +116,32 @@ public abstract class ServerCommonPacketListenerImpl implements ServerCommonPack
+             return;
+         }
+ 
+-        for (java.util.Iterator<io.papermc.paper.util.KeepAlive.PendingKeepAlive> itr = this.keepAlive.pendingKeepAlives.iterator(); itr.hasNext();) {
+-            io.papermc.paper.util.KeepAlive.PendingKeepAlive ka = itr.next();
++        long targetTx = -1;
++        for (io.papermc.paper.util.KeepAlive.PendingKeepAlive ka : this.keepAlive.pendingKeepAlives) {
+             if (ka.challengeId() == packet.getId()) {
+-                itr.remove();
++                targetTx = ka.txTimeNS();
++                break;
++            }
++        }
+ 
+-                LOGGER.info("Disconnecting {} for sending keepalive response ({}) out-of-order!", this.playerProfile().name(), packet.getId());
+-                this.disconnectAsync(TIMEOUT_DISCONNECTION_MESSAGE, io.papermc.paper.connection.DisconnectionReason.TIMEOUT);
+-                return;
++        if (targetTx != -1) {
++            for (java.util.Iterator<io.papermc.paper.util.KeepAlive.PendingKeepAlive> itr = this.keepAlive.pendingKeepAlives.iterator(); itr.hasNext();) {
++                io.papermc.paper.util.KeepAlive.PendingKeepAlive ka = itr.next();
++                if (ka.txTimeNS() <= targetTx) {
++                    itr.remove();
++                    if (ka.challengeId() == packet.getId()) {
++                        io.papermc.paper.util.KeepAlive.KeepAliveResponse response = new io.papermc.paper.util.KeepAlive.KeepAliveResponse(ka.txTimeNS(), now);
++                        this.keepAlive.pingCalculator1m.update(response);
++                        this.keepAlive.pingCalculator5s.update(response);
++                        this.latency = this.keepAlive.pingCalculator5s.getAvgLatencyMS();
++                    }
++                }
+             }
++            return;
+         }
+ 
+-        LOGGER.info("Disconnecting {} for sending keepalive response ({}) without matching challenge!", this.playerProfile().name(), packet.getId());
+-        this.disconnectAsync(TIMEOUT_DISCONNECTION_MESSAGE, io.papermc.paper.connection.DisconnectionReason.TIMEOUT);
+-        // Paper end - improve keepalives
++        // Paper end - improve keepalives: do not disconnect for unmatched/duplicate keepalives
++        return;
+     }
+ 
+     @Override
