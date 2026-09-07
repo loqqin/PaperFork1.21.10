@@ -179,19 +179,29 @@ index c5490b5b9adbffe9cc80074b1f83158fda267a04..8fb001daa4f87d56ee353cef2d495aa1
 +            return;
 +        }
 +
-+        for (java.util.Iterator<io.papermc.paper.util.KeepAlive.PendingKeepAlive> itr = this.keepAlive.pendingKeepAlives.iterator(); itr.hasNext();) {
-+            io.papermc.paper.util.KeepAlive.PendingKeepAlive ka = itr.next();
++        long targetTx = -1;
++        for (io.papermc.paper.util.KeepAlive.PendingKeepAlive ka : this.keepAlive.pendingKeepAlives) {
 +            if (ka.challengeId() == packet.getId()) {
-+                itr.remove();
-+
-+                LOGGER.info("Disconnecting {} for sending keepalive response ({}) out-of-order!", this.playerProfile().name(), packet.getId());
-+                this.disconnectAsync(TIMEOUT_DISCONNECTION_MESSAGE, io.papermc.paper.connection.DisconnectionReason.TIMEOUT);
-+                return;
++                targetTx = ka.txTimeNS();
++                break;
 +            }
-         }
++        }
 +
-+        LOGGER.info("Disconnecting {} for sending keepalive response ({}) without matching challenge!", this.playerProfile().name(), packet.getId());
-+        this.disconnectAsync(TIMEOUT_DISCONNECTION_MESSAGE, io.papermc.paper.connection.DisconnectionReason.TIMEOUT);
++        if (targetTx != -1) {
++            for (java.util.Iterator<io.papermc.paper.util.KeepAlive.PendingKeepAlive> itr = this.keepAlive.pendingKeepAlives.iterator(); itr.hasNext();) {
++                io.papermc.paper.util.KeepAlive.PendingKeepAlive ka = itr.next();
++                if (ka.txTimeNS() <= targetTx) {
++                    itr.remove();
++                    if (ka.challengeId() == packet.getId()) {
++                        io.papermc.paper.util.KeepAlive.KeepAliveResponse response = new io.papermc.paper.util.KeepAlive.KeepAliveResponse(ka.txTimeNS(), now);
++                        this.keepAlive.pingCalculator1m.update(response);
++                        this.keepAlive.pingCalculator5s.update(response);
++                        this.latency = this.keepAlive.pingCalculator5s.getAvgLatencyMS();
++                    }
++                }
++            }
++            return;
++        }
 +        // Paper end - improve keepalives
      }
  
