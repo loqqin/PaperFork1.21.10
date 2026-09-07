@@ -1,0 +1,60 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Mon, 7 Sep 2026 23:00:00 +0300
+Subject: [PATCH] loqqin network disconnect logging
+
+
+diff --git a/net/minecraft/network/Connection.java b/net/minecraft/network/Connection.java
+--- a/net/minecraft/network/Connection.java
++++ b/net/minecraft/network/Connection.java
+@@ -147,6 +147,10 @@ public class Connection extends SimpleChannelInboundHandler<Packet<?>> {
+ 
+     @Override
+     public void channelInactive(final ChannelHandlerContext ctx) {
++        net.minecraft.server.level.ServerPlayer player = this.getPlayer();
++        if (player != null) {
++            LOGGER.info("[NET-CLOSE] Player {} channel became inactive (TCP connection closed by remote or proxy)", player.getPlainTextName());
++        }
+         this.disconnect(Component.translatable("disconnect.endOfStream"));
+     }
+ 
+@@ -172,11 +176,18 @@ public class Connection extends SimpleChannelInboundHandler<Packet<?>> {
+             this.handlingFault = true;
+             if (this.channel.isOpen()) {
+                 net.minecraft.server.level.ServerPlayer player = this.getPlayer(); // Paper - Add API for quit reason
++                String playerName = player != null ? player.getPlainTextName() : "unknown";
+                 if (cause instanceof TimeoutException) {
+-                    LOGGER.debug("Timeout", cause);
++                    LOGGER.warn("[NET-TIMEOUT] Player {} timed out in Netty pipeline: {}", playerName, cause.toString());
+                     if (player != null) player.quitReason = org.bukkit.event.player.PlayerQuitEvent.QuitReason.TIMED_OUT; // Paper - Add API for quit reason
+                     this.disconnect(Component.translatable("disconnect.timeout"));
+                 } else {
++                    if (!(cause instanceof java.nio.channels.ClosedChannelException)) {
++                        LOGGER.warn("[NET-EXCEPTION] Network exception for player {}: {}", playerName, cause.toString());
++                        if (cause instanceof io.netty.handler.codec.DecoderException || cause instanceof io.netty.handler.codec.EncoderException) {
++                            LOGGER.warn("[NET-EXCEPTION] Codec exception details for " + playerName, cause);
++                        }
++                    }
+                     Component reason = Component.translatable("disconnect.genericReason", "Internal Exception: " + cause);
+                     PacketListener listener = this.packetListener;
+                     DisconnectionDetails details;
+diff --git a/net/minecraft/server/network/ServerCommonPacketListenerImpl.java b/net/minecraft/server/network/ServerCommonPacketListenerImpl.java
+--- a/net/minecraft/server/network/ServerCommonPacketListenerImpl.java
++++ b/net/minecraft/server/network/ServerCommonPacketListenerImpl.java
+@@ -282,7 +282,7 @@ public abstract class ServerCommonPacketListenerImpl implements ServerCommonPack
+ 
+             io.papermc.paper.util.KeepAlive.PendingKeepAlive oldest = this.keepAlive.pendingKeepAlives.peek();
+             if (oldest != null && (currTime - oldest.txTimeNS()) > java.util.concurrent.TimeUnit.MILLISECONDS.toNanos(KEEPALIVE_LIMIT)) {
+-                LOGGER.info("{} was kicked due to keepalive timeout!", this.playerProfile().name());
++                LOGGER.info("{} was kicked due to keepalive timeout! (waited: {}ms, oldest challenge: {}, total pending: {})", this.playerProfile().name(), (currTime - oldest.txTimeNS()) / 1_000_000L, oldest.challengeId(), this.keepAlive.pendingKeepAlives.size());
+                 this.disconnect(TIMEOUT_DISCONNECTION_MESSAGE, io.papermc.paper.connection.DisconnectionReason.TIMEOUT); // Paper - kick event cause
+                 // Paper end - improve keepalives
+             }
+@@ -293,6 +293,7 @@ public abstract class ServerCommonPacketListenerImpl implements ServerCommonPack
+     private boolean checkIfClosed(final long now) {
+         if (this.closed) {
+             if (now - this.closedListenerTime >= 15000L) {
++                LOGGER.info("{} was kicked due to closed listener timeout (waited 15s after terminal packet)!", this.playerProfile().name());
+                 this.disconnect(TIMEOUT_DISCONNECTION_MESSAGE, io.papermc.paper.connection.DisconnectionReason.TIMEOUT); // Paper - kick event cause
+             }
+ 
