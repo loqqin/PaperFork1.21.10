@@ -1,13 +1,14 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: aaa <121246396+loqqin@users.noreply.github.com>
-Date: Mon, 7 Sep 2026 23:00:00 +0300
-Subject: [PATCH] loqqin network disconnect logging
+Date: Mon, 7 Sep 2026 23:04:33 +0300
+Subject: [PATCH] loqqin kick logging
 
 
 diff --git a/net/minecraft/network/Connection.java b/net/minecraft/network/Connection.java
+index 9fbc7e93712672dbab67f931e2aee447d803607b..0d0e670df364d966d4ea4262bc060f11903a9793 100644
 --- a/net/minecraft/network/Connection.java
 +++ b/net/minecraft/network/Connection.java
-@@ -147,6 +147,10 @@ public class Connection extends SimpleChannelInboundHandler<Packet<?>> {
+@@ -146,6 +146,10 @@ public class Connection extends SimpleChannelInboundHandler<Packet<?>> {
  
      @Override
      public void channelInactive(final ChannelHandlerContext ctx) {
@@ -18,7 +19,7 @@ diff --git a/net/minecraft/network/Connection.java b/net/minecraft/network/Conne
          this.disconnect(Component.translatable("disconnect.endOfStream"));
      }
  
-@@ -172,11 +176,18 @@ public class Connection extends SimpleChannelInboundHandler<Packet<?>> {
+@@ -173,11 +177,18 @@ public class Connection extends SimpleChannelInboundHandler<Packet<?>> {
              this.handlingFault = true;
              if (this.channel.isOpen()) {
                  net.minecraft.server.level.ServerPlayer player = this.getPlayer(); // Paper - Add API for quit reason
@@ -39,6 +40,7 @@ diff --git a/net/minecraft/network/Connection.java b/net/minecraft/network/Conne
                      PacketListener listener = this.packetListener;
                      DisconnectionDetails details;
 diff --git a/net/minecraft/server/network/ServerCommonPacketListenerImpl.java b/net/minecraft/server/network/ServerCommonPacketListenerImpl.java
+index fbe69807d6790ed3af9ade882283e4b62db9cde8..bcd3c74c47917218d3ad62fddb074a8a88cc2393 100644
 --- a/net/minecraft/server/network/ServerCommonPacketListenerImpl.java
 +++ b/net/minecraft/server/network/ServerCommonPacketListenerImpl.java
 @@ -282,7 +282,7 @@ public abstract class ServerCommonPacketListenerImpl implements ServerCommonPack
@@ -50,7 +52,7 @@ diff --git a/net/minecraft/server/network/ServerCommonPacketListenerImpl.java b/
                  this.disconnect(TIMEOUT_DISCONNECTION_MESSAGE, io.papermc.paper.connection.DisconnectionReason.TIMEOUT); // Paper - kick event cause
                  // Paper end - improve keepalives
              }
-@@ -293,6 +293,7 @@ public abstract class ServerCommonPacketListenerImpl implements ServerCommonPack
+@@ -294,6 +294,7 @@ public abstract class ServerCommonPacketListenerImpl implements ServerCommonPack
      private boolean checkIfClosed(final long now) {
          if (this.closed) {
              if (now - this.closedListenerTime >= 15000L) {
