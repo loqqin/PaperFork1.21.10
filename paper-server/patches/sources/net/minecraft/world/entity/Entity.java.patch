@@ -653,14 +653,6 @@
              this.needsSync = true;
          }
      }
-@@ -2008,7 +_,7 @@
-     public void playSound(final SoundEvent sound, final float volume, final float pitch) {
-         if (!this.isSilent()) {
--            this.level().playSound(null, this.getX(), this.getY(), this.getZ(), sound, this.getSoundSource(), volume, pitch);
-+            this.level().playSound(null, this, sound, this.getSoundSource(), volume, pitch);
-         }
-     }
-
 @@ -2024,8 +_,20 @@
      }
  

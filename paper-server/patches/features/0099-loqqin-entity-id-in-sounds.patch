@@ -1,0 +1,19 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Fri, 9 Oct 2026 17:41:40 +0300
+Subject: [PATCH] loqqin entity id in sounds
+
+
+diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
+index 09007c7b75e742e9147325a55cdee783c0db28ad..8d5b57205e21838f5a6868c16e78c85a95d3a456 100644
+--- a/net/minecraft/world/entity/Entity.java
++++ b/net/minecraft/world/entity/Entity.java
+@@ -2008,7 +2008,7 @@ public abstract class Entity
+ 
+     public void playSound(final SoundEvent sound, final float volume, final float pitch) {
+         if (!this.isSilent()) {
+-            this.level().playSound(null, this.getX(), this.getY(), this.getZ(), sound, this.getSoundSource(), volume, pitch);
++            this.level().playSound(null, this, sound, this.getSoundSource(), volume, pitch);
+         }
+     }
+ 
