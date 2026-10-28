@@ -1,0 +1,124 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Wed, 28 Oct 2026 22:49:31 +0200
+Subject: [PATCH] loqqin largeHitboxEntities
+
+
+diff --git a/ca/spottedleaf/moonrise/paper/PaperHooks.java b/ca/spottedleaf/moonrise/paper/PaperHooks.java
+index c34b3c1c0e4fe6503a5702e544a192d2bb11d263..30343f93e9cd8eb82b2dc6874cde16f63cf4c3b2 100644
+--- a/ca/spottedleaf/moonrise/paper/PaperHooks.java
++++ b/ca/spottedleaf/moonrise/paper/PaperHooks.java
+@@ -102,6 +102,14 @@ public final class PaperHooks extends BaseChunkSystemHooks implements PlatformHo
+ 
+     @Override
+     public void addToGetEntities(final Level world, final Entity entity, final AABB boundingBox, final Predicate<? super Entity> predicate, final List<Entity> into) {
++        if (!world.largeHitboxEntities.isEmpty()) {
++            for (final Entity large : world.largeHitboxEntities.values()) {
++                if (large != entity && large.getBoundingBox().intersects(boundingBox) && !into.contains(large) && (predicate == null || predicate.test(large))) {
++                    into.add(large);
++                }
++            }
++        }
++
+         final Collection<EnderDragonPart> parts = world.dragonParts();
+         if (parts.isEmpty()) {
+             return;
+@@ -121,6 +129,21 @@ public final class PaperHooks extends BaseChunkSystemHooks implements PlatformHo
+             return;
+         }
+ 
++        if (!world.largeHitboxEntities.isEmpty()) {
++            for (final Entity large : world.largeHitboxEntities.values()) {
++                if (!large.getBoundingBox().intersects(boundingBox) || into.contains(large)) {
++                    continue;
++                }
++                final T casted = (T)entityTypeTest.tryCast(large);
++                if (casted != null && (predicate == null || predicate.test(casted))) {
++                    into.add(casted);
++                    if (into.size() >= maxCount) {
++                        return;
++                    }
++                }
++            }
++        }
++
+         final Collection<EnderDragonPart> parts = world.dragonParts();
+         if (parts.isEmpty()) {
+             return;
+diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
+index a2bc4ad888d27a870af4a18e92010a083a5d4c73..578cc34fcb2047e86c1fdf479b97ba4448d54fda 100644
+--- a/net/minecraft/server/level/ServerLevel.java
++++ b/net/minecraft/server/level/ServerLevel.java
+@@ -2893,6 +2893,8 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
+                 }
+             }
+ 
++            ServerLevel.this.updateLargeHitbox(entity);
++
+             entity.updateDynamicGameEventListener(DynamicGameEventListener::add);
+             entity.inWorld = true; // CraftBukkit - Mark entity as in world
+             entity.valid = true; // CraftBukkit
+@@ -2964,6 +2966,8 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
+                 }
+             }
+ 
++            ServerLevel.this.largeHitboxEntities.remove(entity.getId());
++
+             entity.updateDynamicGameEventListener(DynamicGameEventListener::remove);
+             ServerLevel.this.debugSynchronizers.dropEntity(entity);
+             // CraftBukkit start
+diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
+index 8d5b57205e21838f5a6868c16e78c85a95d3a456..5135b1c950cf0ec4521e61c615e90f3e8046904f 100644
+--- a/net/minecraft/world/entity/Entity.java
++++ b/net/minecraft/world/entity/Entity.java
+@@ -4539,6 +4539,9 @@ public abstract class Entity
+         this.dimensions = newDim;
+         this.eyeHeight = newDim.eyeHeight();
+         this.reapplyPosition();
++        if (this.valid) {
++            this.level.updateLargeHitbox(this);
++        }
+         boolean isSmall = newDim.width() <= 4.0F && newDim.height() <= 4.0F;
+         if (!this.level.isClientSide()
+             && !this.firstTick
+diff --git a/net/minecraft/world/entity/projectile/ProjectileUtil.java b/net/minecraft/world/entity/projectile/ProjectileUtil.java
+index 6c633124c2020318275d8ac82cdf25f0de795be3..1dcd38686f527a9f04c644c299f39fe8bd64ec91 100644
+--- a/net/minecraft/world/entity/projectile/ProjectileUtil.java
++++ b/net/minecraft/world/entity/projectile/ProjectileUtil.java
+@@ -235,7 +235,8 @@ public final class ProjectileUtil {
+             double totalMargin = entityMargin + v + v1;
+             AABB entityBB = entity.getBoundingBox();
+             AABB inflatedBB = totalMargin != 0.0 ? entityBB.inflate(totalMargin) : entityBB;
+-            if (includeFromEntity && (inflatedBB.contains(from) || entityBB.contains(from))) {
++            // снаряд, начавший тик внутри огромного хитбокса, иначе пролетает насквозь: clip изнутри коробки ничего не находит
++            if ((includeFromEntity || Level.hasLargeHitbox(entity)) && (inflatedBB.contains(from) || entityBB.contains(from))) {
+                 collector.add(new EntityHitResult(entity, from));
+             } else {
+                 Optional<Vec3> exactHit = entityBB.clip(from, to);
+diff --git a/net/minecraft/world/level/Level.java b/net/minecraft/world/level/Level.java
+index 9286d9bcf3ec4069e77d3133f3d7bf29b2370c5a..747e75440f800d8a25c6294cd18f852c25090d65 100644
+--- a/net/minecraft/world/level/Level.java
++++ b/net/minecraft/world/level/Level.java
+@@ -1925,6 +1925,22 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
+ 
+     public abstract Collection<EnderDragonPart> dragonParts();
+ 
++    // Сущности шире или выше 4 блоков: поиск по секциям их не находит, если область поиска задевает только край хитбокса.
++    // Добавляются в результат getEntities через PlatformHooks#addToGetEntities, как части дракона.
++    public final it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap<Entity> largeHitboxEntities = new it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap<>();
++
++    public static boolean hasLargeHitbox(final Entity entity) {
++        return !(entity instanceof EnderDragon) && (entity.getBbWidth() > 4.0F || entity.getBbHeight() > 4.0F);
++    }
++
++    public void updateLargeHitbox(final Entity entity) {
++        if (hasLargeHitbox(entity)) {
++            this.largeHitboxEntities.put(entity.getId(), entity);
++        } else {
++            this.largeHitboxEntities.remove(entity.getId());
++        }
++    }
++
+     public void blockEntityChanged(final BlockPos pos) {
+         if (this.hasChunkAt(pos)) {
+             this.getChunkAt(pos).markUnsaved();
