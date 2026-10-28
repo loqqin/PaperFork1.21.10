@@ -1,0 +1,19 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Mon, 26 Oct 2026 00:13:19 +0200
+Subject: [PATCH] loqqin
+
+
+diff --git a/net/minecraft/server/level/ChunkMap.java b/net/minecraft/server/level/ChunkMap.java
+index dc8a85c037d98962f0172c7aa1680d7ee8c60c60..386663a3d3743ec745416ee4b55070e7b87e63c0 100644
+--- a/net/minecraft/server/level/ChunkMap.java
++++ b/net/minecraft/server/level/ChunkMap.java
+@@ -406,7 +406,7 @@ public class ChunkMap extends SimpleRegionStorage implements ChunkHolder.PlayerP
+         profiler.popPush("chunk_unload");
+         if (!this.level.noSave()) {
+             this.level.noSave = true;
+-            System.out.println("process unloads " + this.level.serverLevelData.getLevelName());
++            System.out.println("process unloads " + this.level.serverLevelData.getLevelName() + " " + this.level.getWorld().getName());
+ //            this.processUnloads(haveTime);
+         }
+ 
