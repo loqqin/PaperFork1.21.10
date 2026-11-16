@@ -1,0 +1,36 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Mon, 16 Nov 2026 18:10:18 +0200
+Subject: [PATCH] loqqin bubble column block
+
+
+diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
+index 578cc34fcb2047e86c1fdf479b97ba4448d54fda..ceae6b2ccce4742755d85adc7d5cbf43f70a2493 100644
+--- a/net/minecraft/server/level/ServerLevel.java
++++ b/net/minecraft/server/level/ServerLevel.java
+@@ -238,6 +238,8 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
+     public final org.bukkit.craftbukkit.persistence.CraftPersistentDataContainer persistentDataContainer = new org.bukkit.craftbukkit.persistence.CraftPersistentDataContainer(DATA_TYPE_REGISTRY);
+     private final alternate.current.wire.WireHandler wireHandler = new alternate.current.wire.WireHandler(this); // Paper - optimize redstone (Alternate Current)
+ 
++    public boolean disableBubbleColumns; // loqqin
++
+     @Override
+     public @Nullable LevelChunk getChunkIfLoaded(int x, int z) {
+         return this.chunkSource.getChunkAtIfLoadedImmediately(x, z); // Paper - Use getChunkAtIfLoadedImmediately
+diff --git a/net/minecraft/world/level/block/BubbleColumnBlock.java b/net/minecraft/world/level/block/BubbleColumnBlock.java
+index 810b73d8ab91db045a9f5853d0c0cb3da73f6711..b39f62dbda9eb14f9b8de2520542551136861919 100644
+--- a/net/minecraft/world/level/block/BubbleColumnBlock.java
++++ b/net/minecraft/world/level/block/BubbleColumnBlock.java
+@@ -87,6 +87,12 @@ public class BubbleColumnBlock extends Block implements BucketPickup {
+     public static void updateColumn(
+         final Block bubbleColumn, final LevelAccessor level, final BlockPos occupyAt, final BlockState occupyState, final BlockState belowState
+     ) {
++        if (level.getMinecraftWorld().disableBubbleColumns) {
++            if (occupyState.is(bubbleColumn)) {
++                level.setBlock(occupyAt, Blocks.WATER.defaultBlockState(), Block.UPDATE_CLIENTS);
++            }
++            return;
++        }
+         if (canOccupy(bubbleColumn, occupyState)) {
+             BlockState columnState = getColumnState(bubbleColumn, belowState, occupyState);
+             level.setBlock(occupyAt, columnState, Block.UPDATE_CLIENTS);
