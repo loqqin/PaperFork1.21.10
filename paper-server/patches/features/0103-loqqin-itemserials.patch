@@ -1,0 +1,402 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Tue, 17 Nov 2026 20:44:29 +0200
+Subject: [PATCH] loqqin itemserials
+
+
+diff --git a/net/minecraft/core/dispenser/DefaultDispenseItemBehavior.java b/net/minecraft/core/dispenser/DefaultDispenseItemBehavior.java
+index bcd998d6e9d56929b50563d79838d7b9065c4a0e..bd6ba30349addfb508c46a19918fcf892baebcd3 100644
+--- a/net/minecraft/core/dispenser/DefaultDispenseItemBehavior.java
++++ b/net/minecraft/core/dispenser/DefaultDispenseItemBehavior.java
+@@ -28,7 +28,7 @@ public class DefaultDispenseItemBehavior implements DispenseItemBehavior {
+         ItemStack itemStack = dispensed.split(1);
+         // CraftBukkit start
+         if (!DefaultDispenseItemBehavior.spawnItem(source.level(), itemStack, 6, this.direction, position, source)) {
+-            dispensed.grow(1);
++            dispensed.growFrom(itemStack, 1); // Paper - item serials
+         }
+         // CraftBukkit end
+         return dispensed;
+diff --git a/net/minecraft/recipebook/ServerPlaceRecipe.java b/net/minecraft/recipebook/ServerPlaceRecipe.java
+index d5ce83d5abd4de6f014a2827780170d3341eb927..ab4c1210ba34301f20cdb7b9c7e9b1d9eab01196 100644
+--- a/net/minecraft/recipebook/ServerPlaceRecipe.java
++++ b/net/minecraft/recipebook/ServerPlaceRecipe.java
+@@ -189,7 +189,7 @@ public class ServerPlaceRecipe<R extends Recipe<?>> {
+         if (itemInTargetSlot.isEmpty()) {
+             targetSlot.set(takenStack);
+         } else {
+-            itemInTargetSlot.grow(takenCount);
++            itemInTargetSlot.growFrom(takenStack, takenCount); // Paper - item serials
+         }
+ 
+         return count - takenCount;
+diff --git a/net/minecraft/world/SimpleContainer.java b/net/minecraft/world/SimpleContainer.java
+index 073a3bbf1b1db7eac83cf35412543f370fa089ee..b95dabdc44d0b3c7e7acfd804d8142fa3e074607 100644
+--- a/net/minecraft/world/SimpleContainer.java
++++ b/net/minecraft/world/SimpleContainer.java
+@@ -137,7 +137,7 @@ public class SimpleContainer implements Container, StackedContentsCompatible {
+             if (current.getItem().equals(itemType)) {
+                 int stillNeeded = count - removed.getCount();
+                 ItemStack removedFromThisSlot = current.split(stillNeeded);
+-                removed.grow(removedFromThisSlot.getCount());
++                removed.growFrom(removedFromThisSlot, removedFromThisSlot.getCount()); // Paper - item serials
+                 if (removed.getCount() == count) {
+                     break;
+                 }
+@@ -266,7 +266,7 @@ public class SimpleContainer implements Container, StackedContentsCompatible {
+         int maxCount = this.getMaxStackSize(targetStack);
+         int diff = Math.min(sourceStack.getCount(), maxCount - targetStack.getCount());
+         if (diff > 0) {
+-            targetStack.grow(diff);
++            targetStack.growFrom(sourceStack, diff); // Paper - item serials
+             sourceStack.shrink(diff);
+             this.setChanged();
+         }
+diff --git a/net/minecraft/world/entity/item/ItemEntity.java b/net/minecraft/world/entity/item/ItemEntity.java
+index 5bbf63945c687e599d55f047857b543ff61dd409..1f6d0714c4dc80d854d7c434aa5cde733fd8a4b8 100644
+--- a/net/minecraft/world/entity/item/ItemEntity.java
++++ b/net/minecraft/world/entity/item/ItemEntity.java
+@@ -303,7 +303,15 @@ public class ItemEntity extends Entity implements TraceableEntity {
+ 
+     public static ItemStack merge(final ItemStack toStack, final ItemStack fromStack, final int maxCount) {
+         int delta = Math.min(Math.min(toStack.getMaxStackSize(), maxCount) - toStack.getCount(), fromStack.getCount());
+-        ItemStack newToStack = toStack.copyWithCount(toStack.getCount() + delta);
++        // Paper start - item serials
++        ItemStack newToStack;
++        if (toStack.isEmpty()) {
++            newToStack = toStack.copyWithCount(toStack.getCount() + delta);
++        } else {
++            newToStack = toStack.copy();
++            newToStack.growFrom(fromStack, delta);
++        }
++        // Paper end - item serials
+         fromStack.shrink(delta);
+         return newToStack;
+     }
+@@ -422,6 +430,7 @@ public class ItemEntity extends Entity implements TraceableEntity {
+             ItemStack itemStack = this.getItem();
+             Item item = itemStack.getItem();
+             int orgCount = itemStack.getCount();
++            long[] orgSerials = null; // Paper - item serials
+             // CraftBukkit start - fire PlayerPickupItemEvent
+             int canHold = player.getInventory().canHold(itemStack);
+             int remaining = orgCount - canHold;
+@@ -443,14 +452,14 @@ public class ItemEntity extends Entity implements TraceableEntity {
+             }
+ 
+             if (this.pickupDelay <= 0 && canHold > 0) {
+-                itemStack.setCount(canHold);
++                orgSerials = io.papermc.paper.itemserial.ItemSerials.beginTemporaryCount(itemStack, canHold); // Paper - item serials
+                 // Call legacy event
+                 org.bukkit.event.player.PlayerPickupItemEvent playerEvent = new org.bukkit.event.player.PlayerPickupItemEvent((org.bukkit.entity.Player) player.getBukkitEntity(), (org.bukkit.entity.Item) this.getBukkitEntity(), remaining);
+                 playerEvent.setCancelled(!playerEvent.getPlayer().getCanPickupItems());
+                 this.level().getCraftServer().getPluginManager().callEvent(playerEvent);
+                 flyAtPlayer = playerEvent.getFlyAtPlayer(); // Paper
+                 if (playerEvent.isCancelled()) {
+-                    itemStack.setCount(orgCount); // SPIGOT-5294 - restore count
++                    io.papermc.paper.itemserial.ItemSerials.restoreCount(itemStack, orgCount, orgSerials); // SPIGOT-5294 - restore count // Paper - item serials
+                     // Paper start
+                     if (flyAtPlayer) {
+                         player.take(this, orgCount);
+@@ -464,7 +473,7 @@ public class ItemEntity extends Entity implements TraceableEntity {
+                 entityEvent.setCancelled(!entityEvent.getEntity().getCanPickupItems());
+                 this.level().getCraftServer().getPluginManager().callEvent(entityEvent);
+                 if (entityEvent.isCancelled()) {
+-                    itemStack.setCount(orgCount); // SPIGOT-5294 - restore count
++                    io.papermc.paper.itemserial.ItemSerials.restoreCount(itemStack, orgCount, orgSerials); // SPIGOT-5294 - restore count // Paper - item serials
+                     return;
+                 }
+ 
+@@ -473,7 +482,7 @@ public class ItemEntity extends Entity implements TraceableEntity {
+                 if (!itemStack.equals(current)) {
+                     itemStack = current;
+                 } else {
+-                    itemStack.setCount(canHold + remaining); // = i
++                    io.papermc.paper.itemserial.ItemSerials.restoreCount(itemStack, canHold + remaining, orgSerials); // = i // Paper - item serials
+                 }
+ 
+                 // Possibly < 0; fix here so we do not have to modify code below
+diff --git a/net/minecraft/world/entity/player/Inventory.java b/net/minecraft/world/entity/player/Inventory.java
+index cd7714dffcd7e7b6d96d18a97e65fd0914a739d1..51c01d74bb8438572525c2435ec1bc9564f69370 100644
+--- a/net/minecraft/world/entity/player/Inventory.java
++++ b/net/minecraft/world/entity/player/Inventory.java
+@@ -322,7 +322,7 @@ public class Inventory implements Container, Nameable {
+         }
+ 
+         count -= toAdd;
+-        itemStackInSlot.grow(toAdd);
++        itemStackInSlot.growFrom(itemStack, toAdd); // Paper - item serials
+         itemStackInSlot.setPopTime(POP_TIME_DURATION);
+         return count;
+     }
+diff --git a/net/minecraft/world/inventory/AbstractContainerMenu.java b/net/minecraft/world/inventory/AbstractContainerMenu.java
+index 70a23d86ec79879cbbd59790adedad7149ab73b8..17cd3b5426e186b6cce8c1c50880e766ad4208cc 100644
+--- a/net/minecraft/world/inventory/AbstractContainerMenu.java
++++ b/net/minecraft/world/inventory/AbstractContainerMenu.java
+@@ -516,7 +516,16 @@ public abstract class AbstractContainerMenu {
+                             int newCount = Math.min(getQuickCraftPlaceCount(this.quickcraftSlots.size(), this.quickcraftType, source) + carry, maxSize);
+                             remaining -= newCount - carry;
+                             // slot.setByPlayer(source.copyWithCount(newCount));
+-                            draggedSlots.put(slot.index, source.copyWithCount(newCount)); // CraftBukkit - Put in map instead of setting
++                            // Paper start - item serials - из курсора берём только положенное, уже лежавшее в слоте остаётся со своими номерами
++                            ItemStack placed;
++                            if (io.papermc.paper.itemserial.ItemSerials.ENABLED) {
++                                placed = source.copyWithCount(newCount - carry);
++                                io.papermc.paper.itemserial.ItemSerials.composeDrag(placed, newCount - carry, slot.getItem(), carry, this.quickcraftType == QUICKCRAFT_TYPE_CLONE);
++                            } else {
++                                placed = source.copyWithCount(newCount);
++                            }
++                            draggedSlots.put(slot.index, placed); // CraftBukkit - Put in map instead of setting
++                            // Paper end - item serials
+                         }
+                     }
+ 
+@@ -622,7 +631,7 @@ public abstract class AbstractContainerMenu {
+                         } else if (ItemStack.isSameItemSameComponents(clicked, carried)) {
+                             Optional<ItemStack> newCarried = slot.tryRemove(clicked.getCount(), carried.getMaxStackSize() - carried.getCount(), player);
+                             newCarried.ifPresent(itemsTaken -> {
+-                                carried.grow(itemsTaken.getCount());
++                                carried.growFrom(itemsTaken, itemsTaken.getCount()); // Paper - item serials
+                                 slot.onTake(player, itemsTaken);
+                             });
+                         }
+@@ -725,7 +734,7 @@ public abstract class AbstractContainerMenu {
+                             ItemStack itemStack = target.getItem();
+                             if (pass != 0 || itemStack.getCount() != itemStack.getMaxStackSize()) {
+                                 ItemStack removed = target.safeTake(itemStack.getCount(), carried.getMaxStackSize() - carried.getCount(), player);
+-                                carried.grow(removed.getCount());
++                                carried.growFrom(removed, removed.getCount()); // Paper - item serials
+                             }
+                         }
+                     }
+@@ -840,15 +849,18 @@ public abstract class AbstractContainerMenu {
+                     int totalStack = target.getCount() + itemStack.getCount();
+                     int maxStackSize = slot.getMaxStackSize(target);
+                     if (totalStack <= maxStackSize) {
++                        target.growFrom(itemStack, itemStack.getCount()); // Paper - item serials
+                         itemStack.setCount(0);
+-                        target.setCount(totalStack);
+                         if (!isCheck) { // Paper - Add PlayerTradeEvent and PlayerPurchaseEvent
+                         slot.setChanged();
+                         } // Paper - Add PlayerTradeEvent and PlayerPurchaseEvent
+                         anythingChanged = true;
+                     } else if (target.getCount() < maxStackSize) {
+-                        itemStack.shrink(maxStackSize - target.getCount());
+-                        target.setCount(maxStackSize);
++                        // Paper start - item serials
++                        int moved = maxStackSize - target.getCount();
++                        target.growFrom(itemStack, moved);
++                        itemStack.shrink(moved);
++                        // Paper end - item serials
+                         if (!isCheck) { // Paper - Add PlayerTradeEvent and PlayerPurchaseEvent
+                         slot.setChanged();
+                         } // Paper - Add PlayerTradeEvent and PlayerPurchaseEvent
+diff --git a/net/minecraft/world/inventory/ResultSlot.java b/net/minecraft/world/inventory/ResultSlot.java
+index 830ecd77e312d4b7935e908ae20c2915aaada2d4..dd4ff897ded74fac05a9a76c0ebee14b72fa74bb 100644
+--- a/net/minecraft/world/inventory/ResultSlot.java
++++ b/net/minecraft/world/inventory/ResultSlot.java
+@@ -118,7 +118,7 @@ public class ResultSlot extends Slot {
+                     if (itemStack.isEmpty()) {
+                         this.craftSlots.setItem(slot, replacement);
+                     } else if (ItemStack.isSameItemSameComponents(itemStack, replacement)) {
+-                        replacement.grow(itemStack.getCount());
++                        replacement.growFrom(itemStack, itemStack.getCount()); // Paper - item serials
+                         this.craftSlots.setItem(slot, replacement);
+                     } else if (!this.player.getInventory().add(replacement)) {
+                         this.player.drop(replacement, false);
+diff --git a/net/minecraft/world/inventory/Slot.java b/net/minecraft/world/inventory/Slot.java
+index 0e86b025bad2c336cc360c2ce764dad0a75de1b6..133a8d3034e013931cc129b0bec239ef8134a60f 100644
+--- a/net/minecraft/world/inventory/Slot.java
++++ b/net/minecraft/world/inventory/Slot.java
+@@ -142,8 +142,8 @@ public class Slot {
+             if (slotStack.isEmpty()) {
+                 this.setByPlayer(inputStack.split(transferableItemCount));
+             } else if (ItemStack.isSameItemSameComponents(slotStack, inputStack)) {
++                slotStack.growFrom(inputStack, transferableItemCount); // Paper - item serials
+                 inputStack.shrink(transferableItemCount);
+-                slotStack.grow(transferableItemCount);
+                 this.setByPlayer(slotStack);
+             }
+ 
+diff --git a/net/minecraft/world/item/ItemStack.java b/net/minecraft/world/item/ItemStack.java
+index 4d8d4fa258fa7a957a1c465939ffc8fefbc5ac3b..76451dad193d2a0f973da835aa7ae59f8530d256 100644
+--- a/net/minecraft/world/item/ItemStack.java
++++ b/net/minecraft/world/item/ItemStack.java
+@@ -113,9 +113,10 @@ public final class ItemStack implements DataComponentHolder, ItemInstance {
+             i -> i.group(
+                     Item.CODEC_WITH_BOUND_COMPONENTS.fieldOf("id").forGetter(ItemStack::typeHolder),
+                     ExtraCodecs.optionalAlwaysPresentFieldOf(ExtraCodecs.intRange(1, 99), "count", 1).forGetter(ItemStack::getCount),
+-                    DataComponentPatch.CODEC.optionalFieldOf("components", DataComponentPatch.EMPTY).forGetter(s -> s.components.asPatch())
++                    DataComponentPatch.CODEC.optionalFieldOf("components", DataComponentPatch.EMPTY).forGetter(s -> s.components.asPatch()),
++                    io.papermc.paper.itemserial.ItemSerials.CODEC.optionalFieldOf("item_serials").forGetter(io.papermc.paper.itemserial.ItemSerials::encodeView) // Paper - item serials
+                 )
+-                .apply(i, ItemStack::new)
++                .apply(i, (item, count, components, serials) -> io.papermc.paper.itemserial.ItemSerials.attach(new ItemStack(item, count, components), serials)) // Paper - item serials
+         )
+     );
+     public static final Codec<ItemStack> CODEC = Codec.lazyInitialized(MAP_CODEC::codec);
+@@ -156,6 +157,11 @@ public final class ItemStack implements DataComponentHolder, ItemInstance {
+     @Deprecated
+     private @Nullable Holder<Item> item;
+     private PatchedDataComponentMap components;
++    // Paper start - item serials
++    /** Номера единиц стака, см. {@link io.papermc.paper.itemserial.ItemSerials}. Неизменяемый массив, заменяется целиком. */
++    public long @Nullable [] serials;
++    public io.papermc.paper.itemserial.ItemSerials.@Nullable Claim serialClaim;
++    // Paper end - item serials
+     public int modCount = 0;
+ 
+     public static DataResult<ItemStack> validateStrict(final ItemStack itemStack) {
+@@ -793,6 +799,7 @@ public final class ItemStack implements DataComponentHolder, ItemInstance {
+         ItemStack copy = new ItemStack(originalItem ? this.item : this.typeHolder(), this.count, this.components.copy()); // Paper - Perf: Optimize Hoppers
+         copy.setPopTime(this.getPopTime());
+         copy.modCount = modCount;
++        io.papermc.paper.itemserial.ItemSerials.onCopy(this, copy); // Paper - item serials
+         return copy;
+     }
+ 
+@@ -1313,10 +1320,35 @@ public final class ItemStack implements DataComponentHolder, ItemInstance {
+     }
+ 
+     public void setCount(final int count) {
++        if (this.serials != null) io.papermc.paper.itemserial.ItemSerials.onSetCount(this, this.getCount(), count); // Paper - item serials
+         this.count = count;
+         modCount++;
+     }
+ 
++    // Paper start - item serials
++    /** Меняет количество, не трогая номера. Только для {@link io.papermc.paper.itemserial.ItemSerials}. */
++    public void setCountRaw(final int count) {
++        this.count = count;
++        modCount++;
++    }
++
++    /**
++     * Как {@link #grow}, но прибавленные единицы берутся из {@code source} вместе с номерами.
++     * {@code source} не уменьшается: вызывающий код уменьшает его сам, в том же тике и после этого вызова.
++     */
++    public void growFrom(final ItemStack source, final int amount) {
++        if (amount <= 0 || this == EMPTY || !io.papermc.paper.itemserial.ItemSerials.ENABLED || (source.serials == null && this.serials == null)) {
++            this.grow(amount);
++            return;
++        }
++        final int oldCount = this.getCount();
++        final long[] given = io.papermc.paper.itemserial.ItemSerials.give(source, this, amount);
++        final long[] newSerials = io.papermc.paper.itemserial.ItemSerials.concat(oldCount > 0 ? this.serials : null, oldCount, given, amount);
++        this.setCountRaw(oldCount + amount);
++        this.serials = newSerials;
++    }
++    // Paper end - item serials
++
+     public void limitSize(final int maxStackSize) {
+         if (!this.isEmpty() && this.getCount() > maxStackSize) {
+             this.setCount(maxStackSize);
+diff --git a/net/minecraft/world/level/block/entity/DispenserBlockEntity.java b/net/minecraft/world/level/block/entity/DispenserBlockEntity.java
+index 736f5fd76f4a86ab16740904b5c0823413d65cd2..cf98bdde3b301d66c98edcaaea7803033218a12a 100644
+--- a/net/minecraft/world/level/block/entity/DispenserBlockEntity.java
++++ b/net/minecraft/world/level/block/entity/DispenserBlockEntity.java
+@@ -91,8 +91,8 @@ public class DispenserBlockEntity extends RandomizableContainerBlockEntity {
+                     if (targetStack.isEmpty()) {
+                         this.setItem(i, itemStack.split(transferCount));
+                     } else {
++                        targetStack.growFrom(itemStack, transferCount); // Paper - item serials
+                         itemStack.shrink(transferCount);
+-                        targetStack.grow(transferCount);
+                     }
+                 }
+ 
+diff --git a/net/minecraft/world/level/block/entity/HopperBlockEntity.java b/net/minecraft/world/level/block/entity/HopperBlockEntity.java
+index fef616d7b92454a721f7a14941b62a8963080cc5..1ca5afa286c3ed4561edba7198b61f8b2f05c637 100644
+--- a/net/minecraft/world/level/block/entity/HopperBlockEntity.java
++++ b/net/minecraft/world/level/block/entity/HopperBlockEntity.java
+@@ -234,14 +234,14 @@ public class HopperBlockEntity extends RandomizableContainerBlockEntity implemen
+ 
+                 final int originalItemCount = origItemStack.getCount();
+                 final int movedItemCount = Math.min(level.spigotConfig.hopperAmount, originalItemCount);
+-                origItemStack.setCount(movedItemCount);
++                final long[] originalSerials = io.papermc.paper.itemserial.ItemSerials.beginTemporaryCount(origItemStack, movedItemCount); // Paper - item serials
+ 
+                 // We only need to fire the event once to give protection plugins a chance to cancel this event
+                 // Because nothing uses getItem, every event call should end up the same result.
+                 if (!skipPushModeEventFire) {
+                     movedItem = callPushMoveEvent(destination, movedItem, hopper);
+                     if (movedItem == null) { // cancelled
+-                        origItemStack.setCount(originalItemCount);
++                        io.papermc.paper.itemserial.ItemSerials.restoreCount(origItemStack, originalItemCount, originalSerials); // Paper - item serials
+                         return false;
+                     }
+                 }
+@@ -250,15 +250,21 @@ public class HopperBlockEntity extends RandomizableContainerBlockEntity implemen
+                 final int remainingItemCount = remainingItem.getCount();
+                 if (remainingItemCount != movedItemCount) {
+                     origItemStack = origItemStack.copy(true);
++                    // Paper start - item serials
++                    if (originalSerials != null && io.papermc.paper.itemserial.ItemSerials.ENABLED) {
++                        io.papermc.paper.itemserial.ItemSerials.hopperRemainder(origItemStack, originalSerials, originalItemCount, movedItemCount, remainingItem);
++                    } else {
+                     origItemStack.setCount(originalItemCount);
+                     if (!origItemStack.isEmpty()) {
+                         origItemStack.setCount(originalItemCount - movedItemCount + remainingItemCount);
+                     }
++                    }
++                    // Paper end - item serials
+                     hopper.setItem(i, origItemStack);
+                     destination.setChanged();
+                     return true;
+                 }
+-                origItemStack.setCount(originalItemCount);
++                io.papermc.paper.itemserial.ItemSerials.restoreCount(origItemStack, originalItemCount, originalSerials); // Paper - item serials
+             }
+         }
+         if (foundItem && level.paperConfig().hopper.cooldownWhenFull) { // Inventory was full - cooldown
+@@ -272,12 +278,12 @@ public class HopperBlockEntity extends RandomizableContainerBlockEntity implemen
+         final int originalItemCount = origItemStack.getCount();
+         final int movedItemCount = Math.min(level.spigotConfig.hopperAmount, originalItemCount);
+         container.setChanged(); // original logic always marks source inv as changed even if no move happens.
+-        movedItem.setCount(movedItemCount);
++        final long[] originalSerials = io.papermc.paper.itemserial.ItemSerials.beginTemporaryCount(movedItem, movedItemCount); // Paper - item serials
+ 
+         if (!skipPullModeEventFire) {
+             movedItem = callPullMoveEvent(hopper, container, movedItem);
+             if (movedItem == null) { // cancelled
+-                origItemStack.setCount(originalItemCount);
++                io.papermc.paper.itemserial.ItemSerials.restoreCount(origItemStack, originalItemCount, originalSerials); // Paper - item serials
+                 // Drastically improve performance by returning true.
+                 // No plugin could have relied on the behavior of false as the other call
+                 // site for IMIE did not exhibit the same behavior
+@@ -289,10 +295,16 @@ public class HopperBlockEntity extends RandomizableContainerBlockEntity implemen
+         final int remainingItemCount = remainingItem.getCount();
+         if (remainingItemCount != movedItemCount) {
+             origItemStack = origItemStack.copy(true);
++            // Paper start - item serials
++            if (originalSerials != null && io.papermc.paper.itemserial.ItemSerials.ENABLED) {
++                io.papermc.paper.itemserial.ItemSerials.hopperRemainder(origItemStack, originalSerials, originalItemCount, movedItemCount, remainingItem);
++            } else {
+             origItemStack.setCount(originalItemCount);
+             if (!origItemStack.isEmpty()) {
+                 origItemStack.setCount(originalItemCount - movedItemCount + remainingItemCount);
+             }
++            }
++            // Paper end - item serials
+ 
+             ignoreBlockEntityUpdates = true;
+             container.setItem(i, origItemStack);
+@@ -300,7 +312,7 @@ public class HopperBlockEntity extends RandomizableContainerBlockEntity implemen
+             container.setChanged();
+             return true;
+         }
+-        origItemStack.setCount(originalItemCount);
++        io.papermc.paper.itemserial.ItemSerials.restoreCount(origItemStack, originalItemCount, originalSerials); // Paper - item serials
+ 
+         if (level.paperConfig().hopper.cooldownWhenFull) {
+             applyCooldown(hopper);
+@@ -593,8 +605,8 @@ public class HopperBlockEntity extends RandomizableContainerBlockEntity implemen
+             } else if (canMergeItems(current, itemStack)) {
+                 int space = Math.min(itemStack.getMaxStackSize(), container.getMaxStackSize()) - current.getCount(); // Paper - Make hoppers respect inventory max stack size
+                 int count = Math.min(itemStack.getCount(), space);
++                current.growFrom(itemStack, count); // Paper - item serials
+                 itemStack.shrink(count);
+-                current.grow(count);
+                 success = count > 0;
+             }
+ 
