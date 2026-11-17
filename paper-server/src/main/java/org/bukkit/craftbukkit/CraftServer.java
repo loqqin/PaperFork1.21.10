@@ -1605,7 +1605,7 @@ public final class CraftServer implements Server {
                         if (itemInMenu.isEmpty()) {
                             craftingContainer.setItem(inventorySlot, remainingItem);
                         } else if (net.minecraft.world.item.ItemStack.isSameItemSameComponents(itemInMenu, remainingItem)) {
-                            remainingItem.grow(itemInMenu.getCount());
+                            remainingItem.growFrom(itemInMenu, itemInMenu.getCount()); // Paper - item serials
                             craftingContainer.setItem(inventorySlot, remainingItem);
                         } else {
                             craftItemResult.getOverflowItems().add(CraftItemStack.asBukkitCopy(remainingItem));

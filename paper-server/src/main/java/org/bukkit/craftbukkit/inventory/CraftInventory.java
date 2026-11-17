@@ -327,14 +327,14 @@ public class CraftInventory implements Inventory {
 
                     // Check if it fully fits
                     if (amount + partialAmount <= maxAmount) {
-                        partialItem.setAmount(amount + partialAmount);
+                        CraftItemStack.unwrap(partialItem).growFrom(CraftItemStack.unwrap(item), amount); // Paper - item serials
                         // To make sure the packet is sent to the client
                         this.setItem(firstPartial, partialItem);
                         break;
                     }
 
                     // It fits partially
-                    partialItem.setAmount(maxAmount);
+                    CraftItemStack.unwrap(partialItem).growFrom(CraftItemStack.unwrap(item), maxAmount - partialAmount); // Paper - item serials
                     // To make sure the packet is sent to the client
                     this.setItem(firstPartial, partialItem);
                     item.setAmount(amount + partialAmount - maxAmount);
