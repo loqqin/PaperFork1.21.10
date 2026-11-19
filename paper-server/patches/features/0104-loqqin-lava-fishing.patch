@@ -1,0 +1,98 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Thu, 19 Nov 2026 22:52:50 +0200
+Subject: [PATCH] loqqin lava fishing
+
+
+diff --git a/net/minecraft/world/entity/projectile/FishingHook.java b/net/minecraft/world/entity/projectile/FishingHook.java
+index 78bc68e038206ae1fd71bf37f14416e48e511c71..20d0627abc415479858353a80fb970789b87610f 100644
+--- a/net/minecraft/world/entity/projectile/FishingHook.java
++++ b/net/minecraft/world/entity/projectile/FishingHook.java
+@@ -64,6 +64,7 @@ public class FishingHook extends Projectile {
+     public int timeUntilHooked;
+     public float fishAngle;
+     private boolean openWater = true;
++    public boolean lavaFishing; // loqqin - поплавок держится и клюёт в лаве вместо воды
+     private @Nullable Entity hookedIn;
+     public FishingHook.FishHookState currentState = FishingHook.FishHookState.FLYING;
+     private final int luck;
+@@ -184,7 +185,7 @@ public class FishingHook extends Projectile {
+             float liquidHeight = 0.0F;
+             BlockPos blockPos = this.blockPosition();
+             FluidState fluidState = this.level().getFluidState(blockPos);
+-            if (fluidState.is(FluidTags.WATER)) {
++            if (this.isFishingFluid(fluidState)) { // loqqin
+                 liquidHeight = fluidState.getHeight(this.level(), blockPos);
+             }
+ 
+@@ -253,7 +254,7 @@ public class FishingHook extends Projectile {
+                 }
+             }
+ 
+-            if (!fluidState.is(FluidTags.WATER) && !this.onGround() && this.hookedIn == null) {
++            if (!this.isFishingFluid(fluidState) && !this.onGround() && this.hookedIn == null) { // loqqin
+                 this.setDeltaMovement(this.getDeltaMovement().add(0.0, -0.03, 0.0));
+             }
+ 
+@@ -348,15 +349,16 @@ public class FishingHook extends Projectile {
+                 double fishY = Mth.floor(this.getY()) + 1.0F;
+                 double fishZ = this.getZ() + angleCos * this.timeUntilHooked * 0.1F;
+                 BlockState splashBlockState = serverLevel.getBlockState(BlockPos.containing(fishX, fishY - 1.0, fishZ));
+-                if (splashBlockState.is(Blocks.WATER)) {
++                if (this.isFishingBlock(splashBlockState)) { // loqqin
+                     if (this.random.nextFloat() < 0.15F) {
+-                        serverLevel.sendParticles(ParticleTypes.BUBBLE, fishX, fishY - 0.1F, fishZ, 1, angleSin, 0.1, angleCos, 0.0);
++                        serverLevel.sendParticles(this.lavaFishing ? ParticleTypes.LAVA : ParticleTypes.BUBBLE, fishX, fishY - 0.1F, fishZ, 1, angleSin, 0.1, angleCos, 0.0); // loqqin
+                     }
+ 
+                     float particleXMovement = angleSin * 0.04F;
+                     float particleZMovement = angleCos * 0.04F;
+-                    serverLevel.sendParticles(ParticleTypes.FISHING, fishX, fishY, fishZ, 0, particleZMovement, 0.01, -particleXMovement, 1.0);
+-                    serverLevel.sendParticles(ParticleTypes.FISHING, fishX, fishY, fishZ, 0, -particleZMovement, 0.01, particleXMovement, 1.0);
++                    net.minecraft.core.particles.SimpleParticleType trail = this.lavaFishing ? ParticleTypes.FLAME : ParticleTypes.FISHING; // loqqin
++                    serverLevel.sendParticles(trail, fishX, fishY, fishZ, 0, particleZMovement, 0.01, -particleXMovement, 1.0);
++                    serverLevel.sendParticles(trail, fishX, fishY, fishZ, 0, -particleZMovement, 0.01, particleXMovement, 1.0);
+                     org.bukkit.Bukkit.getPluginManager().callEvent(new org.bukkit.event.entity.FishingParticleEvent(((org.bukkit.entity.FishHook) this.getBukkitEntity()),
+                         new org.bukkit.Location(null, fishX, fishY, fishZ)));
+                 }
+@@ -370,10 +372,10 @@ public class FishingHook extends Projectile {
+                 this.playSound(SoundEvents.FISHING_BOBBER_SPLASH, 0.25F, 1.0F + (this.random.nextFloat() - this.random.nextFloat()) * 0.4F);
+                 double y = this.getY() + 0.5;
+                 serverLevel.sendParticles(
+-                    ParticleTypes.BUBBLE, this.getX(), y, this.getZ(), (int)(1.0F + this.getBbWidth() * 20.0F), this.getBbWidth(), 0.0, this.getBbWidth(), 0.2F
++                    this.lavaFishing ? ParticleTypes.LAVA : ParticleTypes.BUBBLE, this.getX(), y, this.getZ(), (int)(1.0F + this.getBbWidth() * 20.0F), this.getBbWidth(), 0.0, this.getBbWidth(), 0.2F // loqqin
+                 );
+                 serverLevel.sendParticles(
+-                    ParticleTypes.FISHING,
++                    this.lavaFishing ? ParticleTypes.FLAME : ParticleTypes.FISHING, // loqqin
+                     this.getX(),
+                     y,
+                     this.getZ(),
+@@ -404,8 +406,8 @@ public class FishingHook extends Projectile {
+                 double fishY = Mth.floor(this.getY()) + 1.0F;
+                 double fishZ = this.getZ() + Mth.cos(angle) * dist * 0.1;
+                 BlockState splashBlockState = serverLevel.getBlockState(BlockPos.containing(fishX, fishY - 1.0, fishZ));
+-                if (splashBlockState.is(Blocks.WATER)) {
+-                    serverLevel.sendParticles(ParticleTypes.SPLASH, fishX, fishY, fishZ, 2 + this.random.nextInt(2), 0.1F, 0.0, 0.1F, 0.0);
++                if (this.isFishingBlock(splashBlockState)) { // loqqin
++                    serverLevel.sendParticles(this.lavaFishing ? ParticleTypes.SMALL_FLAME : ParticleTypes.SPLASH, fishX, fishY, fishZ, 2 + this.random.nextInt(2), 0.1F, 0.0, 0.1F, 0.0);
+                 }
+             }
+ 
+@@ -481,6 +483,16 @@ public class FishingHook extends Projectile {
+         }
+     }
+ 
++    // loqqin start - ловля в лаве
++    private boolean isFishingFluid(final FluidState fluidState) {
++        return fluidState.is(this.lavaFishing ? FluidTags.LAVA : FluidTags.WATER);
++    }
++
++    private boolean isFishingBlock(final BlockState state) {
++        return state.is(this.lavaFishing ? Blocks.LAVA : Blocks.WATER);
++    }
++    // loqqin end
++
+     public boolean isOpenWaterFishing() {
+         return this.openWater;
+     }
