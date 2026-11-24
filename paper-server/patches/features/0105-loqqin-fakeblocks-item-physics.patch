@@ -1,0 +1,61 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aaa <121246396+loqqin@users.noreply.github.com>
+Date: Tue, 24 Nov 2026 17:54:56 +0200
+Subject: [PATCH] loqqin fakeblocks item physics
+
+
+diff --git a/ca/spottedleaf/moonrise/patches/collisions/CollisionUtil.java b/ca/spottedleaf/moonrise/patches/collisions/CollisionUtil.java
+index 9fd94b5181d02f572e6c6b34d859b13bfe95d62e..3b4cec84766df8b6668b9c9e5ff5915dd2fc4453 100644
+--- a/ca/spottedleaf/moonrise/patches/collisions/CollisionUtil.java
++++ b/ca/spottedleaf/moonrise/patches/collisions/CollisionUtil.java
+@@ -1940,6 +1940,17 @@ public final class CollisionUtil {
+ 
+         final boolean loadChunks = (collisionFlags & COLLISION_FLAG_LOAD_CHUNKS) != 0;
+         final ChunkSource chunkSource = world.getChunkSource();
++        // loqqin start - чьи фейковые блоки учитывать: сам игрок или игрок, по которому считается физика предмета
++        ServerPlayer fakeViewer = null;
++        net.minecraft.server.level.ServerLevel fakeLevel = null;
++        if (entity instanceof ServerPlayer serverPlayer) {
++            fakeViewer = serverPlayer;
++            fakeLevel = serverPlayer.level();
++        } else if (entity instanceof net.minecraft.world.entity.item.ItemEntity itemEntity && world instanceof net.minecraft.server.level.ServerLevel serverLevel) {
++            fakeViewer = itemEntity.getPhysicsViewer();
++            fakeLevel = serverLevel;
++        }
++        // loqqin end
+ 
+         for (int currChunkZ = minChunkZ; currChunkZ <= maxChunkZ; ++currChunkZ) {
+             for (int currChunkX = minChunkX; currChunkX <= maxChunkX; ++currChunkX) {
+@@ -2000,8 +2011,8 @@ public final class CollisionUtil {
+ 
+                                 BlockState blockData = blocks.get(localBlockIndex);
+                                 try {
+-                                    if (entity instanceof ServerPlayer serverPlayer) {
+-                                        blockData = FakeBlocks.function.apply(serverPlayer, new BlockPos(blockX, blockY, blockZ), serverPlayer.level());
++                                    if (fakeViewer != null) {
++                                        blockData = FakeBlocks.function.apply(fakeViewer, new BlockPos(blockX, blockY, blockZ), fakeLevel);
+                                     }
+                                 } catch (Throwable throwable) {
+                                     throwable.printStackTrace();
+diff --git a/net/minecraft/world/entity/item/ItemEntity.java b/net/minecraft/world/entity/item/ItemEntity.java
+index 1f6d0714c4dc80d854d7c434aa5cde733fd8a4b8..07c0caa8167ffb90b56309a7c93f2406afe6ddc2 100644
+--- a/net/minecraft/world/entity/item/ItemEntity.java
++++ b/net/minecraft/world/entity/item/ItemEntity.java
+@@ -55,6 +55,17 @@ public class ItemEntity extends Entity implements TraceableEntity {
+     public boolean canMobPickup = true; // Paper - Item#canEntityPickup
+     private int despawnRate = -1; // Paper - Alternative item-despawn-rate
+     public net.kyori.adventure.util.TriState frictionState = net.kyori.adventure.util.TriState.NOT_SET; // Paper - Friction API
++    // loqqin start - коллизии предмета по фейковым блокам этого игрока (net.FakeBlocks), иначе клиент роняет предмет в фейковую дыру,
++    // а сервер держит его на настоящем блоке и предмет прыгает при синхронизации позиции. Не сохраняется в NBT
++    public @Nullable UUID physicsViewer;
++
++    public net.minecraft.server.level.@Nullable ServerPlayer getPhysicsViewer() {
++        if (this.physicsViewer == null || !(this.level() instanceof ServerLevel serverLevel)) {
++            return null;
++        }
++        return serverLevel.getServer().getPlayerList().getPlayer(this.physicsViewer);
++    }
++    // loqqin end
+ 
+     public ItemEntity(final EntityType<? extends ItemEntity> type, final Level level) {
+         super(type, level);
